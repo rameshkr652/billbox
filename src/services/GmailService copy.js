@@ -194,7 +194,15 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
               console.error(`Error fetching message ${msg.id}: ${res.status}`);
               return null;
             }
-            const emailBodydata = extractEmailBody(messageData);            
+            const emailBodydata = extractEmailBody(messageData);
+            const filePath = `${RNFS.DocumentDirectoryPath}/emailBodydata.json`;
+
+            try {
+              await RNFS.writeFile(filePath, JSON.stringify(emailBodydata, null, 2), 'utf8');
+              console.log('Data saved successfully at:', filePath);
+            } catch (error) {
+              console.error('Error saving JSON file:', error);
+            }
             
             // Extract email body           
             const headers = {};
