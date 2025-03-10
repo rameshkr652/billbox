@@ -195,7 +195,8 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
               return null;
             }
             const emailBodydata = extractEmailBody(messageData);            
-            
+            const orderDetails = parseOrderDetails(emailBodydata);
+            console.log(orderDetails,"youe")
             // Extract email body           
             const headers = {};
             if (messageData.payload && messageData.payload.headers) {
@@ -350,3 +351,55 @@ const extractEmailBody = (messageData) => {
       return null;
   }
 };
+
+function parseOrderDetails(emailBodyHtml) {
+  // Extract clean text from HTML
+  const text = emailBodyHtml.replace(/<[^>]*>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  
+  // Object to store our extracted data
+  const orderDetails = {
+    restaurantName: null,
+    restaurantCity: null,
+    orderItems: [],
+    totalPrice: null,
+    orderId: null
+  };
+  
+  // Extract restaurant name
+  const restaurantMatch = text.match(/Thank you for ordering from (.*?)ORDER/i);
+  if (restaurantMatch && restaurantMatch[1]) {
+    orderDetails.restaurantName = restaurantMatch[1].trim();
+  }
+  
+  // Extract order ID
+  const orderIdMatch = text.match(/ORDER ID:?\s*(\d+)/i);
+  if (orderIdMatch && orderIdMatch[1]) {
+    orderDetails.orderId = orderIdMatch[1].trim();
+  }
+  
+  // Extract city - look for common pattern in address
+  const addressMatch = text.match(/([^,]+,[^,]+),\s*([^,]+)/i);
+  if (addressMatch && addressMatch[2]) {
+    orderDetails.restaurantCity = addressMatch[2].trim();
+  }
+  
+  // Extract order items
+  // This pattern looks for quantities and items like "1 X Meal"
+  const itemsRegex = /(\d+)\s*X\s*([^\d]+?)(?=\d+\s*X|\s*Total|\s*$)/gi;
+  let match;
+  while ((match = itemsRegex.exec(text)) !== null) {
+    if (match[1] && match[2]) {
+      orderDetails.orderItems.push(`${match[1].trim()} x ${match[2].trim()}`);
+    }
+  }
+  
+  // Extract total price
+  const totalMatch = text.match(/Total paid\s*-\s*₹\s*(\d+\.?\d*)/i);
+  if (totalMatch && totalMatch[1]) {
+    orderDetails.totalPrice = `₹${totalMatch[1]}`;
+  }
+  
+  return orderDetails;
+}
