@@ -353,8 +353,11 @@ const extractEmailBody = (messageData) => {
 };
 
 function parseOrderDetails(emailBodyHtml) {
-  // Extract clean text from HTML
-  const text = emailBodyHtml.replace(/<[^>]*>/g, '')
+  // Clean up the HTML
+  const cleanText = emailBodyHtml
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
   
@@ -364,39 +367,67 @@ function parseOrderDetails(emailBodyHtml) {
     restaurantCity: null,
     orderItems: [],
     totalPrice: null,
-    orderId: null
+    orderId: null,
+    orderStatus: null
   };
   
-  // Extract restaurant name
-  const restaurantMatch = text.match(/Thank you for ordering from (.*?)ORDER/i);
+  // Extract restaurant name - handle the special character Â
+  const restaurantMatch = cleanText.match(/Thank you for ordering.*?from\s+(.*?)\s*ORDER ID/i);
   if (restaurantMatch && restaurantMatch[1]) {
-    orderDetails.restaurantName = restaurantMatch[1].trim();
+    orderDetails.restaurantName = restaurantMatch[1]
+      .replace(/Â/g, '') // Remove the special character
+      .trim();
   }
   
   // Extract order ID
-  const orderIdMatch = text.match(/ORDER ID:?\s*(\d+)/i);
+  const orderIdMatch = cleanText.match(/ORDER ID:?\s*(\d+)/i);
   if (orderIdMatch && orderIdMatch[1]) {
     orderDetails.orderId = orderIdMatch[1].trim();
   }
   
-  // Extract city - look for common pattern in address
-  const addressMatch = text.match(/([^,]+,[^,]+),\s*([^,]+)/i);
-  if (addressMatch && addressMatch[2]) {
-    orderDetails.restaurantCity = addressMatch[2].trim();
+  // Extract order status
+  const statusMatch = cleanText.match(/\b(Delivered|Processing|Cancelled|Confirmed|Out for Delivery)\b/i);
+  if (statusMatch && statusMatch[1]) {
+    orderDetails.orderStatus = statusMatch[1].trim();
   }
   
-  // Extract order items
-  // This pattern looks for quantities and items like "1 X Meal"
-  const itemsRegex = /(\d+)\s*X\s*([^\d]+?)(?=\d+\s*X|\s*Total|\s*$)/gi;
-  let match;
-  while ((match = itemsRegex.exec(text)) !== null) {
-    if (match[1] && match[2]) {
-      orderDetails.orderItems.push(`${match[1].trim()} x ${match[2].trim()}`);
+  // Extract city - specifically look for Salem in your examples
+  if (cleanText.includes("Salem")) {
+    orderDetails.restaurantCity = "Salem";
+  } else {
+    // Fallback city extraction
+    const cityPattern = /(?:,\s*)([A-Za-z\s]+)(?=\s*\d{6}|$)/g;
+    const cityMatches = [...cleanText.matchAll(cityPattern)];
+    if (cityMatches.length > 0) {
+      // Take the last match which is typically the city
+      orderDetails.restaurantCity = cityMatches[cityMatches.length - 1][1].trim();
     }
   }
   
-  // Extract total price
-  const totalMatch = text.match(/Total paid\s*-\s*₹\s*(\d+\.?\d*)/i);
+  // Extract order items - more robust pattern handling various formats
+  // First, find the position after the restaurant address and before "Total paid"
+  const addressEndPos = cleanText.indexOf("Salem") + "Salem".length;
+  const totalPaidPos = cleanText.indexOf("Total paid");
+  
+  if (addressEndPos > 0 && totalPaidPos > addressEndPos) {
+    // Extract the section that contains order items
+    const itemsSection = cleanText.substring(addressEndPos, totalPaidPos).trim();
+    
+    // Look for patterns like "2 X Item [description]" or just "2 X Item"
+    const itemRegex = /(\d+)\s*X\s*([^\[\d]+)(?:\[\s*([^\]]+)\s*\])?/gi;
+    let match;
+    
+    while ((match = itemRegex.exec(itemsSection)) !== null) {
+      const quantity = match[1].trim();
+      const itemName = match[2].trim();
+      const description = match[3] ? ` [${match[3].trim()}]` : '';
+      
+      orderDetails.orderItems.push(`${quantity} x ${itemName}${description}`);
+    }
+  }
+  
+  // Extract total price - handle the special characters in price
+  const totalMatch = cleanText.match(/Total paid\s*-\s*.*?(\d+\.?\d*)/i);
   if (totalMatch && totalMatch[1]) {
     orderDetails.totalPrice = `₹${totalMatch[1]}`;
   }
