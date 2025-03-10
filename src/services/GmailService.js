@@ -3,7 +3,8 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as AccountService from './AccountService';
 import * as AuthService from './AuthService';
-import RNFS from 'react-native-fs';
+import { extractEmailBody } from '../utils/EmailBodyExtractor';
+import { extractOrderDetails } from '../utils/EmailParser';
 
 // Helper function to handle authentication
 const handleAuthentication = async (accountEmail, retryCount = 0) => {
@@ -157,8 +158,7 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
         `Processing batch of emails (${processedCount + 1}-${processedCount + data.messages.length} of ${totalCount})...`
       );
       
-      // For each message, we only need to extract the subject
-      // This is more efficient than fetching the full message content
+      // For each message, we need to extract the subject, and now also the body
       const processedBatch = await Promise.all(
         data.messages.map(async (msg, index) => {
           try {
@@ -190,14 +190,8 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
             }
             
             const messageData = await res.json();
-            if (!res.ok) {
-              console.error(`Error fetching message ${msg.id}: ${res.status}`);
-              return null;
-            }
-            const emailBodydata = extractEmailBody(messageData);            
-            const orderDetails = parseOrderDetails(emailBodydata);
-            console.log(orderDetails,"youe")
-            // Extract email body           
+            
+            // Extract the headers we need
             const headers = {};
             if (messageData.payload && messageData.payload.headers) {
               messageData.payload.headers.forEach(header => {
@@ -205,14 +199,19 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
               });
             }
             
-            // const decodedData = decodeBase64Url2(messageData.body.data);
-            // console.log(messageData.body, "data");
+            // Extract email body HTML using our utility
+            const emailBodyHtml = extractEmailBody(messageData);
+            
+            // Extract order details based on platform
+            const orderDetails = extractOrderDetails(platform, emailBodyHtml);
+            
             return {
               id: messageData.id,
               subject: headers.subject || 'No Subject',
               from: headers.from || 'Unknown Sender',
               date: headers.date || 'Unknown Date',
               snippet: messageData.snippet || 'No preview available',
+              orderDetails: orderDetails // Add the extracted order details
             };
           } catch (error) {
             console.error(`Error processing message ${msg.id}:`, error);
@@ -311,126 +310,3 @@ export const clearPlatformEmails = async (platform, accountEmail) => {
     return false;
   }
 };
-
-
-const decodeBase64Url2 = (base64UrlString) =>{
-  // Convert Base64URL to Base64 (replace URL-safe characters)
-  let base64 = base64UrlString.replace(/-/g, '+').replace(/_/g, '/');
-
-  // Decode Base64 string
-  let decodedString = atob(base64);
-
-  return decodedString;
-}
-
-const extractEmailBody = (messageData) => {
-  try {
-      if (!messageData.payload) {
-          throw new Error("Invalid message structure: No payload found.");
-      }
-
-      // If there's no `parts`, try getting `payload.body.data` directly
-      if (!messageData.payload.parts) {
-          if (messageData.payload.body && messageData.payload.body.data) {
-              return decodeBase64Url2(messageData.payload.body.data);
-          } else {
-              throw new Error("No email content found.");
-          }
-      }
-
-      // Search for `text/html` or `text/plain` inside `parts`
-      for (const part of messageData.payload.parts) {
-          if (part.mimeType === "text/html" || part.mimeType === "text/plain") {
-              return decodeBase64Url2(part.body.data);
-          }
-      }
-
-      throw new Error("No readable content found.");
-  } catch (error) {
-      console.error("Error extracting email body:", error.message);
-      return null;
-  }
-};
-
-function parseOrderDetails(emailBodyHtml) {
-  // Clean up the HTML
-  const cleanText = emailBodyHtml
-    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-  
-  // Object to store our extracted data
-  const orderDetails = {
-    restaurantName: null,
-    restaurantCity: null,
-    orderItems: [],
-    totalPrice: null,
-    orderId: null,
-    orderStatus: null
-  };
-  
-  // Extract restaurant name - handle the special character Â
-  const restaurantMatch = cleanText.match(/Thank you for ordering.*?from\s+(.*?)\s*ORDER ID/i);
-  if (restaurantMatch && restaurantMatch[1]) {
-    orderDetails.restaurantName = restaurantMatch[1]
-      .replace(/Â/g, '') // Remove the special character
-      .trim();
-  }
-  
-  // Extract order ID
-  const orderIdMatch = cleanText.match(/ORDER ID:?\s*(\d+)/i);
-  if (orderIdMatch && orderIdMatch[1]) {
-    orderDetails.orderId = orderIdMatch[1].trim();
-  }
-  
-  // Extract order status
-  const statusMatch = cleanText.match(/\b(Delivered|Processing|Cancelled|Confirmed|Out for Delivery)\b/i);
-  if (statusMatch && statusMatch[1]) {
-    orderDetails.orderStatus = statusMatch[1].trim();
-  }
-  
-  // Extract city - specifically look for Salem in your examples
-  if (cleanText.includes("Salem")) {
-    orderDetails.restaurantCity = "Salem";
-  } else {
-    // Fallback city extraction
-    const cityPattern = /(?:,\s*)([A-Za-z\s]+)(?=\s*\d{6}|$)/g;
-    const cityMatches = [...cleanText.matchAll(cityPattern)];
-    if (cityMatches.length > 0) {
-      // Take the last match which is typically the city
-      orderDetails.restaurantCity = cityMatches[cityMatches.length - 1][1].trim();
-    }
-  }
-  
-  // Extract order items - more robust pattern handling various formats
-  // First, find the position after the restaurant address and before "Total paid"
-  const addressEndPos = cleanText.indexOf("Salem") + "Salem".length;
-  const totalPaidPos = cleanText.indexOf("Total paid");
-  
-  if (addressEndPos > 0 && totalPaidPos > addressEndPos) {
-    // Extract the section that contains order items
-    const itemsSection = cleanText.substring(addressEndPos, totalPaidPos).trim();
-    
-    // Look for patterns like "2 X Item [description]" or just "2 X Item"
-    const itemRegex = /(\d+)\s*X\s*([^\[\d]+)(?:\[\s*([^\]]+)\s*\])?/gi;
-    let match;
-    
-    while ((match = itemRegex.exec(itemsSection)) !== null) {
-      const quantity = match[1].trim();
-      const itemName = match[2].trim();
-      const description = match[3] ? ` [${match[3].trim()}]` : '';
-      
-      orderDetails.orderItems.push(`${quantity} x ${itemName}${description}`);
-    }
-  }
-  
-  // Extract total price - handle the special characters in price
-  const totalMatch = cleanText.match(/Total paid\s*-\s*.*?(\d+\.?\d*)/i);
-  if (totalMatch && totalMatch[1]) {
-    orderDetails.totalPrice = `₹${totalMatch[1]}`;
-  }
-  
-  return orderDetails;
-}
