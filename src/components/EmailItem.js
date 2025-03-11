@@ -182,7 +182,7 @@ const EmailItem = ({ email, platformColor, platform }) => {
               {getOrderStatus()}
             </Text>
             <Text style={styles.date}>
-              {formatDate(email.date)}
+              {email.date}
             </Text>
           </View>
           
