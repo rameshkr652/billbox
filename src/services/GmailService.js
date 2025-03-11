@@ -1,12 +1,12 @@
-// src/services/GmailService.js
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
+// Inside GmailService.js
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import * as AccountService from './AccountService';
 import * as AuthService from './AuthService';
-import { extractEmailBody } from '../utils/EmailBodyExtractor';
-import { extractOrderDetails } from '../utils/EmailParser';
+import * as EmailParser from '../utils/EmailParser';
 
-// Helper function to handle authentication
+// Enhanced authentication handler function
 const handleAuthentication = async (accountEmail, retryCount = 0) => {
   try {
     // Maximum retry attempts to prevent infinite loops
@@ -52,6 +52,56 @@ const handleAuthentication = async (accountEmail, retryCount = 0) => {
   }
 };
 
+// Helper function for Gmail API calls with automatic token refresh
+const callGmailApi = async (endpoint, accountEmail, options = {}) => {
+  try {
+    // Get access token with automatic refresh
+    const accessToken = await handleAuthentication(accountEmail);
+    
+    // Make the API call
+    const response = await fetch(endpoint, {
+      ...options,
+      headers: {
+        ...options.headers,
+        Authorization: `Bearer ${accessToken}`
+      }
+    });
+    
+    // Handle 401 errors with retry
+    if (response.status === 401) {
+      console.log('Received 401, forcing token refresh and retrying');
+      
+      // Force a fresh token by clearing expiry
+      await AsyncStorage.removeItem(`token_expiry_${accountEmail}`);
+      const newToken = await handleAuthentication(accountEmail);
+      
+      // Retry the request with the new token
+      const retryResponse = await fetch(endpoint, {
+        ...options,
+        headers: {
+          ...options.headers,
+          Authorization: `Bearer ${newToken}`
+        }
+      });
+      
+      if (!retryResponse.ok) {
+        throw new Error(`Gmail API error after retry: ${retryResponse.status}`);
+      }
+      
+      return retryResponse.json();
+    }
+    
+    if (!response.ok) {
+      throw new Error(`Gmail API error: ${response.status}`);
+    }
+    
+    return response.json();
+  } catch (error) {
+    console.error('Error calling Gmail API:', error);
+    throw error;
+  }
+};
+
 // Fetch all emails for a platform with pagination and progress reporting
 export const fetchAllPlatformEmails = async (platform, accountEmail, platformQuery, progressCallback = () => {}) => {
   try {
@@ -61,13 +111,6 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
     
     // Get access token with auto-refresh/re-auth
     progressCallback(0, 1, 'Authenticating...');
-    let accessToken;
-    try {
-      accessToken = await handleAuthentication(accountEmail);
-    } catch (authError) {
-      console.error('Authentication failed:', authError);
-      throw new Error('Authentication failed. Please sign in again.');
-    }
     
     // Use the provided platform query or default
     const query = platformQuery || `from:${platform}.com`;
@@ -75,19 +118,12 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
     
     // First, get the total count of matching emails more accurately
     progressCallback(0, 1, 'Counting emails...');
-    const initialResponse = await fetch(
+    
+    // Use the callGmailApi helper instead of direct fetch
+    const initialData = await callGmailApi(
       `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodedQuery}&maxResults=500`,
-      {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      }
+      accountEmail
     );
-    
-    if (!initialResponse.ok) {
-      const errorData = await initialResponse.json().catch(() => ({}));
-      throw new Error(`Gmail API error: ${initialResponse.status}`);
-    }
-    
-    const initialData = await initialResponse.json();
     
     // If there are more messages (nextPageToken exists), make another call to get a better estimate
     let totalCount = initialData.resultSizeEstimate || 0;
@@ -100,18 +136,13 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
       if (initialData.nextPageToken) {
         try {
           // Check if we can get additional count info
-          const countResponse = await fetch(
+          const countData = await callGmailApi(
             `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodedQuery}&maxResults=1&includeSpamTrash=true`,
-            {
-              headers: { Authorization: `Bearer ${accessToken}` },
-            }
+            accountEmail
           );
           
-          if (countResponse.ok) {
-            const countData = await countResponse.json();
-            // Use the larger of our counts to be safe
-            totalCount = Math.max(totalCount, countData.resultSizeEstimate || 0);
-          }
+          // Use the larger of our counts to be safe
+          totalCount = Math.max(totalCount, countData.resultSizeEstimate || 0);
         } catch (error) {
           console.log("Error getting accurate count, using available count:", totalCount);
         }
@@ -131,16 +162,8 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
     do {
       const pageUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodedQuery}&maxResults=50${pageToken ? `&pageToken=${pageToken}` : ''}`;
       
-      const response = await fetch(pageUrl, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(`Gmail API error: ${response.status}`);
-      }
-      
-      const data = await response.json();
+      // Use callGmailApi helper for API calls
+      const data = await callGmailApi(pageUrl, accountEmail);
       
       if (!data.messages || data.messages.length === 0) {
         break;
@@ -158,16 +181,15 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
         `Processing batch of emails (${processedCount + 1}-${processedCount + data.messages.length} of ${totalCount})...`
       );
       
-      // For each message, we need to extract the subject, and now also the body
+      // For each message, process using callGmailApi
       const processedBatch = await Promise.all(
         data.messages.map(async (msg, index) => {
           try {
             // Update progress for each message processed
-            if (index % 5 === 0) { // Update every 5 messages to avoid too many updates
-              // Double check total count to ensure it's always ≥ processedCount + index
+            if (index % 5 === 0) {
               const currentProcessed = processedCount + index;
               if (currentProcessed + 1 > totalCount) {
-                totalCount = currentProcessed + 100; // Add buffer for remaining
+                totalCount = currentProcessed + 100;
               }
               
               progressCallback(
@@ -177,21 +199,20 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
               );
             }
             
-            const res = await fetch(
-              `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, // Fetch full message
-              {
-                headers: { Authorization: `Bearer ${accessToken}` },
-              }
+            // Get the full message using callGmailApi
+            const messageData = await callGmailApi(
+              `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`,
+              accountEmail
             );
             
-            if (!res.ok) {
-              console.error(`Error fetching message ${msg.id}: ${res.status}`);
-              return null;
-            }
+            // Extract email body for processing
+            const emailBodyHtml = extractEmailBody(messageData);
             
-            const messageData = await res.json();
+            // Parse order details if we have email body
+            const orderDetails = emailBodyHtml ? 
+              EmailParser.extractZomatoOrderDetails(emailBodyHtml) : null;
             
-            // Extract the headers we need
+            // Extract headers
             const headers = {};
             if (messageData.payload && messageData.payload.headers) {
               messageData.payload.headers.forEach(header => {
@@ -199,19 +220,33 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
               });
             }
             
-            // Extract email body HTML using our utility
-            const emailBodyHtml = extractEmailBody(messageData);
+            // Format the date to include full date and time but without timezone
+            let formattedDate = 'Unknown Date';
+            if (headers.date) {
+              try {
+                const dateObj = new Date(headers.date);
+                formattedDate = dateObj.toLocaleString('en-US', {
+                  weekday: 'short',
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit'
+                });
+              } catch (e) {
+                formattedDate = headers.date;
+              }
+            }
             
-            // Extract order details based on platform
-            const orderDetails = extractOrderDetails(platform, emailBodyHtml);
-            
+            // Return processed email data
             return {
               id: messageData.id,
               subject: headers.subject || 'No Subject',
               from: headers.from || 'Unknown Sender',
-              date: headers.date || 'Unknown Date',
+              date: formattedDate,
               snippet: messageData.snippet || 'No preview available',
-              orderDetails: orderDetails // Add the extracted order details
+              orderDetails: orderDetails
             };
           } catch (error) {
             console.error(`Error processing message ${msg.id}:`, error);
@@ -222,7 +257,24 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
       
       // Filter out null results (failed fetches)
       const validEmails = processedBatch.filter(email => email !== null);
-      allEmails = [...allEmails, ...validEmails];
+
+      // Check for duplicates before adding to allEmails array
+      const uniqueEmails = validEmails.filter(newEmail => {
+        // Skip if it's a duplicate by checking if we already have an email with the same order ID
+        if (newEmail.orderDetails && newEmail.orderDetails.orderId) {
+          const isDuplicate = allEmails.some(existingEmail => 
+            existingEmail.orderDetails && 
+            existingEmail.orderDetails.orderId === newEmail.orderDetails.orderId
+          );
+          return !isDuplicate;
+        }
+        
+        // If no order details or order ID, check for duplicate by message ID
+        return !allEmails.some(existingEmail => existingEmail.id === newEmail.id);
+      });
+
+      // Add only unique emails to our collection
+      allEmails = [...allEmails, ...uniqueEmails];
       
       processedCount += data.messages.length;
       pageToken = data.nextPageToken;
@@ -260,7 +312,68 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
   }
 };
 
-// Get emails for a specific platform from storage
+// Helper function to extract email body
+const extractEmailBody = (messageData) => {
+  try {
+    if (!messageData.payload) {
+      throw new Error("Invalid message structure: No payload found.");
+    }
+
+    // If there's no `parts`, try getting `payload.body.data` directly
+    if (!messageData.payload.parts) {
+      if (messageData.payload.body && messageData.payload.body.data) {
+        return decodeBase64Url(messageData.payload.body.data);
+      } else {
+        throw new Error("No email content found.");
+      }
+    }
+
+    // Search for `text/html` or `text/plain` inside `parts`
+    for (const part of messageData.payload.parts) {
+      if (part.mimeType === "text/html" && part.body && part.body.data) {
+        return decodeBase64Url(part.body.data);
+      }
+    }
+    
+    // Try plain text as fallback
+    for (const part of messageData.payload.parts) {
+      if (part.mimeType === "text/plain" && part.body && part.body.data) {
+        return decodeBase64Url(part.body.data);
+      }
+    }
+
+    throw new Error("No readable content found.");
+  } catch (error) {
+    console.error("Error extracting email body:", error.message);
+    return null;
+  }
+};
+
+// Helper function to decode base64 URL-safe strings
+const decodeBase64Url = (base64UrlString) => {
+  try {
+    // Convert Base64URL to Base64 (replace URL-safe characters)
+    let base64 = base64UrlString.replace(/-/g, '+').replace(/_/g, '/');
+    
+    // Add padding if needed
+    while (base64.length % 4) {
+      base64 += '=';
+    }
+
+    // In React Native environment, use Buffer or atob equivalent
+    if (typeof atob === 'function') {
+      return atob(base64);
+    } else {
+      // For other environments (like React Native)
+      return Buffer.from(base64, 'base64').toString('utf8');
+    }
+  } catch (e) {
+    console.error('Error decoding base64:', e);
+    return '';
+  }
+};
+
+// Rest of your exported functions...
 export const getPlatformEmails = async (platform, accountEmail) => {
   try {
     if (!accountEmail) return [];
@@ -281,18 +394,6 @@ export const getLastFetchedTimestamp = async (platform, accountEmail) => {
     return timestamp ? parseInt(timestamp) : null;
   } catch (error) {
     console.error(`Error getting last fetched timestamp for ${platform}:`, error);
-    return null;
-  }
-};
-
-export const getLastFetchError = async (platform, accountEmail) => {
-  try {
-    if (!accountEmail) return null;
-    
-    const errorData = await AsyncStorage.getItem(`lastFetchError_${platform}_${accountEmail}`);
-    return errorData ? JSON.parse(errorData) : null;
-  } catch (error) {
-    console.error(`Error retrieving fetch error for ${platform}:`, error);
     return null;
   }
 };
