@@ -241,8 +241,8 @@ const extractEmailData = (messageData, platform) => {
       });
     }
     
-    const emailBody = extractEmailBody(messageData);
-    const orderDetails = parseOrderDetails(emailBody, platform);
+    const emailBodyHtml = extractEmailBody(messageData);
+    const orderDetails = parseOrderDetails(emailBodyHtml, platform);
     
     return {
       id: messageData.id,
@@ -345,50 +345,95 @@ const decodeBase64Url = (base64UrlString) => {
 /**
  * Extract order details from email content
  */
-const parseOrderDetails = (emailBody, platform) => {
-  if (!emailBody) return null;
+const parseOrderDetails = (emailBodyHtml, platform) => {
+  if (!emailBodyHtml) return null;
   
-  try {
-    const orderDetails = {
-      restaurantName: null,
-      orderItems: [],
-      totalPrice: null,
-      orderId: null,
-      orderStatus: null
-    };
+  // Clean up the HTML
+  const cleanText = emailBodyHtml
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/Â/g, '') // Remove special character
+    .replace(/\s+/g, ' ')
+    .trim();
+  
+  // Object to store our extracted data
+  const orderDetails = {
+    restaurantName: null,
+    orderItems: [],
+    totalPrice: null,
+    orderId: null,
+    orderStatus: null,
+    orderDateTime: null
+  };
+  
+  // Extract restaurant name
+  const restaurantMatch = cleanText.match(/Thank you for ordering.*?from\s+(.*?)\s*ORDER ID/i);
+  if (restaurantMatch && restaurantMatch[1]) {
+    orderDetails.restaurantName = restaurantMatch[1].trim();
+  }
+  
+  // Extract order ID
+  const orderIdMatch = cleanText.match(/ORDER ID:?\s*(\d+)/i);
+  if (orderIdMatch && orderIdMatch[1]) {
+    orderDetails.orderId = orderIdMatch[1].trim();
+  }
+  
+  // Extract order status
+  const statusMatch = cleanText.match(/\b(Delivered|Processing|Cancelled|Confirmed|Out for Delivery)\b/i);
+  if (statusMatch && statusMatch[1]) {
+    orderDetails.orderStatus = statusMatch[1].trim();
+  }
+  
+  // Extract total price
+  const totalMatch = cleanText.match(/Total paid\s*-\s*(.*?)(\d+\.?\d*)/i);
+  if (totalMatch && totalMatch[2]) {
+    orderDetails.totalPrice = `₹${totalMatch[2]}`;
+  }
+  // Extract order items from the HTML structure
+  // For Zomato, items are usually in p tags within td with class="es-m-txt-l"
+  const itemRegexes = [
+    // Primary pattern: <td class="es-m-txt-l"><p>1 X Item</p></td>
+    /<td[^>]*class="es-m-txt-l"[^>]*><p[^>]*>(\d+)\s*[Xx×]\s+([^<]+)<\/p>/gi,
     
-    // Extract order ID
-    const orderIdMatch = emailBody.match(/ORDER ID:?\s*(\d+)/i) || 
-                          emailBody.match(/Order\s+#\s*([A-Z0-9-]+)/i);
-    if (orderIdMatch && orderIdMatch[1]) {
-      orderDetails.orderId = orderIdMatch[1].trim();
-    }
+    // Secondary pattern: Any <p> tag with the X pattern
+    /<p[^>]*>(\d+)\s*[Xx×]\s+([^<]+)<\/p>/gi,
     
-    // Extract status
-    const statusMatch = emailBody.match(/\b(Delivered|Processing|Cancelled|Confirmed|Out for Delivery)\b/i);
-    if (statusMatch) {
-      orderDetails.orderStatus = statusMatch[1];
-    }
+    // Fallback pattern: Any context with the X pattern
+    /(\d+)\s*[Xx×]\s+([A-Za-z][^<>\d\.,]{2,})/gi
+  ];
+  
+  // Apply all patterns to find order items
+  for (const regex of itemRegexes) {
+    const matches = [...emailBodyHtml.matchAll(regex)];
     
-    // Extract restaurant name (platform specific)
-    if (platform === 'zomato') {
-      const nameMatch = emailBody.match(/Thank you for ordering.*?from\s+(.*?)\s*ORDER ID/i);
-      if (nameMatch && nameMatch[1]) {
-        orderDetails.restaurantName = nameMatch[1].trim();
+    for (const match of matches) {
+      if (match[1] && match[2]) {
+        const quantity = match[1].trim();
+        const itemName = match[2].trim();
+        
+        // Validate this looks like a food item
+        if (itemName.length > 1 && 
+            !/ORDER ID|Total paid|Delivered|Processing/i.test(itemName)) {
+          // Add to items if not already there (avoid duplicates)
+          const isDuplicate = orderDetails.orderItems.some(existing => 
+            existing.toLowerCase().includes(itemName.toLowerCase()));
+          
+          if (!isDuplicate) {
+            orderDetails.orderItems.push(`${quantity} X ${itemName}`);
+          }
+        }
       }
     }
     
-    // Extract price
-    const priceMatch = emailBody.match(/Total\s*(paid|amount|price)?:?\s*[₹₨Rs.]*\s*(\d+([.,]\d+)?)/i);
-    if (priceMatch && priceMatch[2]) {
-      orderDetails.totalPrice = priceMatch[2].trim();
+    // If we found items with this pattern, no need to try others
+    if (orderDetails.orderItems.length > 0) {
+      break;
     }
-    
-    return orderDetails;
-  } catch (error) {
-    console.error('Error parsing order details:', error);
-    return null;
   }
+  
+  return orderDetails;
 };
 
 /**
