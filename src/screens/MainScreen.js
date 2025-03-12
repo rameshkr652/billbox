@@ -13,6 +13,7 @@ import PlatformTab from '../components/PlatformTab';
 import * as AccountService from '../services/AccountService';
 import * as StorageService from '../services/StorageService';
 import platforms from '../constants/platforms';
+import DrawerNavigator from '../navigation/DrawerNavigator';
 
 const Drawer = createDrawerNavigator();
 const Tab = createBottomTabNavigator();
@@ -133,14 +134,26 @@ const HeaderAccountButton = ({ platform, navigation }) => {
 const CustomDrawerContent = (props) => {
   const { state, descriptors, navigation } = props;
   const [platformAccounts, setPlatformAccounts] = useState({});
+  const [userInfo, setUserInfo] = useState(null);
+  const [activePlatform, setActivePlatform] = useState(null);
   
   useEffect(() => {
     loadPlatformAccounts();
+    loadUserInfo();
+    
+    // Get active route
+    if (state.routes && state.index >= 0) {
+      const activeRouteName = state.routes[state.index].name;
+      setActivePlatform(activeRouteName.toLowerCase());
+    }
     
     // Reload accounts when drawer opens
-    const unsubscribe = navigation.addListener('focus', loadPlatformAccounts);
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadPlatformAccounts();
+      loadUserInfo();
+    });
     return unsubscribe;
-  }, [navigation]);
+  }, [navigation, state]);
   
   const loadPlatformAccounts = async () => {
     try {
@@ -154,8 +167,54 @@ const CustomDrawerContent = (props) => {
     }
   };
   
+  const loadUserInfo = async () => {
+    try {
+      const account = await AccountService.getCurrentAccount();
+      if (account) {
+        setUserInfo(account);
+      }
+    } catch (error) {
+      console.error('Error loading user info:', error);
+    }
+  };
+  
   return (
     <ScrollView style={styles.drawerContainer}>
+      {/* User info section at the top */}
+      {userInfo && (
+        <View style={styles.userInfoContainer}>
+          <View style={styles.avatar}>
+            {userInfo.photo ? (
+              <Image 
+                source={{ uri: userInfo.photo }} 
+                style={styles.avatarImage} 
+              />
+            ) : (
+              <Text style={styles.avatarText}>
+                {userInfo.name ? userInfo.name.charAt(0).toUpperCase() : 'U'}
+              </Text>
+            )}
+          </View>
+          <View>
+            <Text style={styles.userName}>
+              {userInfo.name || 'User'}
+            </Text>
+            <Text style={styles.userEmail}>
+              {activePlatform ? (
+                <>
+                  <Text style={styles.platformLabel}>
+                    {activePlatform.charAt(0).toUpperCase() + activePlatform.slice(1)}:{' '}
+                  </Text>
+                  {userInfo.email || 'Loading...'}
+                </>
+              ) : (
+                userInfo.email || 'Loading...'
+              )}
+            </Text>
+          </View>
+        </View>
+      )}
+      
       <View style={styles.drawerHeader}>
         <Text style={styles.drawerTitle}>Platforms</Text>
       </View>
@@ -223,6 +282,52 @@ const CustomDrawerContent = (props) => {
           </View>
         );
       })}
+      
+      {/* Settings and Logout options */}
+      <View style={styles.drawerFooter}>
+        <TouchableOpacity 
+          style={styles.drawerFooterButton}
+          onPress={() => {
+            navigation.navigate('Settings');
+            navigation.closeDrawer();
+          }}
+        >
+          <Icon name="settings" size={20} color="#666" />
+          <Text style={styles.drawerFooterButtonText}>Settings</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.drawerFooterButton, styles.logoutButton]}
+          onPress={() => {
+            navigation.closeDrawer();
+            Alert.alert(
+              'Sign Out',
+              'Are you sure you want to sign out?',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { 
+                  text: 'Sign Out', 
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      await AuthService.signOut();
+                      navigation.reset({
+                        index: 0,
+                        routes: [{ name: 'Intro' }],
+                      });
+                    } catch (error) {
+                      console.error('Error signing out:', error);
+                    }
+                  } 
+                },
+              ]
+            );
+          }}
+        >
+          <Icon name="logout" size={20} color={Colors.accent} />
+          <Text style={[styles.drawerFooterButtonText, { color: Colors.accent }]}>Sign Out</Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 };
@@ -404,52 +509,6 @@ const MainScreen = () => {
 
   return (
     <View style={styles.container}>
-      {/* Header with user info */}
-      <View style={styles.header}>
-        <View style={styles.userInfo}>
-          <View style={styles.avatar}>
-            {userInfo?.photo ? (
-              <Image 
-                source={{ uri: userInfo.photo }} 
-                style={styles.avatarImage} 
-              />
-            ) : (
-              <Text style={styles.avatarText}>
-                {userInfo?.name ? userInfo.name.charAt(0).toUpperCase() : 'U'}
-              </Text>
-            )}
-          </View>
-          <View>
-            <Text style={styles.userName}>
-              {userInfo?.name || 'User'}
-            </Text>
-            <Text style={styles.userEmail}>
-              {activePlatform ? (
-                <>
-                  <Text style={styles.platformLabel}>
-                    {activePlatform.charAt(0).toUpperCase() + activePlatform.slice(1)}:{' '}
-                  </Text>
-                  {userInfo?.email || 'Loading...'}
-                </>
-              ) : (
-                userInfo?.email || 'Loading...'
-              )}
-            </Text>
-          </View>
-        </View>
-        <View style={styles.headerActions}>
-          <TouchableOpacity 
-            style={styles.headerButton} 
-            onPress={() => navigation.navigate('Settings')}
-          >
-            <Icon name="settings" size={24} color={Colors.white} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.headerButton} onPress={handleSignOut}>
-            <Icon name="logout" size={24} color={Colors.white} />
-          </TouchableOpacity>
-        </View>
-      </View>
-      
       {/* Main Content */}
       {selectedPlatforms.length > 0 ? (
         <Drawer.Navigator
@@ -512,6 +571,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.lightGray,
+  },
+  userInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: Colors.primary,
   },
   header: {
     flexDirection: 'row',
@@ -643,6 +708,27 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     marginRight: 4,
   },
+  // Footer styles
+  drawerFooter: {
+    marginTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  drawerFooterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  drawerFooterButtonText: {
+    fontSize: 16,
+    color: '#666',
+    marginLeft: 16,
+  },
+  logoutButton: {
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  }
 });
 
 export default MainScreen;
