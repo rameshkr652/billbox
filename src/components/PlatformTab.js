@@ -20,8 +20,6 @@ import AccountDrawer from './AccountDrawer';
 import PlatformTabStyles from '../styles/PlatformTabStyles';
 import PlatformTabUtils from '../utils/PlatformTabUtils';
 import PlatformTabComponents from './PlatformTabComponents';
-import FoodInsightsDashboard from './FoodInsightsDashboard';
-
 // Import platform-specific progress bar
 const ProgressBarAndroid = RNPlatform.OS === 'ios'
   ? require('@react-native-community/progress-bar-android').default
@@ -39,7 +37,6 @@ const PlatformTab = ({ platform }) => {
   const [showProgress, setShowProgress] = useState(false);
   const [progressText, setProgressText] = useState('');
   const [timeRemaining, setTimeRemaining] = useState(null);
-  const [viewMode, setViewMode] = useState('insights'); // 'list' or 'insights'
 
   // Drawer state
   const [showAccountDrawer, setShowAccountDrawer] = useState(false);
