@@ -1,35 +1,31 @@
+// src/components/PlatformTab.js - Refactored
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
   FlatList,
   Alert,
-  ActivityIndicator,
   Animated,
   SafeAreaView,
   StatusBar,
-  Modal, 
+  Modal,
   Dimensions,
-  ProgressBarAndroid,
-  Platform
+  TouchableOpacity,
+  Platform as RNPlatform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
-import Colors from '../constants/colors';
 import * as AccountService from '../services/AccountService';
-import * as GmailService from '../services/GmailService';
-import * as StorageService from '../services/StorageService';
 import EmailItem from './EmailItem';
 import platforms from '../constants/platforms';
 import AccountDrawer from './AccountDrawer';
-import * as AuthService from '../services/AuthService';
+import PlatformTabStyles from '../styles/PlatformTabStyles';
+import PlatformTabUtils from '../utils/PlatformTabUtils';
+import PlatformTabComponents from './PlatformTabComponents';
+import FoodInsightsDashboard from './FoodInsightsDashboard';
 
-// For iOS support
-const ProgressBar = Platform.OS === 'ios' 
-  ? require('@react-native-community/progress-bar-android').default 
-  : ProgressBarAndroid;
+// Import platform-specific progress bar
+const ProgressBarAndroid = RNPlatform.OS === 'ios'
+  ? require('@react-native-community/progress-bar-android').default
+  : require('@react-native-community/progress-bar-android').default;
 
 const PlatformTab = ({ platform }) => {
   const navigation = useNavigation();
@@ -42,14 +38,17 @@ const PlatformTab = ({ platform }) => {
   const [progress, setProgress] = useState(0);
   const [showProgress, setShowProgress] = useState(false);
   const [progressText, setProgressText] = useState('');
-  const [needsReAuthentication, setNeedsReAuthentication] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(null);
+  const [viewMode, setViewMode] = useState('insights'); // 'list' or 'insights'
+
   // Drawer state
   const [showAccountDrawer, setShowAccountDrawer] = useState(false);
   const drawerAnimation = useRef(new Animated.Value(Dimensions.get('window').width)).current;
   
+  // Get platform info
   const platformInfo = platforms.find(p => p.id === platform) || {
     name: platform.charAt(0).toUpperCase() + platform.slice(1),
-    color: Colors.primary,
+    color: '#4285F4',
     icon: 'inbox'
   };
   
@@ -57,38 +56,16 @@ const PlatformTab = ({ platform }) => {
     loadPlatformData();
   }, []);
   
+  // Load platform data
   const loadPlatformData = async () => {
-    try {
-      // Get current main account
-      const account = await AccountService.getCurrentAccount();
-      if (!account) {
-        setError("No account found. Please add an account first.");
-        return;
-      }
-      
-      // Get platform configurations
-      const platformsConfig = await StorageService.getPlatformsForAccount(account.email);
-      if (!platformsConfig || !platformsConfig[platform]) {
-        setError(`No configuration found for ${platformInfo.name}`);
-        return;
-      }
-      
-      // Set account to use for this platform
-      const platformAccount = platformsConfig[platform].accountEmail || account.email;
-      setAccountEmail(platformAccount);
-      
-      // Load saved emails if any
-      const savedEmails = await GmailService.getPlatformEmails(platform, platformAccount);
-      setEmails(savedEmails || []);
-      
-      // Get last fetched timestamp
-      const lastFetchedTimestamp = await GmailService.getLastFetchedTimestamp(platform, platformAccount);
-      if (lastFetchedTimestamp) {
-        setLastFetched(new Date(lastFetchedTimestamp));
-      }
-    } catch (error) {
-      console.error(`Error loading platform data for ${platform}:`, error);
-      setError(`Error loading data: ${error.message}`);
+    const result = await PlatformTabUtils.loadPlatformData(platform, (platformData) => {
+      setAccountEmail(platformData.accountEmail);
+      setEmails(platformData.emails);
+      setLastFetched(platformData.lastFetched);
+    });
+    
+    if (!result.success) {
+      setError(result.error);
     }
   };
   
@@ -112,35 +89,38 @@ const PlatformTab = ({ platform }) => {
     });
   };
   
+  // Handle account change
   const handleAccountChange = async (email) => {
     try {
       // Get current main account
       const mainAccount = await AccountService.getCurrentAccount();
-      if (!mainAccount) return;
       
-      // Get platform configurations
-      const platformsConfig = await StorageService.getPlatformsForAccount(mainAccount.email) || {};
+      const result = await PlatformTabUtils.updatePlatformAccount(
+        platform, 
+        email, 
+        mainAccount
+      );
       
-      // Update account for this platform
-      platformsConfig[platform] = { accountEmail: email };
-      
-      // Save updated config
-      await StorageService.savePlatformsForAccount(mainAccount.email, platformsConfig);
-      
-      // Update UI
-      setAccountEmail(email);
-      setEmails([]);
-      setLastFetched(null);
-      
-      // Close drawer
-      closeAccountDrawer();
+      if (result.success) {
+        // Update UI
+        setAccountEmail(email);
+        setEmails([]);
+        setLastFetched(null);
+        setError(null);
+        
+        // Close drawer
+        closeAccountDrawer();
+      } else {
+        Alert.alert('Error', result.error || 'Failed to update account');
+      }
     } catch (error) {
       console.error('Error updating platform account:', error);
       Alert.alert('Error', 'Failed to update account');
     }
   };
   
-  const fetchEmails = async () => {
+  // Fetch all emails
+  const fetchAllEmails = async () => {
     if (loading) return;
     
     try {
@@ -150,6 +130,7 @@ const PlatformTab = ({ platform }) => {
       setProgress(0);
       setProgressText('Preparing to fetch emails...');
       
+      // Ensure we have an account
       if (!accountEmail) {
         const account = await AccountService.getCurrentAccount();
         if (!account) {
@@ -158,35 +139,32 @@ const PlatformTab = ({ platform }) => {
         setAccountEmail(account.email);
       }
       
-      setProgressText('Authenticating...');
-      setProgress(0.1);
-      
-      // Simple query for the platform - no date filters
-      const query = platformInfo.emailQuery || `from:${platform}.com`;
-      
-      // Update the fetchPlatformEmails function to accept progress callback
-      const newEmails = await GmailService.fetchAllPlatformEmails(
-        platform, 
-        accountEmail, 
-        query,
-        (current, total, message) => {
+      // Fetch all emails with progress tracking
+      const result = await PlatformTabUtils.fetchAllEmails(
+        platform,
+        accountEmail,
+        platformInfo,
+        (current, total, message, estimatedTimeRemaining) => {
           const progressValue = total > 0 ? current / total : 0;
           setProgress(0.1 + progressValue * 0.8); // Scale to 10-90% range
           setProgressText(message || `Processing ${current} of ${total} emails...`);
+          
+          if (estimatedTimeRemaining) {
+            setTimeRemaining(PlatformTabUtils.formatTimeRemaining(estimatedTimeRemaining));
+          }
         }
       );
       
-      setProgressText('Saving data...');
-      setProgress(0.95);
-      
-      setEmails(newEmails || []);
-      
-      const now = new Date();
-      setLastFetched(now);
-      setShowProgress(false);
-      
-      if (newEmails.length === 0) {
-        Alert.alert('No Orders Found', `No ${platformInfo.name} orders found.`);
+      if (result.success) {
+        setEmails(result.emails);
+        setLastFetched(result.lastFetched);
+        
+        if (result.emails.length === 0) {
+          Alert.alert('No Orders Found', `No ${platformInfo.name} orders found.`);
+        }
+      } else {
+        setError(result.error);
+        Alert.alert('Error', result.error);
       }
     } catch (error) {
       console.error(`Error fetching emails for ${platform}:`, error);
@@ -196,24 +174,67 @@ const PlatformTab = ({ platform }) => {
       setLoading(false);
       setRefreshing(false);
       setShowProgress(false);
+      setTimeRemaining(null);
     }
   };
   
-  const clearEmails = async () => {
+  // Fetch latest emails
+  const fetchLatestEmails = async () => {
+    if (loading || !lastFetched) return;
+    
     try {
       setLoading(true);
-      await GmailService.clearPlatformEmails(platform, accountEmail);
-      setEmails([]);
-      setLastFetched(null);
-      Alert.alert('Success', `${platformInfo.name} orders cleared.`);
+      setError(null);
+      setShowProgress(true);
+      setProgress(0);
+      setProgressText('Preparing to fetch latest emails...');
+      
+      // Fetch latest emails with progress tracking
+      const result = await PlatformTabUtils.fetchLatestEmails(
+        platform,
+        accountEmail,
+        lastFetched,
+        platformInfo,
+        (current, total, message, estimatedTimeRemaining) => {
+          const progressValue = total > 0 ? current / total : 0;
+          setProgress(0.1 + progressValue * 0.8);
+          setProgressText(message || `Processing ${current} of ${total} latest emails...`);
+          
+          if (estimatedTimeRemaining) {
+            setTimeRemaining(PlatformTabUtils.formatTimeRemaining(estimatedTimeRemaining));
+          }
+        }
+      );
+      
+      if (result.success) {
+        setEmails(result.emails);
+        setLastFetched(result.lastFetched);
+        
+        // Determine if any new emails were found
+        const newCount = result.emails.length - emails.length;
+        
+        if (newCount <= 0) {
+          Alert.alert('No New Orders', `No new ${platformInfo.name} orders found since your last update.`);
+        } else {
+          Alert.alert('Success', `Found ${newCount} new orders and updated your data.`);
+        }
+      } else {
+        setError(result.error);
+        Alert.alert('Error', result.error);
+      }
     } catch (error) {
-      console.error(`Error clearing ${platform} emails:`, error);
-      Alert.alert('Error', `Failed to clear data: ${error.message}`);
+      console.error(`Error fetching latest emails for ${platform}:`, error);
+      setError(error.message || `Failed to fetch latest data for ${platform}`);
+      Alert.alert('Error', `Failed to fetch latest orders. ${error.message}`);
     } finally {
       setLoading(false);
+      setRefreshing(false);
+      setShowProgress(false);
+      setTimeRemaining(null);
     }
   };
   
+  // Clear emails
   const handleClearEmails = () => {
     Alert.alert(
       'Clear Data',
@@ -223,123 +244,90 @@ const PlatformTab = ({ platform }) => {
         { 
           text: 'Clear', 
           style: 'destructive',
-          onPress: clearEmails
+          onPress: async () => {
+            try {
+              setLoading(true);
+              const result = await PlatformTabUtils.clearEmails(platform, accountEmail);
+              
+              if (result.success) {
+                setEmails([]);
+                setLastFetched(null);
+                Alert.alert('Success', `${platformInfo.name} orders cleared.`);
+              } else {
+                Alert.alert('Error', result.error || 'Failed to clear data');
+              }
+            } catch (error) {
+              console.error(`Error clearing ${platform} emails:`, error);
+              Alert.alert('Error', `Failed to clear data: ${error.message}`);
+            } finally {
+              setLoading(false);
+            }
+          }
         },
       ]
     );
   };
   
-  const formatDate = (date) => {
-    if (!date) return '';
-    
-    try {
-      return date.toLocaleString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch (error) {
-      return date.toString();
-    }
-  };
-  
-  const renderEmptyState = () => (
-    <View style={styles.emptyContainer}>
-      <Icon name={platformInfo.icon} size={60} color="#D1D5DB" />
-      <Text style={styles.emptyText}>No orders found</Text>
-      <Text style={styles.emptySubtext}>
-        Tap 'Load All Orders' to fetch your {platformInfo.name} orders
-      </Text>
-    </View>
-  );
-  
-  const renderListHeader = () => (
-    <View style={styles.listHeader}>
-      <TouchableOpacity
-        style={[
-          styles.loadOrdersButton, 
-          { backgroundColor: platformInfo.color },
-          loading && styles.disabledButton
-        ]}
-        onPress={fetchEmails}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator size="small" color="#FFFFFF" />
-        ) : (
-          <>
-            <Icon name="refresh" size={20} color="#FFFFFF" />
-            <Text style={styles.loadOrdersButtonText}>Load All Orders</Text>
-          </>
-        )}
-      </TouchableOpacity>
-      
-      {lastFetched && (
-        <Text style={styles.lastUpdated}>
-          Last updated: {formatDate(lastFetched)}
-        </Text>
-      )}
-      
-      {emails.length > 0 && (
-        <View style={styles.ordersHeader}>
-          <Text style={styles.ordersTitle}>Order History</Text>
-          <TouchableOpacity 
-            style={styles.clearButton}
-            onPress={handleClearEmails}
-          >
-            <Icon name="delete-outline" size={20} color={Colors.accent} />
-            <Text style={styles.clearButtonText}>Clear</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </View>
-  );
-  
+  // Render progress modal
   const renderProgressModal = () => (
-    <Modal
+    <PlatformTabComponents.ProgressModal
       visible={showProgress}
-      transparent={true}
-      animationType="fade"
-    >
-      <View style={styles.progressModalOverlay}>
-        <View style={styles.progressModalContent}>
-          <Text style={styles.progressModalTitle}>Fetching Orders</Text>
-          <Text style={styles.progressModalSubtitle}>
-            Please wait while we fetch your {platformInfo.name} orders.
-          </Text>
-          <Text style={styles.progressModalText}>{progressText}</Text>
-          <ProgressBar
-            styleAttr="Horizontal"
-            indeterminate={false}
-            progress={progress}
-            color={platformInfo.color}
-            style={styles.progressBar}
+      platformName={platformInfo.name}
+      platformColor={platformInfo.color}
+      progressText={progressText}
+      progress={progress}
+      timeRemaining={timeRemaining}
+    />
+  );
+  
+  // Render account drawer
+  const renderAccountDrawer = () => (
+    showAccountDrawer && (
+      <Modal
+        visible={showAccountDrawer}
+        transparent={true}
+        animationType="none"
+        onRequestClose={closeAccountDrawer}
+      >
+        <View style={PlatformTabStyles.drawerOverlay}>
+          <TouchableOpacity
+            style={PlatformTabStyles.drawerBackdrop}
+            activeOpacity={1}
+            onPress={closeAccountDrawer}
           />
-          <Text style={styles.progressModalNote}>
-            This may take a while depending on the number of orders.
-          </Text>
+          <Animated.View
+            style={[
+              PlatformTabStyles.drawerContainer,
+              {
+                transform: [{ translateX: drawerAnimation }],
+              },
+            ]}
+          >
+            <AccountDrawer
+              platform={platform}
+              accountEmail={accountEmail}
+              onAccountChange={handleAccountChange}
+              onClose={closeAccountDrawer}
+            />
+          </Animated.View>
         </View>
-      </View>
-    </Modal>
+      </Modal>
+    )
   );
   
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={PlatformTabStyles.container}>
       <StatusBar barStyle="light-content" backgroundColor={platformInfo.color} />
-
+      
       {/* Content */}
       {loading && emails.length === 0 && !showProgress ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={platformInfo.color} />
-          <Text style={styles.loadingText}>
-            Loading {platformInfo.name} orders...
-          </Text>
-        </View>
+        <PlatformTabComponents.LoadingIndicator 
+          platformName={platformInfo.name}
+          platformColor={platformInfo.color}
+        />
       ) : (
         <FlatList
-          data={emails.slice(0, 10)} // Only show first 10 for testing
+          data={emails}
           renderItem={({ item }) => (
             <EmailItem 
               email={item} 
@@ -348,268 +336,45 @@ const PlatformTab = ({ platform }) => {
             />
           )}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.list}
-          ListHeaderComponent={renderListHeader}
-          ListEmptyComponent={emails.length === 0 ? renderEmptyState : null}
-          onRefresh={fetchEmails}
+          contentContainerStyle={PlatformTabStyles.list}
+          ListHeaderComponent={
+            <PlatformTabComponents.ListHeader
+              platformName={platformInfo.name}
+              platformColor={platformInfo.color}
+              lastFetched={lastFetched}
+              loading={loading}
+              emails={emails}
+              onFetchAll={fetchAllEmails}
+              onFetchLatest={fetchLatestEmails}
+              onClear={handleClearEmails}
+            />
+          }
+          ListEmptyComponent={
+            emails.length === 0 ? (
+              <PlatformTabComponents.EmptyState 
+                platformIcon={platformInfo.icon}
+                platformName={platformInfo.name}
+                onRefresh={fetchAllEmails}
+              />
+            ) : null
+          }
+          onRefresh={lastFetched ? fetchLatestEmails : fetchAllEmails}
           refreshing={refreshing}
         />
       )}
       
       {/* Error Message */}
       {error && !loading && (
-        <View style={styles.errorContainer}>
-          <Icon name="error" size={20} color={Colors.accent} />
-          <Text style={styles.errorText}>{error}</Text>
-        </View>
+        <PlatformTabComponents.ErrorMessage error={error} />
       )}
       
       {/* Progress Modal */}
       {renderProgressModal()}
       
       {/* Account Drawer */}
-      {showAccountDrawer && (
-        <Modal
-          visible={showAccountDrawer}
-          transparent={true}
-          animationType="none"
-          onRequestClose={closeAccountDrawer}
-        >
-          <View style={styles.drawerOverlay}>
-            <TouchableOpacity
-              style={styles.drawerBackdrop}
-              activeOpacity={1}
-              onPress={closeAccountDrawer}
-            />
-            <Animated.View
-              style={[
-                styles.drawerContainer,
-                {
-                  transform: [{ translateX: drawerAnimation }],
-                },
-              ]}
-            >
-              <AccountDrawer
-                platform={platform}
-                accountEmail={accountEmail}
-                onAccountChange={handleAccountChange}
-                onClose={closeAccountDrawer}
-              />
-            </Animated.View>
-          </View>
-        </Modal>
-      )}
+      {renderAccountDrawer()}
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F9FAFB',
-  },
-  header: {
-    paddingTop: 10,
-    paddingBottom: 15,
-    paddingHorizontal: 20,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: Colors.white,
-    marginBottom: 8,
-  },
-  accountButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 20,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-  },
-  accountButtonText: {
-    fontSize: 14,
-    color: Colors.white,
-    marginRight: 4,
-  },
-  drawerOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  drawerBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  drawerContainer: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    width: '80%',
-    height: '100%',
-    backgroundColor: Colors.white,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: -2, height: 0 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-  },
-  list: {
-    paddingBottom: 20,
-  },
-  listHeader: {
-    padding: 15,
-  },
-  loadOrdersButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 14,
-    borderRadius: 8,
-    marginTop: 16,
-    marginBottom: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-  },
-  loadOrdersButtonText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 16,
-    marginLeft: 8,
-  },
-  disabledButton: {
-    opacity: 0.6,
-  },
-  lastUpdated: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginBottom: 16,
-  },
-  ordersHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-    paddingBottom: 12,
-  },
-  ordersTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#374151',
-  },
-  clearButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-  },
-  clearButtonText: {
-    color: Colors.accent,
-    fontSize: 14,
-    marginLeft: 4,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 60,
-    paddingBottom: 60,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#6B7280',
-    marginTop: 16,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#9CA3AF',
-    textAlign: 'center',
-    marginTop: 8,
-    marginHorizontal: 40,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 16,
-    color: '#6B7280',
-    marginTop: 16,
-  },
-  errorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(220, 38, 38, 0.1)',
-    padding: 12,
-    margin: 15,
-    borderRadius: 8,
-  },
-  errorText: {
-    color: '#DC2626',
-    marginLeft: 10,
-    flex: 1,
-  },
-  progressModalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-  },
-  progressModalContent: {
-    width: '85%',
-    backgroundColor: Colors.white,
-    borderRadius: 12,
-    padding: 24,
-    alignItems: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-  },
-  progressModalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1F2937',
-    marginBottom: 8,
-  },
-  progressModalSubtitle: {
-    fontSize: 16,
-    color: '#4B5563',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  progressModalText: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  progressBar: {
-    width: '100%',
-    height: 6,
-    marginBottom: 20,
-  },
-  progressModalNote: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    textAlign: 'center',
-    fontStyle: 'italic',
-    marginBottom: 8
-  },
-  progressModalSmallNote: {
-    fontSize: 11,
-    color: '#9CA3AF',
-    textAlign: 'center',
-    opacity: 0.7
-  }
-});
 
 export default PlatformTab;
