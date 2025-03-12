@@ -1,20 +1,22 @@
-// src/components/PlatformTab.js - Refactored
+// src/components/PlatformTab.js - Fixed to properly merge new emails
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
-  FlatList,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
   Alert,
   Animated,
   SafeAreaView,
   StatusBar,
   Modal,
   Dimensions,
-  TouchableOpacity,
   Platform as RNPlatform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as AccountService from '../services/AccountService';
-import EmailItem from './EmailItem';
+import * as GmailService from '../services/GmailService';
+import ExpenseSummary from './ExpenseSummary'; // Import the new component
 import platforms from '../constants/platforms';
 import AccountDrawer from './AccountDrawer';
 import PlatformTabStyles from '../styles/PlatformTabStyles';
@@ -186,6 +188,9 @@ const PlatformTab = ({ platform }) => {
       setProgress(0);
       setProgressText('Preparing to fetch latest emails...');
       
+      // Get existing emails first to ensure we have them
+      const existingEmails = [...emails];
+      
       // Fetch latest emails with progress tracking
       const result = await PlatformTabUtils.fetchLatestEmails(
         platform,
@@ -204,16 +209,27 @@ const PlatformTab = ({ platform }) => {
       );
       
       if (result.success) {
-        setEmails(result.emails);
+        // Get only new emails not in the existing set
+        const newEmails = result.emails.filter(newEmail => {
+          return !existingEmails.some(existingEmail => 
+            existingEmail.id === newEmail.id || 
+            (existingEmail.orderDetails?.orderId && 
+             existingEmail.orderDetails.orderId === newEmail.orderDetails?.orderId)
+          );
+        });
+        
+        // Combine existing and new emails
+        const combinedEmails = [...existingEmails, ...newEmails];
+        
+        // Update state
+        setEmails(combinedEmails);
         setLastFetched(result.lastFetched);
         
-        // Determine if any new emails were found
-        const newCount = result.emails.length - emails.length;
-        
-        if (newCount <= 0) {
+        // Show appropriate notification
+        if (newEmails.length === 0) {
           Alert.alert('No New Orders', `No new ${platformInfo.name} orders found since your last update.`);
         } else {
-          Alert.alert('Success', `Found ${newCount} new orders and updated your data.`);
+          Alert.alert('Success', `Found ${newEmails.length} new orders and updated your data.`);
         }
       } else {
         setError(result.error);
@@ -322,42 +338,42 @@ const PlatformTab = ({ platform }) => {
           platformName={platformInfo.name}
           platformColor={platformInfo.color}
         />
+      ) : emails.length === 0 ? (
+        <View>
+          <PlatformTabComponents.ListHeader
+            platformName={platformInfo.name}
+            platformColor={platformInfo.color}
+            lastFetched={lastFetched}
+            loading={loading}
+            emails={emails}
+            onFetchAll={fetchAllEmails}
+            onFetchLatest={fetchLatestEmails}
+            onClear={handleClearEmails}
+          />
+          <PlatformTabComponents.EmptyState 
+            platformIcon={platformInfo.icon}
+            platformName={platformInfo.name}
+            onRefresh={fetchAllEmails}
+          />
+        </View>
       ) : (
-        <FlatList
-          data={emails}
-          renderItem={({ item }) => (
-            <EmailItem 
-              email={item} 
-              platformColor={platformInfo.color} 
-              platform={platform}
-            />
-          )}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={PlatformTabStyles.list}
-          ListHeaderComponent={
-            <PlatformTabComponents.ListHeader
-              platformName={platformInfo.name}
-              platformColor={platformInfo.color}
-              lastFetched={lastFetched}
-              loading={loading}
-              emails={emails}
-              onFetchAll={fetchAllEmails}
-              onFetchLatest={fetchLatestEmails}
-              onClear={handleClearEmails}
-            />
-          }
-          ListEmptyComponent={
-            emails.length === 0 ? (
-              <PlatformTabComponents.EmptyState 
-                platformIcon={platformInfo.icon}
-                platformName={platformInfo.name}
-                onRefresh={fetchAllEmails}
-              />
-            ) : null
-          }
-          onRefresh={lastFetched ? fetchLatestEmails : fetchAllEmails}
-          refreshing={refreshing}
-        />
+        // Here we replace the FlatList with our ExpenseSummary component
+        <View style={{ flex: 1 }}>
+          <PlatformTabComponents.ListHeader
+            platformName={platformInfo.name}
+            platformColor={platformInfo.color}
+            lastFetched={lastFetched}
+            loading={loading}
+            emails={emails}
+            onFetchAll={fetchAllEmails}
+            onFetchLatest={fetchLatestEmails}
+            onClear={handleClearEmails}
+          />
+          <ExpenseSummary 
+            emails={emails} 
+            platformColor={platformInfo.color}
+          />
+        </View>
       )}
       
       {/* Error Message */}
