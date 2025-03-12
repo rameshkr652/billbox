@@ -137,8 +137,13 @@ export const ListHeader = ({
             <ActivityIndicator size="small" color="#6B7280" />
           ) : (
             <>
-              <Icon name="refresh" size={18} color="#6B7280" />
-              <Text style={PlatformTabStyles.loadAllButtonText}>Reload All</Text>
+             <TouchableOpacity 
+          style={PlatformTabStyles.clearButton}
+          onPress={onClear}
+        >
+          <Icon name="delete-outline" size={20} color={Colors.accent} />
+          <Text style={PlatformTabStyles.clearButtonText}>Clear</Text>
+        </TouchableOpacity>
             </>
           )}
         </TouchableOpacity>
@@ -149,19 +154,6 @@ export const ListHeader = ({
       <Text style={PlatformTabStyles.lastUpdated}>
         Last updated: {formatDate(lastFetched)}
       </Text>
-    )}
-    
-    {emails.length > 0 && (
-      <View style={PlatformTabStyles.ordersHeader}>
-        <Text style={PlatformTabStyles.ordersTitle}>Order History</Text>
-        <TouchableOpacity 
-          style={PlatformTabStyles.clearButton}
-          onPress={onClear}
-        >
-          <Icon name="delete-outline" size={20} color={Colors.accent} />
-          <Text style={PlatformTabStyles.clearButtonText}>Clear</Text>
-        </TouchableOpacity>
-      </View>
     )}
   </View>
 );
