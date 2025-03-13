@@ -1,0 +1,302 @@
+info Starting logkitty
+[21:27:58] I | ReactNativeJS ▶︎ [ 'Idli [2 Pieces]',
+                             │ 'Mutton Kushka',
+                             │ 'Plain Dosa',
+                             │ 'Sambar Rice',
+                             │ 'Curd Rice',
+                             │ 'Idli',
+                             │ 'Meal',
+                             │ '1 Vada',
+                             │ 'Nattukozhi Briyani',
+                             │ 'Rava Roast Dosa',
+                             │ '2 Puri and Masala',
+                             │ 'Doll Vanilla Cake',
+                             │ 'Macroons [100 grams]',
+                             │ 'Butterscotch Cake',
+                             │ 'Pineapple Honey Cake',
+                             │ 'Mutton Varuval',
+                             │ 'Ghee Parotta',
+                             │ 'Veg Rice',
+                             │ 'Chapati',
+                             │ 'Poori [1 Set]',
+                             │ 'Rava Roast',
+                             │ 'Parcel Meals(Full)',
+                             │ 'Veg Biriyani',
+                             │ 'Onion Uthappam',
+                             │ 'Vada',
+                             │ 'Chicken Fried Rice',
+                             │ 'Fish Meal',
+                             │ 'Fish Fry',
+                             │ 'Fruit Salad with Ice Cream',
+                             │ 'Pomogranate Juice',
+                             │ 'Chocolate Cake',
+                             │ 'Donne Chicken Biryani',
+                             │ 'Idly(2)',
+                             │ 'Egg Kal Dosai',
+                             │ 'Non Veg Meals [Serves 7]',
+                             │ 'Beach Side Fish Fry',
+                             │ 'Aatukal Soup / Paya Soup',
+                             │ 'Rayalseema Mutton Fry (5Pc)',
+                             │ 'Donne Mutton Biryani',
+                             │ 'Idly',
+                             │ 'Plain Dosai',
+                             │ 'Gobi Manjurian',
+                             │ 'Medhu Vadai',
+                             │ 'Donne Biryani Rice',
+                             │ 'Royal Falooda',
+                             │ 'Tea',
+                             │ 'Ghee Rava Dosa',
+                             │ 'Tomato Rice',
+                             │ 'Chicken Kushka',
+                             │ 'Masal Dosai',
+                             │ 'Masala Roast',
+                             │ 'Non Veg Joy Box',
+                             │ 'Pav Bhaji',
+                             │ 'Vada Pav',
+                             │ 'Rava Dosa',
+                             │ 'Mutton Biryani',
+                             │ 'Poori Masal-2',
+                             │ 'Idly [2 Pieces]',
+                             │ 'Poori Masala [2 Poori]',
+                             │ '2 Dosa',
+                             │ 'Boneless Chilli 65',
+                             │ 'Mutton Biryani+Egg+Sweet',
+                             │ 'Egg Dosa',
+                             │ 'Sambar Satham',
+                             │ 'Mutton Kuska',
+                             │ 'Dahi Puri',
+                             │ 'Grilled Sandwich',
+                             │ 'Pulli Rice',
+                             │ 'Veg Fried Momos [5 Pieces]',
+                             │ 'Paneer Steamed Momos [5 Pieces]',
+                             │ 'Essence Dosa',
+                             │ 'Egg Parotta',
+                             │ 'Veechu Parotta',
+                             │ 'Paneer Fried Momos [5 Pieces]',
+                             │ 'Coconut Bun',
+                             │ 'Pista Cake',
+                             │ 'Jam Bun',
+                             │ 'Mixed Samosa',
+                             │ 'Parotta',
+                             │ 'Cholapoori',
+                             │ 'Pongal',
+                             │ 'Kuska+Sweet',
+                             │ 'Sakthi B Bun',
+                             │ 'Tea Cake [250 grams]',
+                             │ 'Poori',
+                             │ 'Chapati With Kurma (2Pcs)',
+                             │ 'Chicken 65',
+                             │ 'Pepper Chicken Gravy',
+                             │ 'Mini Tiffin [Serves 1]',
+                             │ 'Pomegranate Juice',
+                             │ 'Chilli Parotta',
+                             │ '2 Chapati with Kurma',
+                             │ 'Paper Roast Dosa',
+                             │ 'Chapati with Kurma',
+                             │ 'Vilwadri\'s Veetu Saapadu',
+                             │ 'Paneer Momo Wrap',
+                             │ 'Crab Pepper Fry',
+                             │ 'Mutton Sukka',
+                             │ 'Onion Utthappam',
+                             │ 'Non Veg Meal',
+                             │ 'Light Combo',
+                             │ 'Uttapam',
+                             │ 'Cutlet [1 Piece]',
+                             │ 'Lemon Rice',
+                             │ '3 Poori [1 Set]',
+                             │ 'Special Mushroom Puff',
+                             │ 'Veg Puff',
+                             │ 'Mutton Biriyani',
+                             │ 'Chicken 65 (Boneless)',
+                             │ 'Puliyodharai Rice [500 grams] with Murukku',
+                             │ 'Curd Rice [300 g]',
+                             │ 'Sambhar Rice [300 g]',
+                             │ 'Chicken Manjurian (Bl)',
+                             │ 'Salem Plain',
+                             │ 'Tomato Rice [300 g]',
+                             │ 'Special Mysore Pak',
+                             │ 'Paneer Jangiri',
+                             │ 'Ghee Roast',
+                             │ 'Onion Uttapam',
+                             │ 'Mango Rice [300 g]',
+                             │ 'Gobi 65 [200 g]',
+                             │ 'Poori [2 Poori]',
+                             │ 'Poori [1 set]',
+                             │ 'Chilly Parotta',
+                             │ 'Vadai',
+                             │ 'Plain Mutton Biryani',
+                             │ 'Sambhar Vadai',
+                             │ 'Curd Vadai',
+                             │ 'Vadai [1 Piece]',
+                             │ 'Chole with 1 Poori',
+                             │ 'Kara Paniyaram [4 Pieces]',
+                             │ 'Aloo Dry Fry',
+                             │ 'Veg Biryani',
+                             │ 'Rasmalai',
+                             │ 'Basundi',
+                             │ 'Aloo Tikki Mixed',
+                             │ 'Veg Noodles',
+                             │ 'Lucknowi Mini Paneer Biryani',
+                             │ 'Death by Chocolate Cake Jar',
+                             │ 'Fresh Lime Soda',
+                             │ 'Chicken 555',
+                             │ 'Tandoori Chicken',
+                             │ 'Egg Kothu Parotta',
+                             │ 'Paper Roast',
+                             │ 'Ayala Deep Fry',
+                             │ 'Parai Deep Fry',
+                             │ 'Meen Curry',
+                             │ 'Kashmir Pulao',
+                             │ 'Combo Fish Meals',
+                             │ 'Vanilla Milkshake',
+                             │ 'Mutton Liver Fried',
+                             │ 'Corn Chips 250 Gms',
+                             │ 'Bhel Poori',
+                             │ 'Raskadam',
+                             │ 'Exclusive Meal',
+                             │ 'Thalappakatti Naidu Mutton Biryani',
+                             │ 'Poori Set',
+                             │ 'Idly Set',
+                             │ 'Chilly Paratha',
+                             │ 'Mini Sambar Idly',
+                             │ 'Masal Vadai',
+                             │ 'Athirasam [1 Piece]',
+                             │ 'Pavakkai Chips',
+                             │ 'Kalakand',
+                             │ 'Potato Chips',
+                             │ 'Kal Dosa',
+                             │ 'Kichadi',
+                             │ 'Vanilla Thick Shake',
+                             │ 'Mango Thick Shake',
+                             │ 'Vanilla Ice Cream',
+                             │ 'Mosambi Juice',
+                             │ 'Idli (3 Pcs)',
+                             │ 'Coconut Poli [1 Piece]',
+                             │ 'Adhirasam [5 Pieces]',
+                             │ 'Paruppu Poli [1 Piece]',
+                             │ 'Crab Pepper Masala',
+                             │ 'Fish 65',
+                             │ 'Egg Roast',
+                             │ 'Chilli Fish Fried',
+                             │ 'Lemon Rice [500 grams] with Murukku',
+                             │ 'Veg Fried Rice',
+                             │ 'Milkcake',
+                             │ 'Chicken Broiler Fry',
+                             │ 'Idli [Serves 1]',
+                             │ 'Kuchi Mutton',
+                             │ 'Kuska',
+                             │ 'Thalappakatti Chicken Biryani',
+                             │ 'Curd Rice [500 grams] with Murukku',
+                             │ 'Chicken Steamed Momos [5 Pieces]',
+                             │ 'Kaju Kathili',
+                             │ 'Wheat Halwa',
+                             │ 'Chilli Potato Chips',
+                             │ 'Parotta (2Pcs)',
+                             │ 'Nattukozhi Biriyani',
+                             │ '2 Parotta',
+                             │ 'Buttermilk',
+                             │ 'Nattukozhi Biryani',
+                             │ 'Lemon Rice and Curd Rice Combo',
+                             │ 'Mutton Biryani [Full]',
+                             │ [TOO BIG formatValueCalls 201 exceeded limit of 200],
+                             │ [TOO BIG formatValueCalls 202 exceeded limit of 200],
+                             │ [TOO BIG formatValueCalls 203 exceeded limit of 200],
+                             │ [TOO BIG formatValueCalls 204 exceeded limit of 200],
+                             │ [TOO BIG formatValueCalls 205 exceeded limit of 200],
+                             │ [TOO BIG formatValueCalls 206 exceeded limit of 200],
+                             │ [TOO BIG formatValueCalls 207 exceeded limit of 200],
+                             │ [TOO BIG formatValueCalls 208 exceeded limit of 200],
+                             │ [TOO BIG formatValueCalls 209 exceeded limit of 200],
+                             │ [TOO BIG formatValueCalls 210 exceeded limit of 200],
+                             │ [TOO BIG formatValueCalls 211 exceeded limit of 200],
+                             │ [TOO BIG formatValueCalls 212 exceeded limit of 200],
+                             │ [TOO BIG formatValueCalls 213 exceeded limit of 200],
+                             │ [TOO BIG formatValueCalls 214 exceeded limit of 200],
+                             │ [TOO BIG formatValueCalls 215 exceeded limit of 200],
+                             │ [TOO BIG formatValueCalls 216 exceeded limit of 200],
+                             │ [TOO BIG formatValueCalls 217 exceeded limit of 200],
+                             │ [TOO BIG formatValueCalls 218 exceeded limit of 200],
+                             │ [TOO BIG formatValueCalls 219 exceeded limit of 200],
+                             │ [TOO BIG formatValueCalls 220 exceeded limit of 200],
+                             └ [TOO BIG formatValueCalls 221 exceeded limit of 200] ], 'uniqueFoodItems'
+
+[21:28:00] I | ReactNativeJS ▶︎ 'Getting platforms for:', 'rameshkrr652@gmail.com'
+                             └ 'Raw platforms data:', '{"zomato":{"accountEmail":"rameshkrr652@gmail.com"},"swiggy":{"accountEmail":"rameshkrr652@gmail.com"},"flipkart":{"accountEmail":"rameshkrr652@gmail.com"},"amazon":{"accountEmail":"rameshkrr652@gmail.com"}}'
+
+[21:29:34] I | ReactNativeJS ▶︎ Loading platforms...
+
+[21:29:34] I | ReactNativeJS ▶︎ 'Looking for platforms with key:', 'platforms_rameshkrr652@gmail.com'
+
+[21:29:34] I | ReactNativeJS ▶︎ 'Getting platforms for:', 'rameshkrr652@gmail.com'
+
+[21:29:34] I | ReactNativeJS ▶︎ 'Getting platforms for:', 'rameshkrr652@gmail.com'
+
+[21:29:34] I | ReactNativeJS ▶︎ 'Platforms data loaded:', '{"zomato":{"accountEmail":"rameshkrr652@gmail.com"},"swiggy":{"accountEmail":"rameshkrr652@gmail.com"},"flipkart":{"accountEmail":"rameshkrr652@gmail.com"},"amazon":{"accountEmail":"rameshkrr652@gmail.com"}}'
+                             │ 'Found platforms:', [ 'zomato', 'swiggy', 'flipkart', 'amazon' ]
+                             │ Platforms changed, updating UI
+                             │ 'Raw platforms data:', '{"zomato":{"accountEmail":"rameshkrr652@gmail.com"},"swiggy":{"accountEmail":"rameshkrr652@gmail.com"},"flipkart":{"accountEmail":"rameshkrr652@gmail.com"},"amazon":{"accountEmail":"rameshkrr652@gmail.com"}}'
+                             └ 'Raw platforms data:', '{"zomato":{"accountEmail":"rameshkrr652@gmail.com"},"swiggy":{"accountEmail":"rameshkrr652@gmail.com"},"flipkart":{"accountEmail":"rameshkrr652@gmail.com"},"amazon":{"accountEmail":"rameshkrr652@gmail.com"}}'
+
+[21:29:34] I | ReactNative ▶︎ [GESTURE HANDLER] Initialize gesture handler for root view com.facebook.react.runtime.ReactSurfaceView{8c4149f V.E...... .......D 0,0-1080,2294 #47}
+                           └ [GESTURE HANDLER] Tearing down gesture handler registered for root view com.facebook.react.runtime.ReactSurfaceView{8c4149f V.E...... .......D 0,0-1080,2294 #47}
+
+[21:29:34] I | ReactNativeJS ▶︎ 'Getting platforms for:', 'rameshkrr652@gmail.com'
+
+[21:29:34] I | ReactNativeJS ▶︎ 'Getting platforms for:', 'rameshkrr652@gmail.com'
+                             │ 'Getting platforms for:', 'rameshkrr652@gmail.com'
+                             │ 'Getting platforms for:', 'rameshkrr652@gmail.com'
+                             │ 'Raw platforms data:', '{"zomato":{"accountEmail":"rameshkrr652@gmail.com"},"swiggy":{"accountEmail":"rameshkrr652@gmail.com"},"flipkart":{"accountEmail":"rameshkrr652@gmail.com"},"amazon":{"accountEmail":"rameshkrr652@gmail.com"}}'
+                             │ 'Raw platforms data:', '{"zomato":{"accountEmail":"rameshkrr652@gmail.com"},"swiggy":{"accountEmail":"rameshkrr652@gmail.com"},"flipkart":{"accountEmail":"rameshkrr652@gmail.com"},"amazon":{"accountEmail":"rameshkrr652@gmail.com"}}'
+                             │ 'Raw platforms data:', '{"zomato":{"accountEmail":"rameshkrr652@gmail.com"},"swiggy":{"accountEmail":"rameshkrr652@gmail.com"},"flipkart":{"accountEmail":"rameshkrr652@gmail.com"},"amazon":{"accountEmail":"rameshkrr652@gmail.com"}}'
+                             └ 'Raw platforms data:', '{"zomato":{"accountEmail":"rameshkrr652@gmail.com"},"swiggy":{"accountEmail":"rameshkrr652@gmail.com"},"flipkart":{"accountEmail":"rameshkrr652@gmail.com"},"amazon":{"accountEmail":"rameshkrr652@gmail.com"}}'
+
+[21:29:37] I | ReactNativeJS ▶︎ 'Getting platforms for:', 'rameshkrr652@gmail.com'
+
+[21:29:37] I | ReactNativeJS ▶︎ 'Raw platforms data:', '{"zomato":{"accountEmail":"rameshkrr652@gmail.com"},"swiggy":{"accountEmail":"rameshkrr652@gmail.com"},"flipkart":{"accountEmail":"rameshkrr652@gmail.com"},"amazon":{"accountEmail":"rameshkrr652@gmail.com"}}'
+
+[21:29:40] I | ReactNative ▶︎ [GESTURE HANDLER] Tearing down gesture handler registered for root view com.facebook.react.runtime.ReactSurfaceView{8c4149f V.E...... ........ 0,0-1080,2294 #47}
+
+[21:29:43] I | ReactNativeJS ▶︎ Running "BillBox" with {"rootTag":91,"initialProps":{},"fabric":true}
+
+[21:29:47] I | ReactNativeJS ▶︎ 'Raw platforms data:', '{"zomato":{"accountEmail":"rameshkrr652@gmail.com"},"swiggy":{"accountEmail":"rameshkrr652@gmail.com"},"flipkart":{"accountEmail":"rameshkrr652@gmail.com"},"amazon":{"accountEmail":"rameshkrr652@gmail.com"}}'
+
+[21:29:47] I | ReactNativeJS ▶︎ Loading platforms...
+
+[21:29:47] I | ReactNativeJS ▶︎ Loading platforms...
+
+[21:29:47] I | ReactNativeJS ▶︎ 'Getting platforms for:', 'rameshkrr652@gmail.com'
+
+[21:29:47] I | ReactNativeJS ▶︎ 'Looking for platforms with key:', 'platforms_rameshkrr652@gmail.com'
+                             └ 'Looking for platforms with key:', 'platforms_rameshkrr652@gmail.com'
+
+[21:29:47] I | ReactNativeJS ▶︎ 'Getting platforms for:', 'rameshkrr652@gmail.com'
+                             └ 'Raw platforms data:', '{"zomato":{"accountEmail":"rameshkrr652@gmail.com"},"swiggy":{"accountEmail":"rameshkrr652@gmail.com"},"flipkart":{"accountEmail":"rameshkrr652@gmail.com"},"amazon":{"accountEmail":"rameshkrr652@gmail.com"}}'
+
+[21:29:47] I | ReactNativeJS ▶︎ 'Platforms data loaded:', '{"zomato":{"accountEmail":"rameshkrr652@gmail.com"},"swiggy":{"accountEmail":"rameshkrr652@gmail.com"},"flipkart":{"accountEmail":"rameshkrr652@gmail.com"},"amazon":{"accountEmail":"rameshkrr652@gmail.com"}}'
+
+[21:29:47] I | ReactNativeJS ▶︎ 'Found platforms:', [ 'zomato', 'swiggy', 'flipkart', 'amazon' ]
+                             │ Platforms changed, updating UI
+                             └ 'Platforms data loaded:', '{"zomato":{"accountEmail":"rameshkrr652@gmail.com"},"swiggy":{"accountEmail":"rameshkrr652@gmail.com"},"flipkart":{"accountEmail":"rameshkrr652@gmail.com"},"amazon":{"accountEmail":"rameshkrr652@gmail.com"}}'
+
+[21:29:47] I | ReactNativeJS ▶︎ 'Found platforms:', [ 'zomato', 'swiggy', 'flipkart', 'amazon' ]
+                             │ Platforms changed, updating UI
+                             └ 'Raw platforms data:', '{"zomato":{"accountEmail":"rameshkrr652@gmail.com"},"swiggy":{"accountEmail":"rameshkrr652@gmail.com"},"flipkart":{"accountEmail":"rameshkrr652@gmail.com"},"amazon":{"accountEmail":"rameshkrr652@gmail.com"}}'
+
+[21:29:47] I | ReactNative ▶︎ [GESTURE HANDLER] Initialize gesture handler for root view com.facebook.react.runtime.ReactSurfaceView{8c4149f V.E...... .......D 0,0-1080,2294 #5b}
+
+[21:29:48] I | ReactNativeJS ▶︎ 'Getting platforms for:', 'rameshkrr652@gmail.com'
+
+[21:29:48] I | ReactNativeJS ▶︎ 'Getting platforms for:', 'rameshkrr652@gmail.com'
+                             └ 'Getting platforms for:', 'rameshkrr652@gmail.com'
+
+[21:29:48] I | ReactNativeJS ▶︎ 'Getting platforms for:', 'rameshkrr652@gmail.com'
+
+[21:29:48] I | ReactNativeJS ▶︎ 'Raw platforms data:', '{"zomato":{"accountEmail":"rameshkrr652@gmail.com"},"swiggy":{"accountEmail":"rameshkrr652@gmail.com"},"flipkart":{"accountEmail":"rameshkrr652@gmail.com"},"amazon":{"accountEmail":"rameshkrr652@gmail.com"}}'
+                             │ 'Raw platforms data:', '{"zomato":{"accountEmail":"rameshkrr652@gmail.com"},"swiggy":{"accountEmail":"rameshkrr652@gmail.com"},"flipkart":{"accountEmail":"rameshkrr652@gmail.com"},"amazon":{"accountEmail":"rameshkrr652@gmail.com"}}'
+                             │ 'Raw platforms data:', '{"zomato":{"accountEmail":"rameshkrr652@gmail.com"},"swiggy":{"accountEmail":"rameshkrr652@gmail.com"},"flipkart":{"accountEmail":"rameshkrr652@gmail.com"},"amazon":{"accountEmail":"rameshkrr652@gmail.com"}}'
+                             └ 'Raw platforms data:', '{"zomato":{"accountEmail":"rameshkrr652@gmail.com"},"swiggy":{"accountEmail":"rameshkrr652@gmail.com"},"flipkart":{"accountEmail":"rameshkrr652@gmail.com"},"amazon":{"accountEmail":"rameshkrr652@gmail.com"}}'
+
+[21:29:51] I | ReactNativeJS ▶︎ 'Getting platforms for:', 'rameshkrr652@gmail.com'
+
+[21:29:51] I | ReactNativeJS ▶︎ 'Raw platforms data:', '{"zomato":{"accountEmail":"rameshkrr652@gmail.com"},"swiggy":{"accountEmail":"rameshkrr652@gmail.com"},"flipkart":{"accountEmail":"rameshkrr652@gmail.com"},"amazon":{"accountEmail":"rameshkrr652@gmail.com"}}'
+
