@@ -348,6 +348,23 @@ const decodeBase64Url = (base64UrlString) => {
 const parseOrderDetails = (emailBodyHtml, platform) => {
   if (!emailBodyHtml) return null;
   
+  // Helper function to decode HTML entities
+  const decodeHtmlEntities = (text) => {
+    if (!text) return text;
+    
+    return text
+      .replace(/&#39;/g, "'")
+      .replace(/&#43;/g, '+')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#(\d+);/g, (match, dec) => {
+        // Handle numeric HTML entities
+        return String.fromCharCode(parseInt(dec, 10));
+      });
+  };
+  
   // Clean up the HTML
   const cleanText = emailBodyHtml
     .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
@@ -371,7 +388,8 @@ const parseOrderDetails = (emailBodyHtml, platform) => {
   // Extract restaurant name
   const restaurantMatch = cleanText.match(/Thank you for ordering.*?from\s+(.*?)\s*ORDER ID/i);
   if (restaurantMatch && restaurantMatch[1]) {
-    orderDetails.restaurantName = restaurantMatch[1].trim();
+    // Decode HTML entities in restaurant name
+    orderDetails.restaurantName = decodeHtmlEntities(restaurantMatch[1].trim());
   }
   
   // Extract order ID
@@ -386,11 +404,19 @@ const parseOrderDetails = (emailBodyHtml, platform) => {
     orderDetails.orderStatus = statusMatch[1].trim();
   }
   
-  // Extract total price
-  const totalMatch = cleanText.match(/Total paid\s*-\s*(.*?)(\d+\.?\d*)/i);
-  if (totalMatch && totalMatch[2]) {
-    orderDetails.totalPrice = `₹${totalMatch[2]}`;
+  // Extract total price - Handle different rupee symbols and commas in price
+  const totalMatch = cleanText.match(/Total paid\s*-\s*.*?[₹â¹]([0-9,.]+)/i);
+  if (totalMatch && totalMatch[1]) {
+    // Make sure we capture the complete price with commas
+    orderDetails.totalPrice = `₹${totalMatch[1]}`;
+  } else {
+    // Ultimate fallback - try to find any price pattern after "Total paid"
+    const fallbackMatch = cleanText.match(/Total paid\s*-\s*.*?([0-9,.]+)/i);
+    if (fallbackMatch && fallbackMatch[1]) {
+      orderDetails.totalPrice = `₹${fallbackMatch[1]}`;
+    }
   }
+  
   // Extract order items from the HTML structure
   // For Zomato, items are usually in p tags within td with class="es-m-txt-l"
   const itemRegexes = [
@@ -411,7 +437,8 @@ const parseOrderDetails = (emailBodyHtml, platform) => {
     for (const match of matches) {
       if (match[1] && match[2]) {
         const quantity = match[1].trim();
-        const itemName = match[2].trim();
+        // Decode HTML entities in item names
+        const itemName = decodeHtmlEntities(match[2].trim());
         
         // Validate this looks like a food item
         if (itemName.length > 1 && 

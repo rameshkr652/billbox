@@ -313,11 +313,16 @@ const ExpenseSummary = ({ emails, platformColor }) => {
     <View style={styles.container}>
       {/* Expense Summary Card */}
       <View style={[styles.summaryCard, { borderColor: platformColor }]}>
+      <View style={styles.summaryCardHeader}>
         <Text style={styles.summaryTitle}>Total Spent</Text>
-        <Text style={[styles.totalAmount, { color: platformColor }]}>
-          {formatCurrency(totalSpent)}
+        <Text style={styles.orderCountText}>
+          {filteredEmails.length} order{filteredEmails.length !== 1 ? 's' : ''}
         </Text>
-        <Text style={styles.timeFrameLabel}>{getTimeFrameLabel()}</Text>
+      </View>
+      <Text style={[styles.totalAmount, { color: platformColor }]}>
+        {formatCurrency(totalSpent)}
+      </Text>
+      <Text style={styles.timeFrameLabel}>{getTimeFrameLabel()}</Text>
         
         {/* Time Frame Filters */}
         <View style={styles.filterRow}>
@@ -371,14 +376,7 @@ const ExpenseSummary = ({ emails, platformColor }) => {
       </View>
 
       {/* Order List - Replaced with "See All Transactions" button */}
-      <View style={styles.orderListContainer}>
-        <View style={styles.orderListHeader}>
-          <Text style={styles.orderListTitle}>Order History</Text>
-          <Text style={styles.orderCountText}>
-            {filteredEmails.length} order{filteredEmails.length !== 1 ? 's' : ''}
-          </Text>
-        </View>
-
+      <View style={styles.orderListContainer}>        
         {/* New "See All Transactions" Button */}
         <TouchableOpacity 
           style={[styles.seeAllButton, { backgroundColor: platformColor }]}
@@ -390,21 +388,12 @@ const ExpenseSummary = ({ emails, platformColor }) => {
         </TouchableOpacity>
 
         {/* Show a preview or summary of transactions */}
-        {filteredEmails.length > 0 ? (
-          <View style={styles.transactionsSummary}>
-            <Text style={styles.transactionsPreviewText}>
-              Showing {filteredEmails.length} transactions for {getTimeFrameLabel()}
-            </Text>
-            <Text style={styles.instructionText}>
-              Click the button above to view detailed transactions with search and filter options.
-            </Text>
-          </View>
-        ) : (
+        {!filteredEmails.length ? (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>No orders found for this period</Text>
             <Text style={styles.emptySubtext}>Try selecting a different time frame</Text>
           </View>
-        )}
+        ) :  null}
       </View>
 
       {/* Date Picker Modal */}
@@ -592,6 +581,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 15,
     marginBottom: 10,
+    marginTop: 10
   },
   orderListHeader: {
     flexDirection: 'row',
@@ -748,6 +738,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     marginLeft: 5,
+  },
+  summaryCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  summaryTitle: {
+    fontSize: 16,
+    color: '#666',
+  },
+  orderCountText: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500',
   },
 });
 
