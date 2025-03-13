@@ -1,10 +1,10 @@
-// src/components/ExpenseSummary.js
+// src/components/ExpenseSummary.js - Modified
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Modal, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { Calendar } from 'react-native-calendars'; // Make sure this is installed
+import { Calendar } from 'react-native-calendars';
 import Colors from '../constants/colors';
-import EmailItem from './EmailItem';
+import { useNavigation } from '@react-navigation/native';
 
 const TIME_FRAMES = {
   CURRENT_MONTH: 'current_month',
@@ -16,6 +16,7 @@ const TIME_FRAMES = {
 };
 
 const ExpenseSummary = ({ emails, platformColor }) => {
+  const navigation = useNavigation();
   const [selectedTimeFrame, setSelectedTimeFrame] = useState(TIME_FRAMES.CURRENT_MONTH);
   const [totalSpent, setTotalSpent] = useState(0);
   const [filteredEmails, setFilteredEmails] = useState([]);
@@ -268,6 +269,46 @@ const ExpenseSummary = ({ emails, platformColor }) => {
     setIsDatePickerVisible(false);
   };
 
+  // Handle navigation to the transactions screen
+  const navigateToTransactions = () => {
+    // Extract unique restaurant names and food items from ALL emails
+    const validEmails = emails.filter(email => 
+      email.orderDetails?.restaurantName && 
+      email.orderDetails?.totalPrice && 
+      email.orderDetails?.totalPrice !== 'N/A'
+    );
+    
+    const uniqueRestaurants = [...new Set(validEmails
+      .map(email => email.orderDetails.restaurantName))];
+    
+    // Extract food items from order details
+    const allFoodItems = [];
+    validEmails.forEach(email => {
+      if (email.orderDetails?.orderItems && Array.isArray(email.orderDetails.orderItems)) {
+        email.orderDetails.orderItems.forEach(item => {
+          // Extract food name from format like "1 X Food Name"
+          const match = item.match(/\d+\s*[Xx×]\s+(.*)/);
+          if (match && match[1]) {
+            allFoodItems.push(match[1].trim());
+          }
+        });
+      }
+    });
+    
+    // Get unique food items
+    const uniqueFoodItems = [...new Set(allFoodItems)];
+    
+    // Navigate to Transactions screen with ALL data (not filtered)
+    navigation.navigate('TransactionsScreen', {
+      allEmails: validEmails, // Send all valid emails, not filtered ones
+      platformColor,
+      filterOptions: {
+        restaurants: uniqueRestaurants,
+        foodItems: uniqueFoodItems
+      }
+    });
+  };
+
   return (
     <View style={styles.container}>
       {/* Expense Summary Card */}
@@ -329,7 +370,7 @@ const ExpenseSummary = ({ emails, platformColor }) => {
         </View>
       </View>
 
-      {/* Order List */}
+      {/* Order List - Replaced with "See All Transactions" button */}
       <View style={styles.orderListContainer}>
         <View style={styles.orderListHeader}>
           <Text style={styles.orderListTitle}>Order History</Text>
@@ -338,23 +379,32 @@ const ExpenseSummary = ({ emails, platformColor }) => {
           </Text>
         </View>
 
-        <FlatList
-          data={filteredEmails}
-          renderItem={({ item }) => (
-            <EmailItem 
-              email={item} 
-              platformColor={platformColor} 
-            />
-          )}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.list}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No orders found for this period</Text>
-              <Text style={styles.emptySubtext}>Try selecting a different time frame</Text>
-            </View>
-          }
-        />
+        {/* New "See All Transactions" Button */}
+        <TouchableOpacity 
+          style={[styles.seeAllButton, { backgroundColor: platformColor }]}
+          onPress={navigateToTransactions}
+        >
+          <Icon name="assignment" size={20} color="#fff" />
+          <Text style={styles.seeAllButtonText}>See All Transactions</Text>
+          <Icon name="chevron-right" size={20} color="#fff" />
+        </TouchableOpacity>
+
+        {/* Show a preview or summary of transactions */}
+        {filteredEmails.length > 0 ? (
+          <View style={styles.transactionsSummary}>
+            <Text style={styles.transactionsPreviewText}>
+              Showing {filteredEmails.length} transactions for {getTimeFrameLabel()}
+            </Text>
+            <Text style={styles.instructionText}>
+              Click the button above to view detailed transactions with search and filter options.
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No orders found for this period</Text>
+            <Text style={styles.emptySubtext}>Try selecting a different time frame</Text>
+          </View>
+        )}
       </View>
 
       {/* Date Picker Modal */}
@@ -547,7 +597,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 15,
   },
   orderListTitle: {
     fontSize: 18,
@@ -558,13 +608,50 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
   },
-  list: {
-    paddingBottom: 20,
+  // New styles for "See All Transactions" button and summary
+  seeAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.5,
+  },
+  seeAllButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    flex: 1,
+    textAlign: 'center',
+  },
+  transactionsSummary: {
+    backgroundColor: '#f9f9f9',
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 10,
+  },
+  transactionsPreviewText: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 5,
+  },
+  instructionText: {
+    fontSize: 13,
+    color: '#888',
+    fontStyle: 'italic',
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     padding: 30,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 8,
   },
   emptyText: {
     fontSize: 16,
@@ -577,7 +664,7 @@ const styles = StyleSheet.create({
     color: '#aaa',
     textAlign: 'center',
   },
-  // Modal styles
+  // Existing modal styles
   modalContainer: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -661,7 +748,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     marginLeft: 5,
-  }
+  },
 });
 
 export default ExpenseSummary;
