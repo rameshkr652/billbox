@@ -5,6 +5,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { Calendar } from 'react-native-calendars';
 import Colors from '../constants/colors';
 import { useNavigation } from '@react-navigation/native';
+import RNFS from 'react-native-fs';
 
 const TIME_FRAMES = {
   CURRENT_MONTH: 'current_month',
@@ -297,7 +298,7 @@ const ExpenseSummary = ({ emails, platformColor }) => {
     
     // Get unique food items
     const uniqueFoodItems = [...new Set(allFoodItems)];
-    
+    console.log(allFoodItems)
     // Navigate to Transactions screen with ALL data (not filtered)
     navigation.navigate('TransactionsScreen', {
       allEmails: validEmails, // Send all valid emails, not filtered ones
