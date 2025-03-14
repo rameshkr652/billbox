@@ -104,7 +104,7 @@ export const ListHeader = ({
         )}
       </TouchableOpacity>
     ) : (
-      // Show both "Load Latest" and "Load All" buttons when data exists
+      // Show only "Load Latest" and "Clear" buttons when data exists
       <View style={PlatformTabStyles.buttonContainer}>
         <TouchableOpacity
           style={[
@@ -123,29 +123,15 @@ export const ListHeader = ({
               <Text style={PlatformTabStyles.buttonText}>Load Latest</Text>
             </>
           )}
-        </TouchableOpacity>
+        </TouchableOpacity>        
         
-        <TouchableOpacity
-          style={[
-            PlatformTabStyles.loadAllButton,
-            loading && PlatformTabStyles.disabledButton
-          ]}
-          onPress={onFetchAll}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator size="small" color="#6B7280" />
-          ) : (
-            <>
-             <TouchableOpacity 
+        {/* Clear button */}
+        <TouchableOpacity 
           style={PlatformTabStyles.clearButton}
           onPress={onClear}
         >
           <Icon name="delete-outline" size={20} color={Colors.accent} />
           <Text style={PlatformTabStyles.clearButtonText}>Clear</Text>
-        </TouchableOpacity>
-            </>
-          )}
         </TouchableOpacity>
       </View>
     )}
