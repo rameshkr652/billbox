@@ -58,16 +58,199 @@ const TransactionsScreen = () => {
   const [datePickerMode, setDatePickerMode] = useState('start'); // 'start' or 'end'
   const [customDateRange, setCustomDateRange] = useState({ start: null, end: null });
   const [markedDates, setMarkedDates] = useState({});
-  const [processedRestaurants, setProcessedRestaurants] = useState([]);
-  const [processedFoodItems, setProcessedFoodItems] = useState([]);
   const [restaurantSearch, setRestaurantSearch] = useState('');
   const [foodItemSearch, setFoodItemSearch] = useState('');
-  // useEffect(() => {
-  //   if (filterOptions?.foodItems) {
-  //     const normalizedItems = normalizeAndGroupFoodItems(filterOptions.foodItems);
-  //     setProcessedFoodItems(normalizedItems);
-  //   }
-  // }, [filterOptions]);
+  const [normalizedFoodItems, setNormalizedFoodItems] = useState([]);
+
+  const advancedCombinedFoods = (food) =>{
+    food
+      .replace(/^\d+\s*[Xx×]\s+/i, '')        // Remove "2 X" format
+      .replace(/\s*\[[^\]]*\]/g, '')          // Remove [2 pieces]
+      .replace(/\s*\([^\)]*\)/g, '')          // Remove (3 pcs)
+      .replace(/^\d+\s*[-:]?\s+/i, '')        // Remove "2 - " or "3: " formats
+      .replace(/^\s*[-:]?\s*\d+\s*/i, '')     // Remove trailing " - 2" numbers
+      .replace(/,\s*\d+[\s\S]*$/i, '')        // Remove trailing ", 2" quantities
+      
+      // Common structural replacements
+      .replace(/\b(full|half)\s+/gi, '')      // Remove "full/half" prefixes
+      .replace(/\s{2,}/g, ' ')                // Collapse multiple spaces
+      
+      // Standardize dish names (A-Z)
+      // Common spelling variations in Indian dishes
+      .replace(/biriyani/i, 'biryani')        // Biriyani → Biryani
+      .replace(/briyani/i, 'biryani')         // Briyani → Biryani
+      .replace(/idly/i, 'idli')               // Idly → Idli
+      .replace(/uttapam/i, 'uthappam')        // Uttapam → Uthappam
+      .replace(/utthapapam/i, 'uthappam')     // Utthapapam → Uthappam
+      .replace(/utthapam/i, 'uthappam')       // Utthapam → Uthappam
+      .replace(/dhoklaa?/i, 'dhokla')         // Dhoklaa/Dhokla → Dhokla
+      .replace(/pulav/i, 'pulao')             // Pulav → Pulao
+      .replace(/chapathi/i, 'chapati')        // Chapathi → Chapati
+      .replace(/chapatti/i, 'chapati')        // Chapatti → Chapati
+      .replace(/parotta/i, 'paratha')         // Parotta → Paratha
+      .replace(/porotta/i, 'paratha')         // Porotta → Paratha
+      .replace(/poratha/i, 'paratha')         // Poratha → Paratha
+      .replace(/dhal/i, 'dal')                // Dhal → Dal
+      .replace(/dosa(i|m)?/i, 'dosa')         // Dosai/Dosam → Dosa
+      .replace(/poori/i, 'puri')              // Poori → Puri
+      .replace(/sambhar/i, 'sambar')          // Sambhar → Sambar
+      .replace(/punjabi/i, 'paneer')          // Fix common typo for Paneer
+      .replace(/moglai/i, 'mughlai')          // Moglai → Mughlai
+      .replace(/kofta?/i, 'kofta')            // Koft → Kofta
+      .replace(/roti?/i, 'roti')              // Rot → Roti
+      .replace(/curry?/i, 'curry')            // Curr → Curry
+      .replace(/korma/i, 'kurma')             // Korma → Kurma
+      .replace(/tikka?/i, 'tikka')            // Tikk → Tikka
+      .replace(/masala?/i, 'masala')          // Masal → Masala
+      .replace(/raitha/i, 'raita')            // Raitha → Raita
+      .replace(/bhaji?/i, 'bhaji')            // Bhaj → Bhaji
+      .replace(/chutney?/i, 'chutney')        // Chutne → Chutney
+      .replace(/naan?/i, 'naan')              // Naa → Naan
+      .replace(/chicken?/i, 'chicken')        // Chicke → Chicken
+      .replace(/mutton?/i, 'mutton')          // Mutto → Mutton
+      .replace(/paneer?/i, 'paneer')          // Panee → Paneer
+      .replace(/meals?/i, 'meals')            // Meal → Meals
+      .replace(/thali?/i, 'thali')       // Thal → Thali
+      .replace(/aloo?\b/gi, 'aloo')           // Alu/Aalu → Aloo
+      .replace(/appalam|papadam/gi, 'papad')
+      .replace(/bath\b/gi, 'baath')           // Veg Bath → Veg Baath
+      .replace(/bhel\s?pur?i/gi, 'bhel puri')
+      .replace(/bhindi?\b/gi, 'bhindi')       // Bhendi → Bhindi
+      .replace(/biryani/gi, 'biryani')        // Standardize biryani
+      .replace(/chaat\b/gi, 'chaat')          // Chāt → Chaat
+      .replace(/channa?\b/gi, 'chole')        // Chana/Channa → Chole
+      .replace(/chettinad/gi, 'chettinadu')   // Standardize region names
+      .replace(/dabeli/gi, 'daabeli')         // Dabēli → Daabeli
+      .replace(/dal\b/gi, 'dal')              // Dhal → Dal
+      .replace(/dosa(i|m)?\b/gi, 'dosa')      // Dosai/Dosam → Dosa
+      .replace(/falooda/gi, 'faluda')         // Alternate spelling
+      .replace(/gajar\b/gi, 'gajar')          // Gajjar → Gajar
+      .replace(/gol\s*gappa/gi, 'pani puri')  // Regional names
+      .replace(/halwa\b/gi, 'halwa')          // Halva → Halwa
+      .replace(/idly/gi, 'idli')              // Idly → Idli
+      .replace(/jira\b/gi, 'jeera')           // Jira → Jeera
+      .replace(/kator(i|y)/gi, 'kachori')     // Katori → Kachori
+      .replace(/kofta\b/gi, 'kofta')          // Koft → Kofta
+      .replace(/korma/gi, 'kurma')            // Korma → Kurma
+      .replace(/kulcha/gi, 'kulcha')          // Kulcha → Kulcha
+      .replace(/lassi\b/gi, 'lassi')          // Lassy → Lassi
+      .replace(/malai\b/gi, 'malai')          // Malay → Malai
+      .replace(/matar\b/gi, 'mutter')         // Matar → Mutter
+      .replace(/murgh\b/gi, 'chicken')         // Murgh → Chicken
+      .replace(/naan/gi, 'naan')              // Nan → Naan
+      .replace(/pakoda/gi, 'pakora')          // Pakoda → Pakora
+      .replace(/palak\b/gi, 'palak')          // Paalak → Palak
+      .replace(/paneer/gi, 'paneer')          // Panir → Paneer
+      .replace(/parantha?/gi, 'paratha')      // Paranta → Paratha
+      .replace(/pav\b/gi, 'pav')              // Pao → Pav
+      .replace(/poha\b/gi, 'poha')            // Pohe → Poha
+      .replace(/pulao/gi, 'pulao')            // Pulav → Pulao
+      .replace(/puri\b/gi, 'puri')            // Poori → Puri
+      .replace(/raita\b/gi, 'raita')          // Raitha → Raita
+      .replace(/rasam\b/gi, 'rasam')          // Chaaru → Rasam
+      .replace(/roti\b/gi, 'roti')            // Rot → Roti
+      .replace(/sabzi/gi, 'sabji')            // Sabzi → Sabji
+      .replace(/samosa/gi, 'samosa')          // Samossa → Samosa
+      .replace(/sambar/gi, 'sambar')          // Sambhar → Sambar
+      .replace(/shahi\b/gi, 'shahi')          // Shaahi → Shahi
+      .replace(/tandoori/gi, 'tandoori')      // Tandoor → Tandoori
+      .replace(/tava\b/gi, 'tawa')            // Thava → Tawa
+      .replace(/thali\b/gi, 'thali')          // Thaali → Thali
+      .replace(/tikka\b/gi, 'tikka')          // Tikk → Tikka
+      .replace(/upma\b/gi, 'upma')            // Uppuma → Upma
+      .replace(/uthapam/gi, 'uthappam')       // Uttapam → Uthappam
+      .replace(/vada\b/gi, 'vada')            // Wada → Vada
+      .replace(/zira\b/gi, 'jeera')           // Zira → Jeera
+      
+      // Regional dish specializations
+      .replace(/avial\b/gi, 'avial')          // Aviyal → Avial
+      .replace(/bisi\s*bele\s*bath/gi, 'bisi bele bath')
+      .replace(/daal\s*maakhni/gi, 'dal makhani')
+      .replace(/gulab\s*jamun/gi, 'gulab jamun')
+      .replace(/hyderabadi\s+dum/gi, 'hyderabadi dum')
+      .replace(/kerala\s+parotta/gi, 'kerala paratha')
+      .replace(/mysore\s+masala\s+dosa/gi, 'mysore masala dosa')
+      .replace(/palkova/gi, 'pal khova')
+      
+      // Final cleanup
+      .trim()
+      .toLowerCase()
+      .replace(/\b(\w+)\b(?:s\b)/g, '$1')    // Remove pluralization
+      .replace(/[^a-z0-9\s]/g, '')            // Remove special characters
+      .replace(/\s{2,}/g, ' ');               // Final space cleanup
+  }
+
+  const normalizeFoodItems = (foodItems) => {
+    if (!foodItems || !Array.isArray(foodItems)) return [];
+    
+    // Group similar food items
+    const foodGroups = {};
+    
+    foodItems.forEach(item => {
+      // Skip empty items
+      if (!item) return;
+      
+      // Clean up the item name: remove quantities, brackets, parentheses
+      let cleanName = item
+        .replace(/^\d+\s*[Xx×]\s+/i, '')      // Remove "2 X" format
+        .replace(/\s*\[[^\]]*\]/g, '')        // Remove [2 pieces]
+        .replace(/\s*\([^\)]*\)/g, '')        // Remove (3 pcs)
+        .replace(/^\d+\s+/i, '')              // Remove "2 Idli" format
+        .trim();
+      
+      // Handle common spelling variations
+      let normalizedName = cleanName.toLowerCase()
+        .replace(/biriyani/i, 'biryani')
+        .replace(/idly/i, 'idli');
+      
+      // Handle items with modifiers (like "X + Y")
+      if (normalizedName.includes('+')) {
+        normalizedName = normalizedName.split('+')[0].trim();
+      }
+      
+      // Create a key for grouping - use main dish name
+      // For multi-word items like "Mutton Biryani", keep the full normalized name
+      const groupKey = normalizedName;
+      
+      // Add to food groups
+      if (!foodGroups[groupKey]) {
+        foodGroups[groupKey] = {
+          displayName: cleanName,
+          originalItems: [item],
+          count: 1
+        };
+      } else {
+        // Only add if it's a new variant
+        if (!foodGroups[groupKey].originalItems.includes(item)) {
+          foodGroups[groupKey].originalItems.push(item);
+          foodGroups[groupKey].count++;
+          
+          // Use the shortest name as display name (usually the base version)
+          if (cleanName.length < foodGroups[groupKey].displayName.length) {
+            foodGroups[groupKey].displayName = cleanName;
+          }
+        }
+      }
+    });
+    
+    // Convert to array for rendering
+    return Object.entries(foodGroups)
+      .map(([key, data]) => ({
+        key,
+        displayName: data.displayName,
+        originalItems: data.originalItems,
+        count: data.count
+      }))
+      .sort((a, b) => a.displayName.localeCompare(b.displayName));
+  };
+  
+  // Add this useEffect to process food items when filterOptions change
+  useEffect(() => {
+    if (filterOptions?.foodItems) {
+      const normalized = normalizeFoodItems(filterOptions.foodItems);
+      setNormalizedFoodItems(normalized);
+    }
+  }, [filterOptions]);
 
   // Process emails into transaction data
   useEffect(() => {
@@ -140,31 +323,23 @@ const TransactionsScreen = () => {
       );
     }
     
-    // Apply food item filter
     if (appliedFilters.foodItem) {
       result = result.filter(item => {
         if (!item.foodItemsForFiltering || !Array.isArray(item.foodItemsForFiltering)) {
           return false;
         }
         
-        // Get the selected food item's variants from our processed list
-        const selectedFood = processedFoodItems.find(f => f.rootName === appliedFilters.foodItem);
-        if (!selectedFood) return false;
-        
-        // Check if any of the item's foods match any of the variants
         return item.foodItemsForFiltering.some(food => {
-          const normalizedFood = food
-            .replace(/^\d+\s*[Xx×]\s+/i, '')
-            .replace(/\s*\[[^\]]*\]/g, '')
-            .replace(/\s*\([^\)]*\)/g, '')
-            .replace(/^\d+\s+/i, '')
-            .replace(/\(\d+\)/g, '')
-            .trim()
-            .toLowerCase();
+          // Clean and normalize the food string the same way we do for the filter items
+          const normalizedFood = advancedCombinedFoods(food)                      
+          // If the food contains a plus sign, only consider the main item
+          const mainItem = normalizedFood.includes('+') 
+            ? normalizedFood.split('+')[0].trim() 
+            : normalizedFood;
           
-          // Check if this food's root word matches our filter rootName
-          const foodFirstWord = normalizedFood.split(/\s+/)[0];
-          return foodFirstWord === appliedFilters.foodItem;
+          // Match if it's the same as our filter key or contains it
+          return mainItem === appliedFilters.foodItem || 
+                 mainItem.includes(appliedFilters.foodItem);
         });
       });
     }
@@ -279,81 +454,7 @@ const TransactionsScreen = () => {
       />
     );
   };
-
-  useEffect(() => {
-    // Existing code...
-    
-    if (transactions.length > 0) {
-      const { restaurantCounts, foodItemCounts } = countItemOccurrences();
-      
-      // Process restaurants with popularity
-      if (filterOptions?.restaurants) {
-        const processed = filterOptions.restaurants.map(restaurant => ({
-          name: restaurant,
-          orderCount: restaurantCounts[restaurant] || 0
-        }))
-        .sort((a, b) => b.orderCount - a.orderCount || a.name.localeCompare(b.name));
-        
-        setProcessedRestaurants(processed);
-      }
-      
-      // Process food items with popularity
-      if (filterOptions?.foodItems) {
-        // Create food groups by root name
-        const foodGroups = {};
-        
-        filterOptions.foodItems.forEach(item => {
-          const normalizedName = item
-            .replace(/^\d+\s*[Xx×]\s+/i, '')
-            .trim();
-            
-          const rootName = normalizedName.toLowerCase().split(/\s+/)[0];
-          
-          if (!foodGroups[rootName]) {
-            foodGroups[rootName] = {
-              displayName: normalizedName,
-              rootName,
-              orderCount: foodItemCounts[rootName] || 0
-            };
-          }
-        });
-        
-        const processed = Object.values(foodGroups)
-          .sort((a, b) => b.orderCount - a.orderCount || a.displayName.localeCompare(b.displayName));
-        
-        setProcessedFoodItems(processed);
-      }
-    }
-  }, [transactions, filterOptions]);
-
   
-  const countItemOccurrences = () => {
-    const restaurantCounts = {};
-    const foodItemCounts = {};
-    
-    transactions.forEach(transaction => {
-      // Count restaurant
-      const restaurant = transaction.restaurant;
-      if (restaurant) {
-        restaurantCounts[restaurant] = (restaurantCounts[restaurant] || 0) + 1;
-      }
-      
-      // Count food items
-      if (transaction.foodItemsForFiltering && Array.isArray(transaction.foodItemsForFiltering)) {
-        transaction.foodItemsForFiltering.forEach(food => {
-          const normalizedFood = food
-            .replace(/^\d+\s*[Xx×]\s+/i, '')
-            .trim()
-            .toLowerCase()
-            .split(/\s+/)[0]; // Get root name
-          
-          foodItemCounts[normalizedFood] = (foodItemCounts[normalizedFood] || 0) + 1;
-        });
-      }
-    });
-    
-    return { restaurantCounts, foodItemCounts };
-  };
   // Reset all filters
   const resetAllFilters = () => {
     setAppliedFilters({
@@ -383,30 +484,7 @@ const TransactionsScreen = () => {
   const formatCurrency = (amount) => {
     return `₹${amount.toFixed(2)}`;
   };
-  const cleanAndSortFoodItems = (items) => {
-    if (!items || !Array.isArray(items)) return [];
-    
-    // Extract clean food names by removing quantities and brackets
-    const cleanedItems = items.map(item => {
-      // Remove quantities like "1 X" or "2 X"
-      let cleanName = item.replace(/^\d+\s*[Xx×]\s+/i, '');
-      
-      // Remove any content in brackets like [2 pieces]
-      cleanName = cleanName.replace(/\s*\[[^\]]*\]/g, '');
-      
-      // Remove additional quantifiers like "1 Vada", "2 puri"
-      cleanName = cleanName.replace(/^\d+\s+/i, '');
-      
-      // Trim any extra spaces
-      return cleanName.trim();
-    });
-    
-    // Remove duplicates by creating a Set and converting back to array
-    const uniqueItems = [...new Set(cleanedItems)];
-    
-    // Sort alphabetically
-    return uniqueItems.sort((a, b) => a.localeCompare(b));
-  };
+  
   // Update marked dates for calendar
   const updateMarkedDates = (range) => {
     const newMarkedDates = {};
@@ -453,63 +531,6 @@ const TransactionsScreen = () => {
     setMarkedDates(newMarkedDates);
   };
   
-  const normalizeAndGroupFoodItems = (items) => {
-    if (!items || !Array.isArray(items)) return [];
-    
-    // Create a mapping of normalized names to display names
-    const foodGroups = {};
-    
-    items.forEach(item => {
-      // Base normalization to remove quantities
-      let normalizedName = item
-        .replace(/^\d+\s*[Xx×]\s+/i, '')      // Remove "2 X" format
-        .replace(/\s*\[[^\]]*\]/g, '')        // Remove [2 pieces]
-        .replace(/\s*\([^\)]*\)/g, '')        // Remove (3 pcs)
-        .replace(/^\d+\s+/i, '')              // Remove "2 Idli" format
-        .replace(/\(\d+\)/g, '')              // Remove (2) suffix
-        .trim();
-      
-      // Convert to lowercase for better matching
-      const baseName = normalizedName.toLowerCase();
-      
-      // Get the root name (for grouping similar items)
-      // Extract the first word as the root name
-      const rootName = baseName.split(/\s+/)[0];
-      
-      // Store under the root name
-      if (!foodGroups[rootName]) {
-        foodGroups[rootName] = { 
-          displayName: normalizedName,
-          variants: [item],
-          count: 1
-        };
-      } else {
-        // Add the variant if not already present
-        if (!foodGroups[rootName].variants.includes(item)) {
-          foodGroups[rootName].variants.push(item);
-          foodGroups[rootName].count += 1;
-        }
-        
-        // Keep the shortest name as the display name (typically the base version)
-        if (normalizedName.length < foodGroups[rootName].displayName.length) {
-          foodGroups[rootName].displayName = normalizedName;
-        }
-      }
-    });
-    
-    // Sort by root name and create final array with counts for items with variants
-    return Object.entries(foodGroups)
-      .map(([root, data]) => ({
-        displayName: data.displayName,
-        originalName: data.displayName,
-        rootName: root,
-        variants: data.variants,
-        // Add count to display name if there are multiple variants
-        displayWithCount: data.count > 1 ? `${data.displayName} (${data.count} varieties)` : data.displayName
-      }))
-      .sort((a, b) => a.displayName.localeCompare(b.displayName));
-  };
-
   // Show date picker
   const showDatePicker = (mode) => {
     setDatePickerMode(mode);
@@ -573,14 +594,12 @@ const TransactionsScreen = () => {
   };
   
   // Apply a food item filter
-  const applyFoodItemFilter = (rootName, foodItem) => {
+  const applyFoodItemFilter = (key, foodItem) => {
     setAppliedFilters(prev => ({
       ...prev,
-      foodItem: rootName,
-      foodItemData: rootName ? foodItem : null
+      foodItem: key
     }));
   };
-  
   
   // Render table header
   const renderTableHeader = () => (
@@ -821,6 +840,7 @@ const TransactionsScreen = () => {
                   placeholder="Search restaurants..."
                   value={restaurantSearch}
                   onChangeText={setRestaurantSearch}
+                  placeholderTextColor="#999"
                 />
                 {restaurantSearch ? (
                   <TouchableOpacity onPress={() => setRestaurantSearch('')}>
@@ -830,67 +850,29 @@ const TransactionsScreen = () => {
               </View>
               
               <ScrollView style={styles.filterTabContent} contentContainerStyle={{paddingBottom: 70}}>
-                {/* Most Ordered Section */}
-                {processedRestaurants.length > 0 && (
-                  <View style={styles.filterSection}>
-                    <Text style={styles.filterSectionTitle}>Most Ordered (Top 10)</Text>
-                    {processedRestaurants
-                      .slice(0, 10)
-                      .filter(r => r.name.toLowerCase().includes(restaurantSearch.toLowerCase()))
-                      .map((restaurant, index) => (
-                        <TouchableOpacity
-                          key={`top-restaurant-${index}`}
-                          style={[
-                            styles.filterOption,
-                            appliedFilters.restaurant === restaurant.name && 
-                              [styles.filterOptionSelected, { backgroundColor: `${platformColor}15` }]
-                          ]}
-                          onPress={() => applyRestaurantFilter(
-                            restaurant.name === appliedFilters.restaurant ? null : restaurant.name
-                          )}
-                        >
-                          <View style={styles.filterOptionContent}>
-                            <Text style={styles.filterOptionText}>{restaurant.name}</Text>
-                            <Text style={styles.orderCountText}>{restaurant.orderCount} orders</Text>
-                          </View>
-                          {appliedFilters.restaurant === restaurant.name && (
-                            <Icon name="check" size={18} color={platformColor} />
-                          )}
-                        </TouchableOpacity>
-                      ))}
-                  </View>
-                )}
-                
-                {/* All Restaurants Section */}
-                <View style={styles.filterSection}>
-                  <Text style={styles.filterSectionTitle}>All Restaurants</Text>
-                  {processedRestaurants
-                    .filter(r => r.name.toLowerCase().includes(restaurantSearch.toLowerCase()))
-                    .map((restaurant, index) => (
-                      <TouchableOpacity
-                        key={`restaurant-${index}`}
-                        style={[
-                          styles.filterOption,
-                          appliedFilters.restaurant === restaurant.name && 
-                            [styles.filterOptionSelected, { backgroundColor: `${platformColor}15` }]
-                        ]}
-                        onPress={() => applyRestaurantFilter(
-                          restaurant.name === appliedFilters.restaurant ? null : restaurant.name
-                        )}
-                      >
-                        <View style={styles.filterOptionContent}>
-                          <Text style={styles.filterOptionText}>{restaurant.name}</Text>
-                          <Text style={styles.orderCountText}>{restaurant.orderCount} orders</Text>
-                        </View>
-                        {appliedFilters.restaurant === restaurant.name && (
-                          <Icon name="check" size={18} color={platformColor} />
-                        )}
-                      </TouchableOpacity>
-                    ))}
-                </View>
+                {filterOptions?.restaurants
+                  ?.slice() // Create a copy to avoid mutating original
+                  .sort((a, b) => a.localeCompare(b)) // Sort alphabetically
+                  .filter(restaurant => restaurant.toLowerCase().includes(restaurantSearch.toLowerCase()))
+                  .map((restaurant, index) => (
+                    <TouchableOpacity
+                      key={`restaurant-${index}`}
+                      style={[
+                        styles.filterOption,
+                        appliedFilters.restaurant === restaurant && [styles.filterOptionSelected, { backgroundColor: `${platformColor}15` }]
+                      ]}
+                      onPress={() => applyRestaurantFilter(restaurant === appliedFilters.restaurant ? null : restaurant)}
+                    >
+                      <Text style={styles.filterOptionText}>{restaurant}</Text>
+                      {appliedFilters.restaurant === restaurant && (
+                        <Icon name="check" size={18} color={platformColor} />
+                      )}
+                    </TouchableOpacity>
+                  ))}
               </ScrollView>
             </View>
           )}
+          
           {activeFilterTab === 'foodItems' && (
             <View style={styles.filterTabContainer}>
               {/* Search Input */}
@@ -901,6 +883,7 @@ const TransactionsScreen = () => {
                   placeholder="Search food items..."
                   value={foodItemSearch}
                   onChangeText={setFoodItemSearch}
+                  placeholderTextColor="#999"
                 />
                 {foodItemSearch ? (
                   <TouchableOpacity onPress={() => setFoodItemSearch('')}>
@@ -909,71 +892,45 @@ const TransactionsScreen = () => {
                 ) : null}
               </View>
               
-              <ScrollView style={styles.filterTabContent} contentContainerStyle={{paddingBottom: 70}}>
-                {/* Most Ordered Section */}
-                {processedFoodItems.length > 0 && (
-                  <View style={styles.filterSection}>
-                    <Text style={styles.filterSectionTitle}>Most Ordered (Top 10)</Text>
-                    {processedFoodItems
-                      .slice(0, 10)
-                      .filter(item => item.displayName.toLowerCase().includes(foodItemSearch.toLowerCase()))
-                      .map((foodItem, index) => (
-                        <TouchableOpacity
-                          key={`top-food-${index}`}
-                          style={[
-                            styles.filterOption,
-                            appliedFilters.foodItem === foodItem.rootName && 
-                              [styles.filterOptionSelected, { backgroundColor: `${platformColor}15` }]
-                          ]}
-                          onPress={() => applyFoodItemFilter(
-                            foodItem.rootName === appliedFilters.foodItem ? null : foodItem.rootName
-                          )}
-                        >
-                          <View style={styles.filterOptionContent}>
-                            <Text style={styles.filterOptionText}>{foodItem.displayName}</Text>
-                            <Text style={styles.orderCountText}>{foodItem.orderCount} orders</Text>
-                          </View>
-                          {appliedFilters.foodItem === foodItem.rootName && (
-                            <Icon name="check" size={18} color={platformColor} />
-                          )}
-                        </TouchableOpacity>
-                      ))}
-                  </View>
-                )}
-                
-                {/* All Food Items Section */}
-                <View style={styles.filterSection}>
-                  <Text style={styles.filterSectionTitle}>All Food Items</Text>
-                  {processedFoodItems
-                    .filter(item => item.displayName.toLowerCase().includes(foodItemSearch.toLowerCase()))
-                    .map((foodItem, index) => (
-                      <TouchableOpacity
-                        key={`food-${index}`}
-                        style={[
-                          styles.filterOption,
-                          appliedFilters.foodItem === foodItem.rootName && 
-                            [styles.filterOptionSelected, { backgroundColor: `${platformColor}15` }]
-                        ]}
-                        onPress={() => applyFoodItemFilter(
-                          foodItem.rootName === appliedFilters.foodItem ? null : foodItem.rootName
-                        )}
-                      >
-                        <View style={styles.filterOptionContent}>
-                          <Text style={styles.filterOptionText}>{foodItem.displayName}</Text>
-                          <Text style={styles.orderCountText}>{foodItem.orderCount} orders</Text>
-                        </View>
-                        {appliedFilters.foodItem === foodItem.rootName && (
-                          <Icon name="check" size={18} color={platformColor} />
-                        )}
-                      </TouchableOpacity>
-                    ))}
-                </View>
+              <ScrollView 
+                style={styles.filterTabContent} 
+                contentContainerStyle={{paddingBottom: 120}}
+                showsVerticalScrollIndicator={true}
+              >
+                {normalizedFoodItems
+                  .filter(item => 
+                    item.displayName.toLowerCase().includes(foodItemSearch.toLowerCase())
+                  )
+                  .map((foodItem, index) => (
+                    <TouchableOpacity
+                      key={`food-${index}`}
+                      style={[
+                        styles.filterOption,
+                        appliedFilters.foodItem === foodItem.key && 
+                          [styles.filterOptionSelected, { backgroundColor: `${platformColor}15` }]
+                      ]}
+                      onPress={() => applyFoodItemFilter(
+                        foodItem.key === appliedFilters.foodItem ? null : foodItem.key, 
+                        foodItem
+                      )}
+                    >
+                      <Text style={styles.filterOptionText}>
+                        {foodItem.displayName}
+                        {foodItem.count > 1 && 
+                          <Text style={styles.variantCount}> ({foodItem.count} varieties)</Text>
+                        }
+                      </Text>
+                      {appliedFilters.foodItem === foodItem.key && (
+                        <Icon name="check" size={18} color={platformColor} />
+                      )}
+                    </TouchableOpacity>
+                  ))}
               </ScrollView>
             </View>
           )}
-    
+          
           {activeFilterTab === 'date' && (
-            <ScrollView style={styles.filterTabContent}>
+            <View style={styles.filterTabContent}>
               <View style={styles.dateRangeContainer}>
                 <Text style={styles.dateRangeTitle}>Select Date Range</Text>
                 
@@ -1123,9 +1080,9 @@ const TransactionsScreen = () => {
                   </TouchableOpacity>
                 </View>
               </View>
-            </ScrollView>
+            </View>
           )}
-                    
+          
           <View style={styles.modalFooter}>
             <TouchableOpacity 
               style={styles.resetAllFiltersButton}
@@ -1148,8 +1105,10 @@ const TransactionsScreen = () => {
       </View>
     </Modal>
   );
-// Render Date Picker Modal
-const renderDatePickerModal = () => (
+  
+  // Render Date Picker Modal
+ // Render Date Picker Modal
+ const renderDatePickerModal = () => (
   <Modal
     visible={datePickerVisible}
     transparent={true}
@@ -1603,7 +1562,6 @@ filterTabText: {
 },
 filterTabContent: {
   maxHeight: 300,
-  paddingBottom: 70,
 },
 filterOption: {
   paddingVertical: 12,
@@ -1791,29 +1749,11 @@ filterSearchInput: {
   fontSize: 14,
   color: '#333',
 },
-filterSection: {
-  marginBottom: 10,
-},
-filterSectionTitle: {
-  fontSize: 14,
-  fontWeight: 'bold',
-  color: '#555',
-  backgroundColor: '#f5f5f5',
-  paddingVertical: 8,
-  paddingHorizontal: 15,
-  borderBottomWidth: 1,
-  borderBottomColor: '#e0e0e0',
-},
-filterOptionContent: {
-  flex: 1,
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-},
-orderCountText: {
+variantCount: {
   fontSize: 12,
-  color: '#888',
-},
+  color: '#777',
+  fontStyle: 'italic'
+}
 });
 
 export default TransactionsScreen;
