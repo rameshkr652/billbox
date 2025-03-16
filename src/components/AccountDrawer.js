@@ -1,10 +1,11 @@
-// src/components/AccountDrawer.js
+// src/components/AccountDrawer.js - Fixed for proper account switching
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Colors from '../constants/colors';
 import * as AccountService from '../services/AccountService';
 import * as StorageService from '../services/StorageService';
+import { tokenCache } from '../services/GmailService'; // Import tokenCache for clearing
 
 const AccountDrawer = ({ platform, accountEmail, onAccountChange, onClose }) => {
   const [accounts, setAccounts] = useState([]);
@@ -28,12 +29,44 @@ const AccountDrawer = ({ platform, accountEmail, onAccountChange, onClose }) => 
 
   const handleAccountSelect = async (email) => {
     try {
+      if (email === accountEmail) {
+        // If the same account is selected, just close the drawer
+        onClose();
+        return;
+      }
+      
+      console.log(`AccountDrawer: Switching from ${accountEmail} to ${email} for platform ${platform}`);
+      
+      // Clear token cache for both the old and new account to ensure fresh tokens
+      if (accountEmail) tokenCache.clearToken(accountEmail);
+      tokenCache.clearToken(email);
+      
+      // Get the main account (the one logged into the app)
+      const mainAccount = await AccountService.getCurrentAccount();
+      if (!mainAccount) {
+        throw new Error('No main account found.');
+      }
+      
+      // Update platform configurations
+      const platformsConfig = await StorageService.getPlatformsForAccount(mainAccount.email) || {};
+      platformsConfig[platform] = { accountEmail: email };
+      
+      // Save the updated config
+      await StorageService.savePlatformsForAccount(mainAccount.email, platformsConfig);
+      
+      // Notify parent component of the account change
       if (onAccountChange) {
         onAccountChange(email);
       }
+      
+      // Show confirmation
+      Alert.alert('Account Changed', `Now using ${email} for ${platform}`);
+      
+      // Close the drawer
       onClose();
     } catch (error) {
       console.error('Error selecting account:', error);
+      Alert.alert('Error', 'Failed to switch account. Please try again.');
     }
   };
 
@@ -69,7 +102,7 @@ const AccountDrawer = ({ platform, accountEmail, onAccountChange, onClose }) => 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Select Account</Text>
+        <Text style={styles.title}>Select Account for {platform}</Text>
         <TouchableOpacity onPress={onClose} style={styles.closeButton}>
           <Icon name="close" size={24} color={Colors.darkGray} />
         </TouchableOpacity>
