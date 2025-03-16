@@ -1,37 +1,57 @@
-// src/services/GmailService.js with token caching
+// src/services/GmailService.js with improved token and cache management
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import * as AccountService from './AccountService';
 import * as AuthService from './AuthService';
 
 // In-memory token cache to prevent excessive validation
+// Fixed to be more secure and account-specific
 const tokenCache = {
   tokens: {},
   expiryTimes: {},
   isValidToken: function(accountEmail) {
-    if (!this.tokens[accountEmail]) return false;
+    if (!accountEmail || !this.tokens[accountEmail]) return false;
     
     const expiryTime = this.expiryTimes[accountEmail] || 0;
     return expiryTime > Date.now();
   },
   getToken: function(accountEmail) {
-    return this.tokens[accountEmail];
+    return accountEmail ? this.tokens[accountEmail] : null;
   },
   setToken: function(accountEmail, token, expiresInSeconds = 3600) {
+    if (!accountEmail || !token) return;
+    
     this.tokens[accountEmail] = token;
     this.expiryTimes[accountEmail] = Date.now() + (expiresInSeconds * 1000);
+    
+    console.log(`Token cached for ${accountEmail}, expires in ${expiresInSeconds} seconds`);
   },
   clearToken: function(accountEmail) {
+    if (!accountEmail) return;
+    
     delete this.tokens[accountEmail];
     delete this.expiryTimes[accountEmail];
+    console.log(`Token cache cleared for ${accountEmail}`);
+  },
+  clearAllTokens: function() {
+    this.tokens = {};
+    this.expiryTimes = {};
+    console.log('All token caches cleared');
   }
 };
+
+// Export the tokenCache so it can be accessed by other components
+export { tokenCache };
 
 /**
  * Get a valid access token, using cache when possible to prevent validation overhead
  */
 const getAccessToken = async (accountEmail) => {
   try {
+    if (!accountEmail) {
+      throw new Error('Account email is required to get an access token');
+    }
+    
     // Check memory cache first
     if (tokenCache.isValidToken(accountEmail)) {
       return tokenCache.getToken(accountEmail);
@@ -39,11 +59,16 @@ const getAccessToken = async (accountEmail) => {
     
     // Try getting a fresh token
     console.log(`Cache miss for ${accountEmail}, obtaining fresh token...`);
+    
+    // Try to refresh token first
+    const refreshResult = await AuthService.refreshTokenIfNeeded(accountEmail);
+    
+    // Get account with refreshed token
     const accounts = await AccountService.getAccounts();
     const account = accounts.find(acc => acc.email === accountEmail);
     
     if (!account || !account.accessToken) {
-      throw new Error('Account not found or missing access token');
+      throw new Error(`Account not found or missing access token for ${accountEmail}`);
     }
     
     // Store in cache with expiry time (50 minutes to be safe)
@@ -51,7 +76,7 @@ const getAccessToken = async (accountEmail) => {
     
     return account.accessToken;
   } catch (error) {
-    console.error('Error getting access token:', error);
+    console.error(`Error getting access token for ${accountEmail}:`, error);
     throw error;
   }
 };
@@ -61,8 +86,14 @@ const getAccessToken = async (accountEmail) => {
  */
 const callGmailApi = async (endpoint, accountEmail, options = {}, retryCount = 0) => {
   try {
+    if (!accountEmail) {
+      throw new Error('Account email is required for Gmail API calls');
+    }
+    
     // Get token from cache or refresh if needed
     const accessToken = await getAccessToken(accountEmail);
+    
+    console.log(`Making Gmail API call to ${endpoint} with account ${accountEmail}`);
     
     // Make the API call
     const response = await fetch(endpoint, {
@@ -108,10 +139,7 @@ const callGmailApi = async (endpoint, accountEmail, options = {}, retryCount = 0
   }
 };
 
-/**
- * IMPORTANT: Keep the original function name for compatibility
- * Batch processing of emails to reduce API calls
- */
+// src/services/GmailService.js (continued)
 export const fetchAllPlatformEmails = async (platform, accountEmail, platformQuery, progressCallback = () => {}) => {
   try {
     if (!accountEmail) {
@@ -209,9 +237,10 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
       );
     }
     
-    // Save results
+    // Save results - IMPORTANT: We now use accountEmail in the storage key
     progressCallback(allMessageIds.length, allMessageIds.length, 'Saving emails...');
-    await AsyncStorage.setItem(`emails_${platform}_${accountEmail}`, JSON.stringify(processedEmails));
+    const storageKey = `emails_${platform}_${accountEmail}`;
+    await AsyncStorage.setItem(storageKey, JSON.stringify(processedEmails));
     
     // Save last fetched timestamp
     const now = Date.now();
@@ -219,7 +248,7 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
     
     return processedEmails;
   } catch (error) {
-    console.error(`Error fetching platform emails:`, error);
+    console.error(`Error fetching platform emails for ${accountEmail}:`, error);
     throw error;
   }
 };
@@ -464,47 +493,73 @@ const parseOrderDetails = (emailBodyHtml, platform) => {
 };
 
 /**
- * Utility methods for storage
+ * Utility methods for storage - IMPORTANT: These now use accountEmail in the keys
  */
 export const getPlatformEmails = async (platform, accountEmail) => {
   try {
-    if (!accountEmail) return [];
+    if (!accountEmail) {
+      console.warn(`getPlatformEmails: No account email provided for ${platform}`);
+      return [];
+    }
     
-    const emails = await AsyncStorage.getItem(`emails_${platform}_${accountEmail}`);
+    console.log(`Getting emails for ${platform} with account ${accountEmail}`);
+    const storageKey = `emails_${platform}_${accountEmail}`;
+    const emails = await AsyncStorage.getItem(storageKey);
     return emails ? JSON.parse(emails) : [];
   } catch (error) {
-    console.error(`Error getting ${platform} emails from storage:`, error);
+    console.error(`Error getting ${platform} emails from storage for ${accountEmail}:`, error);
     return [];
   }
 };
 
 export const getLastFetchedTimestamp = async (platform, accountEmail) => {
   try {
-    if (!accountEmail) return null;
+    if (!accountEmail) {
+      console.warn(`getLastFetchedTimestamp: No account email provided for ${platform}`);
+      return null;
+    }
     
-    const timestamp = await AsyncStorage.getItem(`lastFetched_${platform}_${accountEmail}`);
+    const storageKey = `lastFetched_${platform}_${accountEmail}`;
+    const timestamp = await AsyncStorage.getItem(storageKey);
     return timestamp ? parseInt(timestamp) : null;
   } catch (error) {
-    console.error(`Error getting last fetched timestamp for ${platform}:`, error);
+    console.error(`Error getting last fetched timestamp for ${platform} with ${accountEmail}:`, error);
     return null;
   }
 };
 
 export const clearPlatformEmails = async (platform, accountEmail) => {
   try {
-    if (!accountEmail) return false;
+    if (!accountEmail) {
+      console.warn(`clearPlatformEmails: No account email provided for ${platform}`);
+      return false;
+    }
     
-    await AsyncStorage.removeItem(`emails_${platform}_${accountEmail}`);
-    await AsyncStorage.removeItem(`lastFetched_${platform}_${accountEmail}`);
+    console.log(`Clearing emails for ${platform} with account ${accountEmail}`);
+    const emailsKey = `emails_${platform}_${accountEmail}`;
+    const timestampKey = `lastFetched_${platform}_${accountEmail}`;
+    
+    await AsyncStorage.removeItem(emailsKey);
+    await AsyncStorage.removeItem(timestampKey);
+    
+    // Also clear token cache for this account to force fresh token on next operation
+    tokenCache.clearToken(accountEmail);
+    
     return true;
   } catch (error) {
-    console.error(`Error clearing ${platform} emails:`, error);
+    console.error(`Error clearing ${platform} emails for ${accountEmail}:`, error);
     return false;
   }
 };
 
 export const fetchLatestEmails = async (platform, accountEmail, lastFetchedDate, progressCallback = () => {}) => {
   try {
+    if (!accountEmail) {
+      throw new Error('No account email provided for fetching latest emails');
+    }
+    
+    console.log(`Fetching latest emails for ${platform} with account ${accountEmail}`);
+    
     // Format date for Gmail query (YYYY/MM/DD)
     const formatDate = (date) => {
       return `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
@@ -526,8 +581,9 @@ export const fetchLatestEmails = async (platform, accountEmail, lastFetchedDate,
     // Merge without duplicates
     const mergedEmails = mergeWithoutDuplicates(existingEmails, newEmails);
     
-    // Save merged result
-    await AsyncStorage.setItem(`emails_${platform}_${accountEmail}`, JSON.stringify(mergedEmails));
+    // Save merged result using the correct account-specific key
+    const storageKey = `emails_${platform}_${accountEmail}`;
+    await AsyncStorage.setItem(storageKey, JSON.stringify(mergedEmails));
     
     // Update timestamp
     const now = Date.now();
@@ -535,7 +591,7 @@ export const fetchLatestEmails = async (platform, accountEmail, lastFetchedDate,
     
     return mergedEmails;
   } catch (error) {
-    console.error(`Error fetching latest emails:`, error);
+    console.error(`Error fetching latest emails for ${platform} with ${accountEmail}:`, error);
     throw error;
   }
 };
