@@ -56,6 +56,7 @@ const PlatformTab = ({ platform }) => {
   // Load platform data
   const loadPlatformData = async () => {
     const result = await PlatformTabUtils.loadPlatformData(platform, (platformData) => {
+      console.log(platformData,"platformData")
       setAccountEmail(platformData.accountEmail);
       setEmails(platformData.emails);
       setLastFetched(platformData.lastFetched);
@@ -84,36 +85,6 @@ const PlatformTab = ({ platform }) => {
     }).start(() => {
       setShowAccountDrawer(false);
     });
-  };
-  
-  // Handle account change
-  const handleAccountChange = async (email) => {
-    try {
-      // Get current main account
-      const mainAccount = await AccountService.getCurrentAccount();
-      
-      const result = await PlatformTabUtils.updatePlatformAccount(
-        platform, 
-        email, 
-        mainAccount
-      );
-      
-      if (result.success) {
-        // Update UI
-        setAccountEmail(email);
-        setEmails([]);
-        setLastFetched(null);
-        setError(null);
-        
-        // Close drawer
-        closeAccountDrawer();
-      } else {
-        Alert.alert('Error', result.error || 'Failed to update account');
-      }
-    } catch (error) {
-      console.error('Error updating platform account:', error);
-      Alert.alert('Error', 'Failed to update account');
-    }
   };
   
   // Fetch all emails
@@ -279,41 +250,6 @@ const PlatformTab = ({ platform }) => {
     />
   );
   
-  // Render account drawer
-  const renderAccountDrawer = () => (
-    showAccountDrawer && (
-      <Modal
-        visible={showAccountDrawer}
-        transparent={true}
-        animationType="none"
-        onRequestClose={closeAccountDrawer}
-      >
-        <View style={PlatformTabStyles.drawerOverlay}>
-          <TouchableOpacity
-            style={PlatformTabStyles.drawerBackdrop}
-            activeOpacity={1}
-            onPress={closeAccountDrawer}
-          />
-          <Animated.View
-            style={[
-              PlatformTabStyles.drawerContainer,
-              {
-                transform: [{ translateX: drawerAnimation }],
-              },
-            ]}
-          >
-            <AccountDrawer
-              platform={platform}
-              accountEmail={accountEmail}
-              onAccountChange={handleAccountChange}
-              onClose={closeAccountDrawer}
-            />
-          </Animated.View>
-        </View>
-      </Modal>
-    )
-  );
-  
   return (
     <SafeAreaView style={PlatformTabStyles.container}>
       <StatusBar barStyle="light-content" backgroundColor={platformInfo.color} />
@@ -376,8 +312,6 @@ const PlatformTab = ({ platform }) => {
       {/* Progress Modal */}
       {renderProgressModal()}
       
-      {/* Account Drawer */}
-      {renderAccountDrawer()}
       {showConfirmClear && (
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>

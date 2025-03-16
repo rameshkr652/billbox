@@ -446,7 +446,6 @@ const MainScreen = () => {
       }
       
       const storageKey = `platforms_${account.email}`;
-      console.log('Looking for platforms with key:', storageKey);
       
       const platformsData = await AsyncStorage.getItem(storageKey);
       console.log('Platforms data loaded:', platformsData);

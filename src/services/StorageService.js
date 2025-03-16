@@ -65,9 +65,7 @@ export const getPlatformsForAccount = async (accountEmail) => {
         return {};
       }
       
-      console.log('Getting platforms for:', accountEmail);
       const platforms = await AsyncStorage.getItem(`platforms_${accountEmail}`);
-      console.log('Raw platforms data:', platforms);
       
       // If no data exists yet, return empty object instead of null
       if (!platforms) {
@@ -101,7 +99,6 @@ export const getPlatformsForAccount = async (accountEmail) => {
       
       // Verify save was successful
       const savedData = await AsyncStorage.getItem(`platforms_${accountEmail}`);
-      console.log('Verification - saved data:', savedData);
       
       return true;
     } catch (error) {
