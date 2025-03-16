@@ -628,3 +628,37 @@ const mergeWithoutDuplicates = (existingEmails, newEmails) => {
   // Convert map back to array
   return Array.from(emailMap.values());
 };
+
+// Add this to GmailService.js
+
+/**
+ * Save emails for a specific platform and account
+ * @param {string} platform - The platform identifier
+ * @param {string} accountEmail - The email of the account
+ * @param {Array} emails - The array of emails to save
+ * @returns {Promise<boolean>} - Whether the operation was successful
+ */
+export const saveEmails = async (platform, accountEmail, emails) => {
+  try {
+    if (!platform || !accountEmail) {
+      console.error('Missing platform or account email for saving emails');
+      return false;
+    }
+    
+    // Create the platform-specific, account-specific storage key
+    const storageKey = `emails_${platform}_${accountEmail}`;
+    
+    // Save the emails to storage
+    await AsyncStorage.setItem(storageKey, JSON.stringify(emails));
+    
+    // Update the last fetched timestamp
+    const now = Date.now();
+    await AsyncStorage.setItem(`lastFetched_${platform}_${accountEmail}`, now.toString());
+    
+    console.log(`Saved ${emails.length} emails for ${platform} with account ${accountEmail}`);
+    return true;
+  } catch (error) {
+    console.error(`Error saving emails for ${platform} with account ${accountEmail}:`, error);
+    return false;
+  }
+};
