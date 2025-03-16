@@ -12,6 +12,10 @@ import AccountSelectionScreen from '../screens/AccountSelectionScreen';
 import WebAuthScreen from '../screens/WebAuthScreen';
 import TransactionsScreen from '../screens/TransactionsScreen';
 import OrderDetailsScreen from '../screens/OrderDetailsScreen';
+import RestaurantsScreen from '../screens/RestaurantsScreen';
+import FoodsScreen from '../screens/FoodsScreen';
+import FoodDetailsScreen from '../screens/FoodDetailsScreen';
+import RestaurantDetailsScreen from '../screens/RestaurantDetailsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -31,7 +35,10 @@ const AppNavigator = () => {
         <Stack.Screen name="WebAuth" component={WebAuthScreen} />
         <Stack.Screen name="TransactionsScreen" component={TransactionsScreen} />
         <Stack.Screen name="OrderDetails" component={OrderDetailsScreen} />
-
+        <Stack.Screen name="RestaurantsScreen" component={RestaurantsScreen} />
+        <Stack.Screen name="FoodsScreen" component={FoodsScreen} />
+        <Stack.Screen name="RestaurantDetails" component={RestaurantDetailsScreen} />
+        <Stack.Screen name="FoodDetails" component={FoodDetailsScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

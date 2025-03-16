@@ -62,7 +62,14 @@ const TransactionsScreen = () => {
   const [restaurantSearch, setRestaurantSearch] = useState('');
   const [foodItemSearch, setFoodItemSearch] = useState('');
   const [normalizedFoodItems, setNormalizedFoodItems] = useState([]);
-
+  const [tempFilters, setTempFilters] = useState({
+    restaurant: null,
+    foodItem: null,
+    date: {
+      start: null,
+      end: null
+    }
+  });
   
 
   const normalizeFoodItems = (foodItems) => {
@@ -215,19 +222,33 @@ const TransactionsScreen = () => {
         }
         
         return item.foodItemsForFiltering.some(food => {
-          // Clean and normalize the food string the same way we do for the filter items
-          const normalizedFood = advancedCombinedFoods(food)                      
-          // If the food contains a plus sign, only consider the main item
-          const mainItem = normalizedFood.includes('+') 
-            ? normalizedFood.split('+')[0].trim() 
-            : normalizedFood;
+          // Guard against undefined values
+          if (!food) return false;
           
-          // Match if it's the same as our filter key or contains it
-          return mainItem === appliedFilters.foodItem || 
-                 mainItem.includes(appliedFilters.foodItem);
+          try {
+            // Clean and normalize the food string
+            const normalizedFood = typeof food === 'string' ? 
+              advancedCombinedFoods(food) : '';
+            console.log(normalizedFood);
+            // If normalizedFood is empty or undefined, skip this item
+            if (!normalizedFood) return false;
+            
+            // If the food contains a plus sign, only consider the main item
+            const mainItem = normalizedFood.includes('+') ? 
+              normalizedFood.split('+')[0].trim() : 
+              normalizedFood;
+            
+            // Match if it's the same as our filter key or contains it
+            return mainItem === appliedFilters.foodItem || 
+                   mainItem.includes(appliedFilters.foodItem);
+          } catch (error) {
+            console.log('Error processing food item:', food, error);
+            return false;
+          }
         });
       });
     }
+    
     
     // Apply date range filter
     if (appliedFilters.date.start && appliedFilters.date.end) {
@@ -342,21 +363,31 @@ const TransactionsScreen = () => {
   
   // Reset all filters
   const resetAllFilters = () => {
-    setAppliedFilters({
+    const emptyFilters = {
       restaurant: null,
       foodItem: null,
       date: {
         start: null,
         end: null
       }
-    });
+    };
+    
+    // Reset temp filters
+    setTempFilters(emptyFilters);
     setCustomDateRange({ start: null, end: null });
-    setSearchQuery('');
     updateMarkedDates({ start: null, end: null });
+    
+    // If called from modal footer, don't apply yet
+    if (!showFilterModal) {
+      setAppliedFilters(emptyFilters);
+      setSearchQuery('');
+    }
   };
+  
   
   // Open filter modal
   const openFilterModal = () => {
+    setTempFilters({...appliedFilters});
     setShowFilterModal(true);
   };
   
@@ -427,23 +458,34 @@ const TransactionsScreen = () => {
     const selectedDate = new Date(date.dateString);
     
     if (datePickerMode === 'start') {
+      // Update custom date range visual state
       setCustomDateRange(prev => {
         const updatedRange = {
           ...prev,
           start: selectedDate,
-          // If end date exists and is before new start date, reset end date
           end: prev.end && prev.end < selectedDate ? null : prev.end
         };
         updateMarkedDates(updatedRange);
         return updatedRange;
       });
-      // Switch to end date selection if we haven't selected an end date yet
+      
+      // Update temp filters instead of applied filters
+      setTempFilters(prev => ({
+        ...prev,
+        date: {
+          ...prev.date,
+          start: selectedDate
+        }
+      }));
+      
+      // Handle mode switching
       if (!customDateRange.end) {
         setDatePickerMode('end');
       } else {
         setDatePickerVisible(false);
       }
     } else {
+      // Similar changes for end date selection
       setCustomDateRange(prev => {
         const updatedRange = {
           ...prev,
@@ -452,10 +494,33 @@ const TransactionsScreen = () => {
         updateMarkedDates(updatedRange);
         return updatedRange;
       });
+      
+      setTempFilters(prev => ({
+        ...prev,
+        date: {
+          ...prev.date,
+          end: selectedDate
+        }
+      }));
+      
       setDatePickerVisible(false);
     }
   };
   
+  const applyAllFilters = () => {
+    // Create a sanitized version of filters
+    const sanitizedFilters = {
+      restaurant: tempFilters.restaurant || null,
+      foodItem: tempFilters.foodItem || null,
+      date: {
+        start: tempFilters.date?.start || null,
+        end: tempFilters.date?.end || null
+      }
+    };
+    
+    setAppliedFilters(sanitizedFilters);
+    closeFilterModal();
+  };
   // Apply custom date range
   const applyDateRange = () => {
     if (customDateRange.start && customDateRange.end) {
@@ -472,17 +537,18 @@ const TransactionsScreen = () => {
   
   // Apply a restaurant filter
   const applyRestaurantFilter = (restaurant) => {
-    setAppliedFilters(prev => ({
+    setTempFilters(prev => ({
       ...prev,
-      restaurant
+      restaurant: restaurant === tempFilters.restaurant ? null : restaurant
     }));
   };
   
   // Apply a food item filter
   const applyFoodItemFilter = (key, foodItem) => {
-    setAppliedFilters(prev => ({
+  
+    setTempFilters(prev => ({
       ...prev,
-      foodItem: key
+      foodItem: key === prev.foodItem ? null : key
     }));
   };
   
@@ -744,12 +810,12 @@ const TransactionsScreen = () => {
                       key={`restaurant-${index}`}
                       style={[
                         styles.filterOption,
-                        appliedFilters.restaurant === restaurant && [styles.filterOptionSelected, { backgroundColor: `${platformColor}15` }]
+                        tempFilters.restaurant === restaurant && [styles.filterOptionSelected, { backgroundColor: `${platformColor}15` }]
                       ]}
-                      onPress={() => applyRestaurantFilter(restaurant === appliedFilters.restaurant ? null : restaurant)}
+                      onPress={() => applyRestaurantFilter(restaurant)}
                     >
                       <Text style={styles.filterOptionText}>{restaurant}</Text>
-                      {appliedFilters.restaurant === restaurant && (
+                      {tempFilters.restaurant === restaurant && (
                         <Icon name="check" size={18} color={platformColor} />
                       )}
                     </TouchableOpacity>
@@ -788,27 +854,24 @@ const TransactionsScreen = () => {
                   )
                   .map((foodItem, index) => (
                     <TouchableOpacity
-                      key={`food-${index}`}
-                      style={[
-                        styles.filterOption,
-                        appliedFilters.foodItem === foodItem.key && 
-                          [styles.filterOptionSelected, { backgroundColor: `${platformColor}15` }]
-                      ]}
-                      onPress={() => applyFoodItemFilter(
-                        foodItem.key === appliedFilters.foodItem ? null : foodItem.key, 
-                        foodItem
-                      )}
-                    >
-                      <Text style={styles.filterOptionText}>
-                        {foodItem.displayName}
-                        {foodItem.count > 1 && 
-                          <Text style={styles.variantCount}> ({foodItem.count} varieties)</Text>
-                        }
-                      </Text>
-                      {appliedFilters.foodItem === foodItem.key && (
-                        <Icon name="check" size={18} color={platformColor} />
-                      )}
-                    </TouchableOpacity>
+                        key={`food-${index}`}
+                        style={[
+                          styles.filterOption,
+                          tempFilters.foodItem === foodItem.key && 
+                            [styles.filterOptionSelected, { backgroundColor: `${platformColor}15` }]
+                        ]}
+                        onPress={() => applyFoodItemFilter(foodItem.key, foodItem)}
+                      >
+                        <Text style={styles.filterOptionText}>
+                          {foodItem.displayName}
+                          {foodItem.count > 1 && 
+                            <Text style={styles.variantCount}> ({foodItem.count} varieties)</Text>
+                          }
+                        </Text>
+                        {tempFilters.foodItem === foodItem.key && (
+                          <Icon name="check" size={18} color={platformColor} />
+                        )}
+                      </TouchableOpacity>
                   ))}
               </ScrollView>
             </View>
@@ -884,24 +947,24 @@ const TransactionsScreen = () => {
                 <Text style={styles.quickDateFiltersTitle}>Quick Filters</Text>
                 
                 <View style={styles.quickDateButtonsRow}>
-                  <TouchableOpacity 
-                    style={styles.quickDateButton}
-                    onPress={() => {
-                      const today = new Date();
-                      const start = new Date(today);
-                      const end = new Date(today);
-                      
-                      setCustomDateRange({ start, end });
-                      setAppliedFilters(prev => ({
-                        ...prev,
-                        date: { start, end }
-                      }));
-                      updateMarkedDates({ start, end });
-                      closeFilterModal();
-                    }}
-                  >
-                    <Text style={styles.quickDateButtonText}>Today</Text>
-                  </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.quickDateButton}
+                  onPress={() => {
+                    const today = new Date();
+                    const start = new Date(today);
+                    const end = new Date(today);
+                    
+                    setCustomDateRange({ start, end });
+                    setTempFilters(prev => ({
+                      ...prev,
+                      date: { start, end }
+                    }));
+                    updateMarkedDates({ start, end });
+                    // Don't close modal or apply yet
+                  }}
+                >
+                  <Text style={styles.quickDateButtonText}>Today</Text>
+                </TouchableOpacity>
                   
                   <TouchableOpacity 
                     style={styles.quickDateButton}
@@ -981,7 +1044,7 @@ const TransactionsScreen = () => {
             
             <TouchableOpacity 
               style={[styles.applyFiltersButton, { backgroundColor: platformColor }]}
-              onPress={closeFilterModal}
+              onPress={applyAllFilters}
             >
               <Text style={styles.applyFiltersButtonText}>Apply</Text>
             </TouchableOpacity>
