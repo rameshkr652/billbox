@@ -1,6 +1,6 @@
 // src/components/ExpenseSummary.js - Modified
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { Calendar } from 'react-native-calendars';
 import Colors from '../constants/colors';
@@ -26,7 +26,7 @@ const ExpenseSummary = ({ emails, platformColor }) => {
   const [datePickerMode, setDatePickerMode] = useState('start'); // 'start' or 'end'
   const [earliestDate, setEarliestDate] = useState(null);
   const [markedDates, setMarkedDates] = useState({});
-  
+  const [isNavigating, setIsNavigating] = useState(false);
   // Find earliest date in emails
   useEffect(() => {
     if (emails && emails.length > 0) {
@@ -272,42 +272,56 @@ const ExpenseSummary = ({ emails, platformColor }) => {
 
   // Handle navigation to the transactions screen
   const navigateToTransactions = () => {
-    // Extract unique restaurant names and food items from ALL emails
-    const validEmails = emails.filter(email => 
-      email.orderDetails?.restaurantName && 
-      email.orderDetails?.totalPrice && 
-      email.orderDetails?.totalPrice !== 'N/A'
-    );
+    // Show loader
+    setIsNavigating(true);
     
-    const uniqueRestaurants = [...new Set(validEmails
-      .map(email => email.orderDetails.restaurantName))];
-    
-    // Extract food items from order details
-    const allFoodItems = [];
-    validEmails.forEach(email => {
-      if (email.orderDetails?.orderItems && Array.isArray(email.orderDetails.orderItems)) {
-        email.orderDetails.orderItems.forEach(item => {
-          // Extract food name from format like "1 X Food Name"
-          const match = item.match(/\d+\s*[Xx×]\s+(.*)/);
-          if (match && match[1]) {
-            allFoodItems.push(match[1].trim());
+    // Use setTimeout to allow the loader to render before heavy processing
+    setTimeout(() => {
+      try {
+        // Extract unique restaurant names and food items from ALL emails
+        const validEmails = emails.filter(email => 
+          email.orderDetails?.restaurantName && 
+          email.orderDetails?.totalPrice && 
+          email.orderDetails?.totalPrice !== 'N/A'
+        );
+        
+        const uniqueRestaurants = [...new Set(validEmails
+          .map(email => email.orderDetails.restaurantName))];
+        
+        // Extract food items from order details
+        const allFoodItems = [];
+        validEmails.forEach(email => {
+          if (email.orderDetails?.orderItems && Array.isArray(email.orderDetails.orderItems)) {
+            email.orderDetails.orderItems.forEach(item => {
+              // Extract food name from format like "1 X Food Name"
+              const match = item.match(/\d+\s*[Xx×]\s+(.*)/);
+              if (match && match[1]) {
+                allFoodItems.push(match[1].trim());
+              }
+            });
           }
         });
+        
+        // Get unique food items
+        const uniqueFoodItems = [...new Set(allFoodItems)];
+        
+        // Navigate to Transactions screen with ALL data (not filtered)
+        navigation.navigate('TransactionsScreen', {
+          allEmails: validEmails,
+          platformColor,
+          filterOptions: {
+            restaurants: uniqueRestaurants,
+            foodItems: uniqueFoodItems
+          }
+        });
+      } catch (error) {
+        console.error("Error preparing transaction data:", error);
+        // Show error message if needed
+      } finally {
+        // Hide loader
+        setIsNavigating(false);
       }
-    });
-    
-    // Get unique food items
-    const uniqueFoodItems = [...new Set(allFoodItems)];
-    console.log(allFoodItems)
-    // Navigate to Transactions screen with ALL data (not filtered)
-    navigation.navigate('TransactionsScreen', {
-      allEmails: validEmails, // Send all valid emails, not filtered ones
-      platformColor,
-      filterOptions: {
-        restaurants: uniqueRestaurants,
-        foodItems: uniqueFoodItems
-      }
-    });
+    }, 100); // Small delay to ensure loader appears
   };
 
   return (
@@ -382,10 +396,20 @@ const ExpenseSummary = ({ emails, platformColor }) => {
         <TouchableOpacity 
           style={[styles.seeAllButton, { backgroundColor: platformColor }]}
           onPress={navigateToTransactions}
+          disabled={isNavigating}
         >
-          <Icon name="assignment" size={20} color="#fff" />
-          <Text style={styles.seeAllButtonText}>See All Transactions</Text>
-          <Icon name="chevron-right" size={20} color="#fff" />
+          {isNavigating ? (
+            <>
+              <ActivityIndicator size="small" color="#fff" />
+              <Text style={styles.seeAllButtonText}>Preparing Transactions...</Text>
+            </>
+          ) : (
+            <>
+              <Icon name="assignment" size={20} color="#fff" />
+              <Text style={styles.seeAllButtonText}>See All Transactions</Text>
+              <Icon name="chevron-right" size={20} color="#fff" />
+            </>
+          )}
         </TouchableOpacity>
 
         {/* Show a preview or summary of transactions */}
