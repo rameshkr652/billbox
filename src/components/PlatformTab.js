@@ -1,5 +1,5 @@
-// src/components/PlatformTab.js - Fixed to properly merge new emails
-import React, { useState, useEffect, useRef } from 'react';
+// src/components/PlatformTab.js - Fixed to handle account switching
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -14,10 +14,11 @@ import {
   Platform as RNPlatform,
   ScrollView
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import * as AccountService from '../services/AccountService';
 import * as GmailService from '../services/GmailService';
-import ExpenseSummary from './ExpenseSummary'; // Import the new component
+import * as StorageService from '../services/StorageService';
+import ExpenseSummary from './ExpenseSummary';
 import platforms from '../constants/platforms';
 import AccountDrawer from './AccountDrawer';
 import PlatformTabStyles from '../styles/PlatformTabStyles';
@@ -25,7 +26,7 @@ import PlatformTabUtils from '../utils/PlatformTabUtils';
 import PlatformTabComponents from './PlatformTabComponents';
 import TopFavoritesSection from './TopFavoritesSection';
 
-const PlatformTab = ({ platform }) => {
+const PlatformTab = ({ platform, route }) => {
   const navigation = useNavigation();
   const [emails, setEmails] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -48,22 +49,81 @@ const PlatformTab = ({ platform }) => {
     color: '#4285F4',
     icon: 'inbox'
   };
+  useEffect(() => {
+    // Check if we have a refresh trigger from account switching
+    if (route.params?.refreshTrigger) {
+      console.log(`PlatformTab (${platform}): Refresh triggered by parameter change:`, route.params.refreshTrigger);
+      
+      // MODIFIED: Don't clear existing data, just reload
+      // This ensures data persistence between account switches
+      loadPlatformData();
+    }
+  }, [route.params?.refreshTrigger]);
+  
+  // Also reload when the screen gains focus
+  useFocusEffect(
+    useCallback(() => {
+      console.log(`PlatformTab (${platform}): Screen focused`);
+      loadPlatformData();
+    }, [])
+  );
   
   useEffect(() => {
     loadPlatformData();
   }, []);
   
-  // Load platform data
+  // Load platform data with correct account
   const loadPlatformData = async () => {
-    const result = await PlatformTabUtils.loadPlatformData(platform, (platformData) => {
-      console.log(platformData,"platformData")
-      setAccountEmail(platformData.accountEmail);
-      setEmails(platformData.emails);
-      setLastFetched(platformData.lastFetched);
-    });
-    
-    if (!result.success) {
-      setError(result.error);
+    try {
+      // Only show loading indicator if we don't have any emails yet
+      if (emails.length === 0) {
+        setLoading(true);
+      }
+      setError(null);
+      
+      // Get current main account
+      const account = await AccountService.getCurrentAccount();
+      if (!account) {
+        throw new Error("No account found. Please add an account first.");
+      }
+      
+      // Get platform configurations
+      const platformsConfig = await StorageService.getPlatformsForAccount(account.email);
+      
+      // Set account to use for this platform
+      const platformAccount = platformsConfig && platformsConfig[platform] ? 
+                             platformsConfig[platform].accountEmail || account.email : 
+                             account.email;
+      
+      console.log(`PlatformTab (${platform}): Using account:`, platformAccount);
+      
+      // Check if account has changed
+      const isAccountChanged = platformAccount !== accountEmail;
+      
+      // Update account email state
+      setAccountEmail(platformAccount);
+      
+      // Load saved emails if any
+      const savedEmails = await GmailService.getPlatformEmails(platform, platformAccount);
+      
+      // Get last fetched timestamp
+      const lastFetchedTimestamp = await GmailService.getLastFetchedTimestamp(platform, platformAccount);
+      const lastFetched = lastFetchedTimestamp ? new Date(parseInt(lastFetchedTimestamp)) : null;
+      
+      // Update state with loaded data
+      setEmails(savedEmails || []);
+      setLastFetched(lastFetched);
+      setLoading(false);
+      
+      return { success: true };
+    } catch (error) {
+      console.error(`Error loading platform data for ${platform}:`, error);
+      setLoading(false);
+      setError(error.message || `Error loading data for ${platform}`);
+      return { 
+        success: false, 
+        error: error.message || `Error loading data for ${platform}`
+      };
     }
   };
   
@@ -107,10 +167,13 @@ const PlatformTab = ({ platform }) => {
         setAccountEmail(account.email);
       }
       
+      // Clear existing emails to avoid showing data from the wrong account
+      setEmails([]);
+      
       // Fetch all emails with progress tracking
       const result = await PlatformTabUtils.fetchAllEmails(
         platform,
-        accountEmail,
+        accountEmail, // Important: Use the current account email state
         platformInfo,
         (current, total, message, estimatedTimeRemaining) => {
           const progressValue = total > 0 ? current / total : 0;
@@ -224,14 +287,18 @@ const PlatformTab = ({ platform }) => {
   const performClearEmails = async () => {
     try {
       setLoading(true);
-      const result = await PlatformTabUtils.clearEmails(platform, accountEmail);
       
-      if (result.success) {
+      // Clear emails for this specific platform and account
+      const result = await GmailService.clearPlatformEmails(platform, accountEmail);
+      
+      if (result) {
         setEmails([]);
         setLastFetched(null);
+        Alert.alert('Success', `All ${platformInfo.name} order data has been cleared.`);
       }
     } catch (error) {
       console.error(`Error clearing ${platform} emails:`, error);
+      Alert.alert('Error', `Failed to clear emails: ${error.message}`);
     } finally {
       setLoading(false);
       setShowConfirmClear(false);
@@ -262,6 +329,7 @@ const PlatformTab = ({ platform }) => {
         />
       ) : emails.length === 0 ? (
         <View>
+          
           <PlatformTabComponents.ListHeader
             platformName={platformInfo.name}
             platformColor={platformInfo.color}
@@ -281,6 +349,8 @@ const PlatformTab = ({ platform }) => {
       ) : (
         // Here we replace the FlatList with our ExpenseSummary component
         <View style={{ flex: 1 }}>
+        
+          
           <PlatformTabComponents.ListHeader
             platformName={platformInfo.name}
             platformColor={platformInfo.color}
@@ -312,6 +382,25 @@ const PlatformTab = ({ platform }) => {
       {/* Progress Modal */}
       {renderProgressModal()}
       
+      {/* Account Drawer */}
+      {showAccountDrawer && (
+        <Animated.View 
+          style={[
+            styles.accountDrawerContainer,
+            {
+              transform: [{ translateX: drawerAnimation }]
+            }
+          ]}
+        >
+          <AccountDrawer 
+            platform={platform}
+            accountEmail={accountEmail}
+            onAccountChange={handleAccountChange}
+            onClose={closeAccountDrawer}
+          />
+        </Animated.View>
+      )}
+      
       {showConfirmClear && (
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -341,6 +430,38 @@ const PlatformTab = ({ platform }) => {
 };
 
 const styles = StyleSheet.create({
+  accountInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    padding: 10,
+    margin: 15,
+    marginBottom: 5,
+    borderRadius: 8,
+    borderLeftWidth: 3,
+  },
+  accountInfoText: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 10,
+  },
+  accountInfoEmail: {
+    fontWeight: 'bold',
+  },
+  accountDrawerContainer: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    width: '80%',
+    backgroundColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: -2, height: 0 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    zIndex: 1000,
+  },
   modalOverlay: {
     position: 'absolute',
     top: 0,

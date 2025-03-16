@@ -14,11 +14,12 @@ import * as AccountService from '../services/AccountService';
 import * as StorageService from '../services/StorageService';
 import platforms from '../constants/platforms';
 import DrawerNavigator from '../navigation/DrawerNavigator';
+import { tokenCache } from '../services/GmailService';
 
 const Drawer = createDrawerNavigator();
 const Tab = createBottomTabNavigator();
 
-// HeaderAccountButton component
+// In MainScreen.js, fixed HeaderAccountButton to preserve data between account switches
 const HeaderAccountButton = ({ platform, navigation }) => {
   const [accountEmail, setAccountEmail] = useState('');
   
@@ -73,41 +74,47 @@ const HeaderAccountButton = ({ platform, navigation }) => {
     }
   };
   
-  // Update platform account function
-  const updatePlatformAccount = async (email) => {
-    try {
-      // Get current main account
-      const mainAccount = await AccountService.getCurrentAccount();
-      if (!mainAccount) {
-        Alert.alert('Error', 'No main account found');
-        return;
-      }
-      
-      // Get platform configurations
-      const platformsConfig = await StorageService.getPlatformsForAccount(mainAccount.email) || {};
-      
-      // Update account for this platform
-      platformsConfig[platform] = { accountEmail: email };
-      
-      // Save updated config
-      await StorageService.savePlatformsForAccount(mainAccount.email, platformsConfig);
-      
-      // Update UI
-      setAccountEmail(email);
-      
-      // Show success message
-      Alert.alert('Account Updated', `Now using ${email} for ${platform}`);
-      
-      // Refresh the screen
-      if (navigation.isFocused()) {
-        navigation.setParams({ refresh: Date.now() });
-      }
-    } catch (error) {
-      console.error('Error updating platform account:', error);
-      Alert.alert('Error', 'Failed to update account');
+  // Update platform account function with improved refresh mechanism
+  // FIXED to preserve data between account switches
+  // In MainScreen.js, modify the updatePlatformAccount function
+
+const updatePlatformAccount = async (email) => {
+  try {
+    // Get current main account
+    const mainAccount = await AccountService.getCurrentAccount();
+    if (!mainAccount) {
+      Alert.alert('Error', 'No main account found');
+      return;
     }
-  };
-  
+    
+    // Get platform configurations
+    const platformsConfig = await StorageService.getPlatformsForAccount(mainAccount.email) || {};
+    
+    // Update account for this platform
+    platformsConfig[platform] = { accountEmail: email };
+    
+    // Save updated config
+    await StorageService.savePlatformsForAccount(mainAccount.email, platformsConfig);
+    
+    // Update UI
+    setAccountEmail(email);
+    
+    // Show success message
+    Alert.alert('Account Updated', `Now using ${email} for ${platform}`);
+    
+    // Force PlatformTab to refresh by setting a unique refresh trigger
+    // This is the key part: we use a timestamp to ensure the value is always different
+    if (navigation.isFocused()) {
+      navigation.setParams({ refreshTrigger: Date.now() });
+      
+      // IMPORTANT: Removed the call to clearPlatformData to preserve data when switching accounts
+      // We want data to persist until explicitly cleared
+    }
+  } catch (error) {
+    console.error('Error updating platform account:', error);
+    Alert.alert('Error', 'Failed to update account');
+  }
+};
   return (
     <TouchableOpacity
       style={{
