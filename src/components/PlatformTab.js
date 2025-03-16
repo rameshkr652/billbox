@@ -12,6 +12,7 @@ import {
   Modal,
   Dimensions,
   Platform as RNPlatform,
+  ScrollView
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as AccountService from '../services/AccountService';
@@ -22,10 +23,7 @@ import AccountDrawer from './AccountDrawer';
 import PlatformTabStyles from '../styles/PlatformTabStyles';
 import PlatformTabUtils from '../utils/PlatformTabUtils';
 import PlatformTabComponents from './PlatformTabComponents';
-// Import platform-specific progress bar
-const ProgressBarAndroid = RNPlatform.OS === 'ios'
-  ? require('@react-native-community/progress-bar-android').default
-  : require('@react-native-community/progress-bar-android').default;
+import TopFavoritesSection from './TopFavoritesSection';
 
 const PlatformTab = ({ platform }) => {
   const navigation = useNavigation();
@@ -39,7 +37,7 @@ const PlatformTab = ({ platform }) => {
   const [showProgress, setShowProgress] = useState(false);
   const [progressText, setProgressText] = useState('');
   const [timeRemaining, setTimeRemaining] = useState(null);
-
+  const [showConfirmClear, setShowConfirmClear] = useState(false);
   // Drawer state
   const [showAccountDrawer, setShowAccountDrawer] = useState(false);
   const drawerAnimation = useRef(new Animated.Value(Dimensions.get('window').width)).current;
@@ -249,36 +247,24 @@ const PlatformTab = ({ platform }) => {
   
   // Clear emails
   const handleClearEmails = () => {
-    Alert.alert(
-      'Clear Data',
-      `Are you sure you want to clear all ${platformInfo.name} orders?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Clear', 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setLoading(true);
-              const result = await PlatformTabUtils.clearEmails(platform, accountEmail);
-              
-              if (result.success) {
-                setEmails([]);
-                setLastFetched(null);
-                Alert.alert('Success', `${platformInfo.name} orders cleared.`);
-              } else {
-                Alert.alert('Error', result.error || 'Failed to clear data');
-              }
-            } catch (error) {
-              console.error(`Error clearing ${platform} emails:`, error);
-              Alert.alert('Error', `Failed to clear data: ${error.message}`);
-            } finally {
-              setLoading(false);
-            }
-          }
-        },
-      ]
-    );
+    setShowConfirmClear(true);
+  };
+
+  const performClearEmails = async () => {
+    try {
+      setLoading(true);
+      const result = await PlatformTabUtils.clearEmails(platform, accountEmail);
+      
+      if (result.success) {
+        setEmails([]);
+        setLastFetched(null);
+      }
+    } catch (error) {
+      console.error(`Error clearing ${platform} emails:`, error);
+    } finally {
+      setLoading(false);
+      setShowConfirmClear(false);
+    }
   };
   
   // Render progress modal
@@ -369,10 +355,16 @@ const PlatformTab = ({ platform }) => {
             onFetchLatest={fetchLatestEmails}
             onClear={handleClearEmails}
           />
-          <ExpenseSummary 
-            emails={emails} 
-            platformColor={platformInfo.color}
-          />
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 20 }}>
+            <ExpenseSummary 
+              emails={emails} 
+              platformColor={platformInfo.color}
+            />
+            <TopFavoritesSection 
+              emails={emails} 
+              platformColor={platformInfo.color}
+            />
+          </ScrollView>
         </View>
       )}
       
@@ -386,8 +378,87 @@ const PlatformTab = ({ platform }) => {
       
       {/* Account Drawer */}
       {renderAccountDrawer()}
+      {showConfirmClear && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Clear Data</Text>
+            <Text style={styles.modalText}>Are you sure you want to clear all {platformInfo.name} orders?</Text>
+            
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setShowConfirmClear(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.clearButton]}
+                onPress={performClearEmails}
+              >
+                <Text style={styles.clearButtonText}>Clear</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 20,
+    width: '80%',
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#333',
+  },
+  modalText: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  modalButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 4,
+    marginLeft: 8,
+  },
+  cancelButton: {
+    backgroundColor: '#f0f0f0',
+  },
+  clearButton: {
+    backgroundColor: "#DB4437",
+  },
+  cancelButtonText: {
+    color: '#333',
+  },
+  clearButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+});
 
 export default PlatformTab;
