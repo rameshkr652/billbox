@@ -156,7 +156,7 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
     progressCallback(0, 1, 'Finding matching emails...');
     const listUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodedQuery}&maxResults=100`;
     const initialData = await callGmailApi(listUrl, accountEmail);
-    
+    console.log(initialData,"ss")
     if (!initialData.messages || initialData.messages.length === 0) {
       progressCallback(1, 1, 'No emails found.');
       return [];
@@ -403,7 +403,6 @@ const parseOrderDetails = (emailBodyHtml, platform) => {
     .replace(/Â/g, '') // Remove special character
     .replace(/\s+/g, ' ')
     .trim();
-  
   // Object to store our extracted data
   const orderDetails = {
     restaurantName: null,
@@ -627,4 +626,38 @@ const mergeWithoutDuplicates = (existingEmails, newEmails) => {
   
   // Convert map back to array
   return Array.from(emailMap.values());
+};
+
+// Add this to GmailService.js
+
+/**
+ * Save emails for a specific platform and account
+ * @param {string} platform - The platform identifier
+ * @param {string} accountEmail - The email of the account
+ * @param {Array} emails - The array of emails to save
+ * @returns {Promise<boolean>} - Whether the operation was successful
+ */
+export const saveEmails = async (platform, accountEmail, emails) => {
+  try {
+    if (!platform || !accountEmail) {
+      console.error('Missing platform or account email for saving emails');
+      return false;
+    }
+    
+    // Create the platform-specific, account-specific storage key
+    const storageKey = `emails_${platform}_${accountEmail}`;
+    
+    // Save the emails to storage
+    await AsyncStorage.setItem(storageKey, JSON.stringify(emails));
+    
+    // Update the last fetched timestamp
+    const now = Date.now();
+    await AsyncStorage.setItem(`lastFetched_${platform}_${accountEmail}`, now.toString());
+    
+    console.log(`Saved ${emails.length} emails for ${platform} with account ${accountEmail}`);
+    return true;
+  } catch (error) {
+    console.error(`Error saving emails for ${platform} with account ${accountEmail}:`, error);
+    return false;
+  }
 };

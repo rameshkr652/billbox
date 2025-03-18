@@ -25,6 +25,8 @@ import PlatformTabStyles from '../styles/PlatformTabStyles';
 import PlatformTabUtils from '../utils/PlatformTabUtils';
 import PlatformTabComponents from './PlatformTabComponents';
 import TopFavoritesSection from './TopFavoritesSection';
+import DietaryPreferencesSection from './DietaryPreferencesSection';
+import MealTimingAnalysis from './MealTimingAnalysis';
 
 const PlatformTab = ({ platform, route }) => {
   const navigation = useNavigation();
@@ -210,74 +212,96 @@ const PlatformTab = ({ platform, route }) => {
   };
   
   // Fetch latest emails
-  const fetchLatestEmails = async () => {
-    if (loading || !lastFetched) return;
+  // Fixed fetchLatestEmails function in PlatformTab.js
+const fetchLatestEmails = async () => {
+  if (loading || !lastFetched) return;
+  
+  try {
+    setLoading(true);
+    setError(null);
+    setShowProgress(true);
+    setProgress(0);
+    setProgressText('Preparing to fetch latest emails...');
     
-    try {
-      setLoading(true);
-      setError(null);
-      setShowProgress(true);
-      setProgress(0);
-      setProgressText('Preparing to fetch latest emails...');
-      
-      // Get existing emails first to ensure we have them
-      const existingEmails = [...emails];
-      
-      // Fetch latest emails with progress tracking
-      const result = await PlatformTabUtils.fetchLatestEmails(
-        platform,
-        accountEmail,
-        lastFetched,
-        platformInfo,
-        (current, total, message, estimatedTimeRemaining) => {
-          const progressValue = total > 0 ? current / total : 0;
-          setProgress(0.1 + progressValue * 0.8);
-          setProgressText(message || `Processing ${current} of ${total} latest emails...`);
-          
-          if (estimatedTimeRemaining) {
-            setTimeRemaining(PlatformTabUtils.formatTimeRemaining(estimatedTimeRemaining));
-          }
+    // Make a copy of existing emails before fetching new ones
+    const existingEmails = [...emails];
+    console.log(`Existing emails before fetch: ${existingEmails.length}`);
+    
+    // Fetch latest emails with progress tracking
+    const result = await PlatformTabUtils.fetchLatestEmails(
+      platform,
+      accountEmail,
+      lastFetched,
+      platformInfo,
+      (current, total, message, estimatedTimeRemaining) => {
+        const progressValue = total > 0 ? current / total : 0;
+        setProgress(0.1 + progressValue * 0.8);
+        setProgressText(message || `Processing ${current} of ${total} latest emails...`);
+        
+        if (estimatedTimeRemaining) {
+          setTimeRemaining(PlatformTabUtils.formatTimeRemaining(estimatedTimeRemaining));
         }
-      );
+      }
+    );
+    
+    if (result.success) {
+      console.log(`New emails fetched: ${result.emails ? result.emails.length : 0}`);
       
-      if (result.success) {
-        // Get only new emails not in the existing set
-        const newEmails = result.emails.filter(newEmail => {
-          return !existingEmails.some(existingEmail => 
+      // Create a new array with only truly new emails
+      const newEmails = [];
+      
+      // Check each new email to see if it's already in our existing set
+      if (result.emails && result.emails.length > 0) {
+        result.emails.forEach(newEmail => {
+          // Check if this email is already in our existing set
+          const isDuplicate = existingEmails.some(existingEmail => 
             existingEmail.id === newEmail.id || 
             (existingEmail.orderDetails?.orderId && 
-             existingEmail.orderDetails.orderId === newEmail.orderDetails?.orderId)
+             newEmail.orderDetails?.orderId && 
+             existingEmail.orderDetails.orderId === newEmail.orderDetails.orderId)
           );
+          
+          // If it's not a duplicate, add it to our new emails array
+          if (!isDuplicate) {
+            newEmails.push(newEmail);
+          }
         });
-        
-        // Combine existing and new emails
-        const combinedEmails = [...existingEmails, ...newEmails];
-        
-        // Update state
-        setEmails(combinedEmails);
-        setLastFetched(result.lastFetched);
-        
-        // Show appropriate notification
-        if (newEmails.length === 0) {
-          Alert.alert('No New Orders', `No new ${platformInfo.name} orders found since your last update.`);
-        } else {
-          Alert.alert('Success', `Found ${newEmails.length} new orders and updated your data.`);
-        }
-      } else {
-        setError(result.error);
-        Alert.alert('Error', result.error);
       }
-    } catch (error) {
-      console.error(`Error fetching latest emails for ${platform}:`, error);
-      setError(error.message || `Failed to fetch latest data for ${platform}`);
-      Alert.alert('Error', `Failed to fetch latest orders. ${error.message}`);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-      setShowProgress(false);
-      setTimeRemaining(null);
+      
+      console.log(`Truly new emails (not duplicates): ${newEmails.length}`);
+      
+      // Combine existing and new emails
+      const combinedEmails = [...existingEmails, ...newEmails];
+      console.log(`Combined emails: ${combinedEmails.length}`);
+      
+      // Save the combined emails
+      await GmailService.saveEmails(platform, accountEmail, combinedEmails);
+      
+      // Update state with combined emails
+      setEmails(combinedEmails);
+      setLastFetched(result.lastFetched);
+      
+      // Show appropriate notification
+      if (newEmails.length === 0) {
+        Alert.alert('No New Orders', `No new ${platformInfo.name} orders found since your last update.`);
+      } else {
+        Alert.alert('Success', `Found ${newEmails.length} new orders and updated your data.`);
+      }
+    } else {
+      setError(result.error);
+      Alert.alert('Error', result.error);
     }
-  };
+  } catch (error) {
+    console.error(`Error fetching latest emails for ${platform}:`, error);
+    setError(error.message || `Failed to fetch latest data for ${platform}`);
+    Alert.alert('Error', `Failed to fetch latest orders. ${error.message}`);
+  } finally {
+    setLoading(false);
+    setRefreshing(false);
+    setShowProgress(false);
+    setTimeRemaining(null);
+  }
+};
   
   // Clear emails
   const handleClearEmails = () => {
@@ -363,6 +387,14 @@ const PlatformTab = ({ platform, route }) => {
           />
           <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 20 }}>
             <ExpenseSummary 
+              emails={emails} 
+              platformColor={platformInfo.color}
+            />
+            <DietaryPreferencesSection 
+              emails={emails} 
+              platformColor={platformInfo.color}
+            />
+            <MealTimingAnalysis 
               emails={emails} 
               platformColor={platformInfo.color}
             />
