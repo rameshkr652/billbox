@@ -156,7 +156,7 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
     progressCallback(0, 1, 'Finding matching emails...');
     const listUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodedQuery}&maxResults=100`;
     const initialData = await callGmailApi(listUrl, accountEmail);
-    
+    console.log(initialData,"ss")
     if (!initialData.messages || initialData.messages.length === 0) {
       progressCallback(1, 1, 'No emails found.');
       return [];
@@ -403,7 +403,6 @@ const parseOrderDetails = (emailBodyHtml, platform) => {
     .replace(/Â/g, '') // Remove special character
     .replace(/\s+/g, ' ')
     .trim();
-  
   // Object to store our extracted data
   const orderDetails = {
     restaurantName: null,
