@@ -1,18 +1,73 @@
+import RNFS from 'react-native-fs';
+
+const saveJsonToFile = async (messageData) => {
+  const filePath = `${RNFS.DocumentDirectoryPath}/emailBodyHtml.html`;
+
+  try {
+    await RNFS.writeFile(filePath, JSON.stringify(messageData, null, 2), 'utf8');
+    console.log('Data saved successfully at:', filePath);
+  } catch (error) {
+    console.error('Error saving JSON file:', error);
+  }
+};
+
+// src/utils/EmailParser.js
 /**
- * Email parser utility for extracting structured data from Zomato emails
- * 
- * This improved version fixes two key issues:
- * 1. Correctly extracts the city name (Salem) from the address
- * 2. Properly identifies all order items (both "Rava Dosa" and "Idli")
+ * Email parser utility for extracting structured data from platform-specific emails
  */
 
 /**
+ * Main function to extract order details based on platform
+ * @param {string} emailBodyHtml - The HTML content of the email
+ * @param {string} platform - The platform identifier (zomato, swiggy, amazon, flipkart)
+ * @returns {Object} Extracted order details or null if parsing fails
+ */
+export const parseOrderDetails = (emailBodyHtml, platform) => {
+  if (!emailBodyHtml || !platform) return null;
+  
+  // Select the appropriate extraction function based on platform
+  switch (platform.toLowerCase()) {
+    case 'zomato':
+      return extractZomatoOrderDetails(emailBodyHtml);
+    case 'swiggy':
+      return extractSwiggyOrderDetails(emailBodyHtml);
+    case 'amazon':
+      // For now, return null for other platforms
+      return null;
+    case 'flipkart':
+      // For now, return null for other platforms
+      return null;
+    default:
+      console.log(`No parser available for platform: ${platform}`);
+      return null;
+  }
+};
+
+/**
  * Extract order details from Zomato emails
+ * Keeping the exact same logic as in GmailService.js for Zomato
  * @param {string} emailBodyHtml - The HTML content of the email
  * @returns {Object} Extracted order details
  */
 export const extractZomatoOrderDetails = (emailBodyHtml) => {
   if (!emailBodyHtml) return null;
+  
+  // Helper function to decode HTML entities
+  const decodeHtmlEntities = (text) => {
+    if (!text) return text;
+    
+    return text
+      .replace(/&#39;/g, "'")
+      .replace(/&#43;/g, '+')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#(\d+);/g, (match, dec) => {
+        // Handle numeric HTML entities
+        return String.fromCharCode(parseInt(dec, 10));
+      });
+  };
   
   // Clean up the HTML
   const cleanText = emailBodyHtml
@@ -23,7 +78,7 @@ export const extractZomatoOrderDetails = (emailBodyHtml) => {
     .replace(/Â/g, '') // Remove special character
     .replace(/\s+/g, ' ')
     .trim();
-  
+    
   // Object to store our extracted data
   const orderDetails = {
     restaurantName: null,
@@ -37,7 +92,8 @@ export const extractZomatoOrderDetails = (emailBodyHtml) => {
   // Extract restaurant name
   const restaurantMatch = cleanText.match(/Thank you for ordering.*?from\s+(.*?)\s*ORDER ID/i);
   if (restaurantMatch && restaurantMatch[1]) {
-    orderDetails.restaurantName = restaurantMatch[1].trim();
+    // Decode HTML entities in restaurant name
+    orderDetails.restaurantName = decodeHtmlEntities(restaurantMatch[1].trim());
   }
   
   // Extract order ID
@@ -52,11 +108,19 @@ export const extractZomatoOrderDetails = (emailBodyHtml) => {
     orderDetails.orderStatus = statusMatch[1].trim();
   }
   
-  // Extract total price
-  const totalMatch = cleanText.match(/Total paid\s*-\s*(.*?)(\d+\.?\d*)/i);
-  if (totalMatch && totalMatch[2]) {
-    orderDetails.totalPrice = `₹${totalMatch[2]}`;
+  // Extract total price - Handle different rupee symbols and commas in price
+  const totalMatch = cleanText.match(/Total paid\s*-\s*.*?[₹â¹]([0-9,.]+)/i);
+  if (totalMatch && totalMatch[1]) {
+    // Make sure we capture the complete price with commas
+    orderDetails.totalPrice = `₹${totalMatch[1]}`;
+  } else {
+    // Ultimate fallback - try to find any price pattern after "Total paid"
+    const fallbackMatch = cleanText.match(/Total paid\s*-\s*.*?([0-9,.]+)/i);
+    if (fallbackMatch && fallbackMatch[1]) {
+      orderDetails.totalPrice = `₹${fallbackMatch[1]}`;
+    }
   }
+  
   // Extract order items from the HTML structure
   // For Zomato, items are usually in p tags within td with class="es-m-txt-l"
   const itemRegexes = [
@@ -77,7 +141,8 @@ export const extractZomatoOrderDetails = (emailBodyHtml) => {
     for (const match of matches) {
       if (match[1] && match[2]) {
         const quantity = match[1].trim();
-        const itemName = match[2].trim();
+        // Decode HTML entities in item names
+        const itemName = decodeHtmlEntities(match[2].trim());
         
         // Validate this looks like a food item
         if (itemName.length > 1 && 
@@ -101,34 +166,89 @@ export const extractZomatoOrderDetails = (emailBodyHtml) => {
   
   return orderDetails;
 };
+export const extractSwiggyOrderDetails = (emailBodyHtml) => {
+  if (!emailBodyHtml) return null;
+  
+  // Object to store extracted data
+  const orderDetails = {
+    restaurantName: null,
+    orderItems: [],
+    totalPrice: null,
+    orderId: null,
+    orderStatus: null,
+    orderDateTime: null
+  };
 
-/**
- * Main function to extract order details based on platform
- * @param {string} platform - The platform identifier (zomato, swiggy, amazon, flipkart)
- * @param {string} emailBodyHtml - The HTML content of the email
- * @returns {Object} Extracted order details
- */
-export const extractOrderDetails = (platform, emailBodyHtml) => {
-  // Select the appropriate extraction function based on platform
-  switch (platform.toLowerCase()) {
-    case 'zomato':
-      return extractZomatoOrderDetails(emailBodyHtml);
-    case 'swiggy':
-      // Placeholder for future implementation
-      return null;
-    case 'amazon':
-      // Placeholder for future implementation
-      return null;
-    case 'flipkart':
-      // Placeholder for future implementation
-      return null;
-    default:
-      console.log(`No parser available for platform: ${platform}`);
-      return null;
+  // Extract order ID
+  const orderIdPattern = /Order No:\s*<strong>(\d+)<\/strong>/i;
+  const orderIdMatch = emailBodyHtml.match(orderIdPattern);
+  if (orderIdMatch && orderIdMatch[1]) {
+    orderDetails.orderId = orderIdMatch[1].trim();
   }
-};
 
+  // Extract restaurant name
+  const restaurantNamePattern = /<strong>([^<]+)<\/strong>\s*<\/h5>\s*<p class=""/i;
+  const restaurantNameMatch = emailBodyHtml.match(restaurantNamePattern);
+  if (restaurantNameMatch && restaurantNameMatch[1]) {
+    orderDetails.restaurantName = restaurantNameMatch[1].trim();
+  }
+
+  // Extract order status
+  const statusPattern = /Order Status:\s*<strong>([^<]+)<\/strong>/i;
+  const statusMatch = emailBodyHtml.match(statusPattern);
+  if (statusMatch && statusMatch[1]) {
+    orderDetails.orderStatus = statusMatch[1].trim();
+  }
+
+  // Extract order datetime
+  const dateTimePattern = /Order placed at:\s*<strong>([^<]+)<\/strong>/i;
+  const dateTimeMatch = emailBodyHtml.match(dateTimePattern);
+  if (dateTimeMatch && dateTimeMatch[1]) {
+    orderDetails.orderDateTime = dateTimeMatch[1].trim();
+  }
+
+  // Extract total price - look for the grand-total row specifically
+  const totalPattern = /<tr class="grand-total"[\s\S]*?Order Total:[\s\S]*?<td[^>]*>[\s\S]*?(\d+)\s*<\/td>/is;
+  const totalMatch = emailBodyHtml.match(totalPattern);
+  if (totalMatch && totalMatch[1]) {
+    orderDetails.totalPrice = `₹${totalMatch[1]}`
+  }
+
+  // Extract actual food items - using rows that have quantity and price
+  const itemRowPattern = /<tr[^>]*>[\s\S]*?<td[^>]*class="small"[^>]*>([\s\S]*?)<\/td>[\s\S]*?<td[^>]*>\s*(\d+)\s*<\/td>[\s\S]*?<td[^>]*align="right"[^>]*>[^<]*<\/td>[\s\S]*?<\/tr>/gi;
+  let rowMatch;
+  
+  while ((rowMatch = itemRowPattern.exec(emailBodyHtml)) !== null) {
+    const fullItemText = rowMatch[1].trim();
+    
+    // Extract just the base item name (remove quantity in parentheses)
+    let itemName = fullItemText;
+    const parenthesisIndex = fullItemText.indexOf('(');
+    if (parenthesisIndex > 0) {
+      itemName = fullItemText.substring(0, parenthesisIndex).trim();
+    }
+    
+    orderDetails.orderItems.push(itemName);
+  }
+  
+  // Remove any null values from the object
+  const cleanedOrderDetails = {};
+  for (const key in orderDetails) {
+    if (orderDetails[key] !== null) {
+      // Don't include empty arrays either
+      if (Array.isArray(orderDetails[key]) && orderDetails[key].length === 0) {
+        continue;
+      }
+      cleanedOrderDetails[key] = orderDetails[key];
+    }
+  }
+  console.log(cleanedOrderDetails,"cleanedOrderDetails")
+  return cleanedOrderDetails;
+}
+
+// Export the default object
 export default {
-  extractOrderDetails,
-  extractZomatoOrderDetails
+  parseOrderDetails,
+  extractZomatoOrderDetails,
+  extractSwiggyOrderDetails
 };

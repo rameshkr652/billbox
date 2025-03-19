@@ -284,7 +284,7 @@ const ExpenseSummary = ({ emails, platformColor }) => {
           email.orderDetails?.totalPrice && 
           email.orderDetails?.totalPrice !== 'N/A'
         );
-        
+        console.log(validEmails, "email.orderDetails")
         const uniqueRestaurants = [...new Set(validEmails
           .map(email => email.orderDetails.restaurantName))];
         
@@ -293,11 +293,13 @@ const ExpenseSummary = ({ emails, platformColor }) => {
         validEmails.forEach(email => {
           if (email.orderDetails?.orderItems && Array.isArray(email.orderDetails.orderItems)) {
             email.orderDetails.orderItems.forEach(item => {
-              // Extract food name from format like "1 X Food Name"
-              const match = item.match(/\d+\s*[Xx×]\s+(.*)/);
-              if (match && match[1]) {
-                allFoodItems.push(match[1].trim());
-              }
+              console.log(item, "email.orderDetails")
+              allFoodItems.push(item.trim());
+              // // Extract food name from format like "1 X Food Name"
+              // const match = item.match(/\d+\s*[Xx×]\s+(.*)/);
+              // if (match && match[1]) {
+              //   allFoodItems.push(match[1].trim());
+              // }
             });
           }
         });

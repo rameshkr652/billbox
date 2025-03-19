@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import * as AccountService from './AccountService';
 import * as AuthService from './AuthService';
+import { parseOrderDetails } from '../utils/EmailParser';
 
 // In-memory token cache to prevent excessive validation
 // Fixed to be more secure and account-specific
@@ -156,7 +157,7 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
     progressCallback(0, 1, 'Finding matching emails...');
     const listUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodedQuery}&maxResults=100`;
     const initialData = await callGmailApi(listUrl, accountEmail);
-    console.log(initialData,"ss")
+    // console.log(initialData,"ss")
     if (!initialData.messages || initialData.messages.length === 0) {
       progressCallback(1, 1, 'No emails found.');
       return [];
@@ -370,127 +371,6 @@ const decodeBase64Url = (base64UrlString) => {
     return '';
   }
 };
-
-/**
- * Extract order details from email content
- */
-const parseOrderDetails = (emailBodyHtml, platform) => {
-  if (!emailBodyHtml) return null;
-  
-  // Helper function to decode HTML entities
-  const decodeHtmlEntities = (text) => {
-    if (!text) return text;
-    
-    return text
-      .replace(/&#39;/g, "'")
-      .replace(/&#43;/g, '+')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#(\d+);/g, (match, dec) => {
-        // Handle numeric HTML entities
-        return String.fromCharCode(parseInt(dec, 10));
-      });
-  };
-  
-  // Clean up the HTML
-  const cleanText = emailBodyHtml
-    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/Â/g, '') // Remove special character
-    .replace(/\s+/g, ' ')
-    .trim();
-  // Object to store our extracted data
-  const orderDetails = {
-    restaurantName: null,
-    orderItems: [],
-    totalPrice: null,
-    orderId: null,
-    orderStatus: null,
-    orderDateTime: null
-  };
-  
-  // Extract restaurant name
-  const restaurantMatch = cleanText.match(/Thank you for ordering.*?from\s+(.*?)\s*ORDER ID/i);
-  if (restaurantMatch && restaurantMatch[1]) {
-    // Decode HTML entities in restaurant name
-    orderDetails.restaurantName = decodeHtmlEntities(restaurantMatch[1].trim());
-  }
-  
-  // Extract order ID
-  const orderIdMatch = cleanText.match(/ORDER ID:?\s*(\d+)/i);
-  if (orderIdMatch && orderIdMatch[1]) {
-    orderDetails.orderId = orderIdMatch[1].trim();
-  }
-  
-  // Extract order status
-  const statusMatch = cleanText.match(/\b(Delivered|Processing|Cancelled|Confirmed|Out for Delivery)\b/i);
-  if (statusMatch && statusMatch[1]) {
-    orderDetails.orderStatus = statusMatch[1].trim();
-  }
-  
-  // Extract total price - Handle different rupee symbols and commas in price
-  const totalMatch = cleanText.match(/Total paid\s*-\s*.*?[₹â¹]([0-9,.]+)/i);
-  if (totalMatch && totalMatch[1]) {
-    // Make sure we capture the complete price with commas
-    orderDetails.totalPrice = `₹${totalMatch[1]}`;
-  } else {
-    // Ultimate fallback - try to find any price pattern after "Total paid"
-    const fallbackMatch = cleanText.match(/Total paid\s*-\s*.*?([0-9,.]+)/i);
-    if (fallbackMatch && fallbackMatch[1]) {
-      orderDetails.totalPrice = `₹${fallbackMatch[1]}`;
-    }
-  }
-  
-  // Extract order items from the HTML structure
-  // For Zomato, items are usually in p tags within td with class="es-m-txt-l"
-  const itemRegexes = [
-    // Primary pattern: <td class="es-m-txt-l"><p>1 X Item</p></td>
-    /<td[^>]*class="es-m-txt-l"[^>]*><p[^>]*>(\d+)\s*[Xx×]\s+([^<]+)<\/p>/gi,
-    
-    // Secondary pattern: Any <p> tag with the X pattern
-    /<p[^>]*>(\d+)\s*[Xx×]\s+([^<]+)<\/p>/gi,
-    
-    // Fallback pattern: Any context with the X pattern
-    /(\d+)\s*[Xx×]\s+([A-Za-z][^<>\d\.,]{2,})/gi
-  ];
-  
-  // Apply all patterns to find order items
-  for (const regex of itemRegexes) {
-    const matches = [...emailBodyHtml.matchAll(regex)];
-    
-    for (const match of matches) {
-      if (match[1] && match[2]) {
-        const quantity = match[1].trim();
-        // Decode HTML entities in item names
-        const itemName = decodeHtmlEntities(match[2].trim());
-        
-        // Validate this looks like a food item
-        if (itemName.length > 1 && 
-            !/ORDER ID|Total paid|Delivered|Processing/i.test(itemName)) {
-          // Add to items if not already there (avoid duplicates)
-          const isDuplicate = orderDetails.orderItems.some(existing => 
-            existing.toLowerCase().includes(itemName.toLowerCase()));
-          
-          if (!isDuplicate) {
-            orderDetails.orderItems.push(`${quantity} X ${itemName}`);
-          }
-        }
-      }
-    }
-    
-    // If we found items with this pattern, no need to try others
-    if (orderDetails.orderItems.length > 0) {
-      break;
-    }
-  }
-  
-  return orderDetails;
-};
-
 /**
  * Utility methods for storage - IMPORTANT: These now use accountEmail in the keys
  */
