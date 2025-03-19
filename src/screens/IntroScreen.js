@@ -1,5 +1,5 @@
 // src/screens/IntroScreen.js
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,23 +10,69 @@ import {
   Dimensions,
   SafeAreaView,
   StatusBar,
+  Animated,
+  Easing
 } from 'react-native';
-import { GoogleSigninButton } from '@react-native-google-signin/google-signin';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import * as AuthService from '../services/AuthService';
 import Colors from '../constants/colors';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const IntroScreen = () => {
   const navigation = useNavigation();
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const flatListRef = useRef(null);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(50)).current;
+
+  // Animated values for the sign-in button
+  const buttonScale = useRef(new Animated.Value(1)).current;
+  const buttonOpacity = useRef(new Animated.Value(1)).current;
+
+  // Animate the elements when the component mounts
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateY, {
+        toValue: 0,
+        duration: 800,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      })
+    ]).start();
+  }, []);
+
+  // Sign-in button press animation
+  const animateButton = () => {
+    Animated.sequence([
+      Animated.timing(buttonScale, {
+        toValue: 0.95,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(buttonScale, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(buttonOpacity, {
+        toValue: 0.7,
+        duration: 200,
+        useNativeDriver: true,
+      })
+    ]).start();
+  };
 
   const signIn = async () => {
     try {
+      animateButton();
       setLoading(true);
       await AuthService.signIn();
       navigation.replace('PlatformSelection');
@@ -39,43 +85,61 @@ const IntroScreen = () => {
   const features = [
     {
       id: '1',
-      title: 'Expense Management',
-      description: 'Track all your invoices, bills, and expenses in one secure dashboard',
-      icon: 'account-balance-wallet',
-      color: Colors.primary,
+      title: "Track All Your Orders",
+      description: "BillBox automatically organizes all your food and shopping orders from Gmail into one beautiful dashboard",
+      icon: "receipt-long",
+      secondaryIcon: "local-mall",
+      color: Colors.primary
     },
     {
       id: '2',
-      title: 'Health Updates',
-      description: 'Monitor medical appointments, prescriptions, and health reports',
-      icon: 'favorite',
-      color: '#E91E63', // Pink for health
+      title: "Monitor Expenses",
+      description: "See exactly how much you've spent across different platforms with detailed analytics and trends",
+      icon: "account-balance-wallet",
+      secondaryIcon: "trending-up",
+      color: Colors.accent
     },
     {
       id: '3',
-      title: 'Multiple Accounts',
-      description: 'Connect different Gmail accounts for work, personal, and family needs',
-      icon: 'people',
-      color: Colors.flipkart,
-    },
-    {
-      id: '4',
-      title: 'Smart Analytics',
-      description: 'Get insights on spending patterns and health metrics over time',
-      icon: 'insert-chart',
-      color: Colors.amazon,
-    },
+      title: "Multiple Accounts",
+      description: "Connect different Gmail accounts and manage all your platforms separately for work and personal use",
+      icon: "people",
+      secondaryIcon: "account-circle",
+      color: Colors.flipkart
+    }
   ];
 
-  const renderFeatureItem = ({ item }) => (
-    <View style={styles.featureItem}>
-      <View style={[styles.featureIconContainer, { backgroundColor: item.color }]}>
-        <Icon name={item.icon} size={30} color="#FFFFFF" />
+  const renderFeatureItem = ({ item, index }) => {
+    // Calculate if this item is the current one
+    const isCurrent = index === currentPage;
+    
+    return (
+      <View style={styles.featureItem}>
+        <View style={[styles.featureIconsContainer, { backgroundColor: `${item.color}15` }]}>
+          <View style={[styles.primaryIconContainer, { backgroundColor: item.color }]}>
+            <Icon name={item.icon} size={60} color="#FFFFFF" />
+          </View>
+          
+          {/* Secondary floating icons */}
+          <View style={[styles.secondaryIconContainer, { backgroundColor: item.color, top: 100, right: 80 }]}>
+            <Icon name={item.secondaryIcon} size={30} color="#FFFFFF" />
+          </View>
+          
+          <View style={[styles.secondaryIconContainer, { backgroundColor: `${item.color}90`, bottom: 90, left: 80 }]}>
+            <Icon name={index === 0 ? "fastfood" : (index === 1 ? "bar-chart" : "settings")} size={26} color="#FFFFFF" />
+          </View>
+          
+          {/* Decorative dots */}
+          <View style={[styles.decorativeDot, { top: 70, left: 60, backgroundColor: `${item.color}40` }]} />
+          <View style={[styles.decorativeDot, { bottom: 60, right: 70, backgroundColor: `${item.color}60` }]} />
+          <View style={[styles.decorativeDot, { top: 160, right: 50, backgroundColor: `${item.color}30` }]} />
+        </View>
+        
+        <Text style={styles.featureTitle}>{item.title}</Text>
+        <Text style={styles.featureDescription}>{item.description}</Text>
       </View>
-      <Text style={styles.featureTitle}>{item.title}</Text>
-      <Text style={styles.featureDescription}>{item.description}</Text>
-    </View>
-  );
+    );
+  };
 
   const handleScroll = (event) => {
     const { contentOffset } = event.nativeEvent;
@@ -93,19 +157,39 @@ const IntroScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       
-      {/* Header */}
-      <View style={styles.header}>
+      {/* Header Logo */}
+      <Animated.View 
+        style={[
+          styles.header, 
+          { 
+            opacity: fadeAnim,
+            transform: [{ translateY: translateY }]
+          }
+        ]}
+      >
         <View style={styles.logoContainer}>
-          <Icon name="receipt-long" size={40} color={Colors.white} />
-          <Text style={styles.appTitle}>BillBox</Text>
+          <View style={styles.logoBox}>
+            <Text style={styles.logoText}>BB</Text>
+          </View>
+          <View>
+            <Text style={styles.appTitle}>BillBox</Text>
+            <Text style={styles.appSubtitle}>Simplify your expense tracking</Text>
+          </View>
         </View>
-        <Text style={styles.appSubtitle}>Your digital finance & health assistant</Text>
-      </View>
+      </Animated.View>
 
       {/* Features Carousel */}
-      <View style={styles.featuresContainer}>
+      <Animated.View 
+        style={[
+          styles.featuresContainer,
+          { 
+            opacity: fadeAnim,
+            transform: [{ translateY: translateY }]
+          }
+        ]}
+      >
         <FlatList
           ref={flatListRef}
           data={features}
@@ -125,67 +209,59 @@ const IntroScreen = () => {
               key={index}
               style={[
                 styles.paginationDot,
-                index === currentPage && styles.paginationDotActive,
+                index === currentPage && [
+                  styles.paginationDotActive,
+                  { backgroundColor: features[currentPage].color }
+                ],
               ]}
               onPress={() => goToPage(index)}
             />
           ))}
         </View>
-      </View>
+      </Animated.View>
 
-      {/* Benefits */}
-      <View style={styles.benefitsSection}>
-        <Text style={styles.benefitsSectionTitle}>Why use BillBox?</Text>
-        
-        <View style={styles.benefitItem}>
-          <Icon name="savings" size={24} color={Colors.primary} />
-          <Text style={styles.benefitText}>Track expenses and save money with spending insights</Text>
-        </View>
-        
-        <View style={styles.benefitItem}>
-          <Icon name="local-hospital" size={24} color={Colors.primary} />
-          <Text style={styles.benefitText}>Never miss important health updates and appointments</Text>
-        </View>
-        
-        <View style={styles.benefitItem}>
-          <Icon name="receipt" size={24} color={Colors.primary} />
-          <Text style={styles.benefitText}>Organize bills and medical documents automatically</Text>
-        </View>
-      </View>
-
-      {/* Sign-in Section */}
-      <View style={styles.signInSection}>
+      {/* Sign-in Button */}
+      <Animated.View 
+        style={[
+          styles.signInSection,
+          { 
+            opacity: fadeAnim,
+            transform: [
+              { translateY: translateY },
+              { scale: buttonScale }
+            ] 
+          }
+        ]}
+      >
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={Colors.primary} />
             <Text style={styles.loadingText}>Connecting to Google...</Text>
           </View>
         ) : (
-          <>
-            <GoogleSigninButton
-              style={styles.googleButton}
-              size={GoogleSigninButton.Size.Wide}
-              color={GoogleSigninButton.Color.Light}
-              onPress={signIn}
-            />
-            
-            <TouchableOpacity
-              style={styles.alternateSignInButton}
-              onPress={signIn}
-              activeOpacity={0.8}
-            >
-              <Icon name="login" size={20} color={Colors.primary} />
-              <Text style={styles.alternateSignInButtonText}>
-                Sign in with Gmail
-              </Text>
-            </TouchableOpacity>
-          </>
+          <TouchableOpacity
+            style={[styles.signInButton, { backgroundColor: Colors.primary }]}
+            onPress={signIn}
+            activeOpacity={0.8}
+          >
+            <View style={styles.googleIconContainer}>
+              <Icon name="alternate-email" size={24} color="#FFFFFF" />
+            </View>
+            <Text style={styles.signInButtonText}>
+              Continue with Google
+            </Text>
+            <Icon name="arrow-forward" size={20} color="#FFFFFF" />
+          </TouchableOpacity>
         )}
         
-        <Text style={styles.termsText}>
-          By signing in, you agree to our Terms of Service and Privacy Policy
-        </Text>
-      </View>
+        <View style={styles.privacyContainer}>
+          <Text style={styles.privacyText}>
+            By continuing, you agree to our{' '}
+            <Text style={styles.privacyLink}>Terms of Service</Text> and{' '}
+            <Text style={styles.privacyLink}>Privacy Policy</Text>
+          </Text>
+        </View>
+      </Animated.View>
     </SafeAreaView>
   );
 };
@@ -196,166 +272,196 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   header: {
-    backgroundColor: Colors.primary,
-    paddingTop: 20,
-    paddingBottom: 30,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    paddingHorizontal: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
+    paddingTop: 30,
+    paddingHorizontal: 25,
+    paddingBottom: 15,
   },
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 10,
   },
-  appTitle: {
-    fontSize: 28,
+  logoBox: {
+    width: 50,
+    height: 50,
+    borderRadius: 15,
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: Colors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
+    marginRight: 15,
+  },
+  logoText: {
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginLeft: 10,
+  },
+  appTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1a1a2e',
   },
   appSubtitle: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.9)',
-    textAlign: 'center',
+    fontSize: 14,
+    color: '#5d5d5d',
   },
   featuresContainer: {
-    marginTop: 20,
-    height: 220,
+    flex: 1,
+    marginTop: 10,
   },
   featuresList: {
-    maxHeight: 200,
+    flexGrow: 0,
   },
   featureItem: {
     width: width,
     padding: 20,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  featureIconContainer: {
-    width: 60,
-    height: 60,
+  featureIconsContainer: {
+    width: width * 0.75,
+    height: width * 0.75,
     borderRadius: 30,
-    backgroundColor: Colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 30,
+    position: 'relative',
+  },
+  primaryIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 6,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 7,
+  },
+  secondaryIconContainer: {
+    position: 'absolute',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  decorativeDot: {
+    position: 'absolute',
+    width: 20,
+    height: 20,
+    borderRadius: 10,
   },
   featureTitle: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 8,
-    color: Colors.darkGray,
+    color: '#1a1a2e',
+    marginBottom: 12,
     textAlign: 'center',
   },
   featureDescription: {
-    fontSize: 14,
-    color: Colors.gray,
+    fontSize: 16,
+    color: '#5d5d5d',
     textAlign: 'center',
     paddingHorizontal: 30,
-    lineHeight: 20,
+    lineHeight: 24,
   },
   pagination: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 10,
-  },
-  paginationDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#DDDDDD',
-    marginHorizontal: 4,
-  },
-  paginationDotActive: {
-    width: 24,
-    backgroundColor: Colors.primary,
-  },
-  benefitsSection: {
-    paddingHorizontal: 25,
-    marginVertical: 20,
-  },
-  benefitsSectionTitle: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    color: Colors.darkGray,
-    marginBottom: 15,
-  },
-  benefitItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-    backgroundColor: '#F9F9F9',
-    padding: 12,
-    borderRadius: 8,
-  },
-  benefitText: {
-    fontSize: 14,
-    color: Colors.darkGray,
-    marginLeft: 12,
-    flex: 1,
-  },
-  signInSection: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    paddingBottom: 30,
-    paddingHorizontal: 20,
-  },
-  googleButton: {
-    width: 240,
-    height: 48,
-    marginBottom: 15,
-  },
-  alternateSignInButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: Colors.primary,
-    borderRadius: 24,
-    paddingVertical: 8,
-    paddingHorizontal: 15,
+    marginTop: 30,
     marginBottom: 20,
   },
-  alternateSignInButtonText: {
-    color: Colors.primary,
-    fontSize: 14,
-    fontWeight: '500',
-    marginLeft: 8,
+  paginationDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#DDDDDD',
+    marginHorizontal: 6,
+  },
+  paginationDotActive: {
+    width: 30,
+  },
+  signInSection: {
+    paddingHorizontal: 25,
+    paddingBottom: 40,
+  },
+  signInButton: {
+    width: '100%',
+    height: 60,
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 25,
+    shadowColor: Colors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 5,
+    marginBottom: 20,
+  },
+  googleIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  signInButtonText: {
+    flex: 1,
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
   loadingContainer: {
     alignItems: 'center',
+    justifyContent: 'center',
+    height: 60,
     marginBottom: 20,
   },
   loadingText: {
     marginTop: 10,
-    color: Colors.gray,
-    fontSize: 14,
+    color: Colors.primary,
+    fontSize: 16,
+    fontWeight: '500',
   },
-  termsText: {
+  privacyContainer: {
+    alignItems: 'center',
+  },
+  privacyText: {
     fontSize: 12,
-    color: Colors.gray,
+    color: '#8a8a8a',
     textAlign: 'center',
-    marginHorizontal: 20,
+    lineHeight: 18,
+  },
+  privacyLink: {
+    color: Colors.primary,
+    fontWeight: '500',
   },
 });
 
