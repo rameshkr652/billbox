@@ -13,20 +13,39 @@ import PlatformTab from '../components/PlatformTab';
 import * as AccountService from '../services/AccountService';
 import * as StorageService from '../services/StorageService';
 import platforms from '../constants/platforms';
+import AccountSwitcherModal from '../components/AccountSwitcherModal';
+
 
 const Drawer = createDrawerNavigator();
 const Tab = createBottomTabNavigator();
 
-// HeaderAccountButton component
+// Modified HeaderAccountButton in MainScreen.js
 const HeaderAccountButton = ({ platform, navigation }) => {
   const [accountEmail, setAccountEmail] = useState('');
+  const [accounts, setAccounts] = useState([]);
+  const [showAccountModal, setShowAccountModal] = useState(false);
+  const [platformInfo, setPlatformInfo] = useState(null);
   
   useEffect(() => {
     const getAccountInfo = async () => {
       try {
+        // Find platform info
+        const platformObj = platforms.find(p => p.id === platform) || {
+          name: platform.charAt(0).toUpperCase() + platform.slice(1),
+          color: Colors.primary,
+          icon: 'inbox'
+        };
+        setPlatformInfo(platformObj);
+        
+        // Get accounts
+        const accountsList = await AccountService.getAccounts();
+        setAccounts(accountsList);
+        
+        // Get current account
         const account = await AccountService.getCurrentAccount();
         if (!account) return;
         
+        // Get platform configurations
         const platformsConfig = await StorageService.getPlatformsForAccount(account.email);
         if (platformsConfig && platformsConfig[platform]) {
           setAccountEmail(platformsConfig[platform].accountEmail || account.email);
@@ -42,37 +61,16 @@ const HeaderAccountButton = ({ platform, navigation }) => {
   }, [platform]);
   
   // Handle account selection directly here
-  const handleAccountSelect = async () => {
+  const handleAccountSelect = async (account) => {
     try {
-      const accounts = await AccountService.getAccounts();
-      
-      const options = accounts.map(acc => ({
-        text: acc.email,
-        onPress: () => updatePlatformAccount(acc.email)
-      }));
-      
-      options.push({
-        text: 'Add New Account',
-        onPress: () => navigation.navigate('WebAuth')
-      });
-      
-      options.push({
-        text: 'Cancel',
-        style: 'cancel'
-      });
-      
-      Alert.alert(
-        'Select Account',
-        `Choose which account to use for ${platform}:`,
-        options
-      );
+      await updatePlatformAccount(account.email);
     } catch (error) {
-      console.error('Error showing account options:', error);
-      Alert.alert('Error', 'Failed to load account options');
+      console.error('Error updating account:', error);
     }
   };
   
-  // Update platform account function
+  // Update platform account function with improved refresh mechanism
+  // FIXED to preserve data between account switches
   const updatePlatformAccount = async (email) => {
     try {
       // Get current main account
@@ -94,12 +92,10 @@ const HeaderAccountButton = ({ platform, navigation }) => {
       // Update UI
       setAccountEmail(email);
       
-      // Show success message
-      Alert.alert('Account Updated', `Now using ${email} for ${platform}`);
-      
-      // Refresh the screen
+      // Force PlatformTab to refresh by setting a unique refresh trigger
+      // This is the key part: we use a timestamp to ensure the value is always different
       if (navigation.isFocused()) {
-        navigation.setParams({ refresh: Date.now() });
+        navigation.setParams({ refreshTrigger: Date.now() });
       }
     } catch (error) {
       console.error('Error updating platform account:', error);
@@ -107,25 +103,43 @@ const HeaderAccountButton = ({ platform, navigation }) => {
     }
   };
   
+  const handleAddNewAccount = () => {
+    navigation.navigate('WebAuth');
+  };
+  
   return (
-    <TouchableOpacity
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
-        borderRadius: 20,
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-        marginRight: 16,
-      }}
-      onPress={handleAccountSelect}
-    >
-      <Icon name="account-circle" size={18} color="#fff" />
-      <Text style={{color: '#fff', marginLeft: 6, fontSize: 14, marginRight: 4}}>
-        {accountEmail ? accountEmail.split('@')[0] : 'Account'}
-      </Text>
-      <Icon name="arrow-drop-down" size={18} color="#fff" />
-    </TouchableOpacity>
+    <>
+      <TouchableOpacity
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: 'rgba(255, 255, 255, 0.2)',
+          borderRadius: 20,
+          paddingVertical: 6,
+          paddingHorizontal: 12,
+          marginRight: 16,
+        }}
+        onPress={() => setShowAccountModal(true)}
+      >
+        <Icon name="account-circle" size={18} color="#fff" />
+        <Text style={{color: '#fff', marginLeft: 6, fontSize: 14, marginRight: 4}}>
+          {accountEmail ? accountEmail.split('@')[0] : 'Account'}
+        </Text>
+        <Icon name="arrow-drop-down" size={18} color="#fff" />
+      </TouchableOpacity>
+      
+      {/* Import and use the new AccountSwitcherModal component */}
+      <AccountSwitcherModal
+        visible={showAccountModal}
+        onClose={() => setShowAccountModal(false)}
+        accounts={accounts}
+        currentAccount={accountEmail}
+        onAccountSelect={handleAccountSelect}
+        platformName={platformInfo?.name || platform}
+        platformColor={platformInfo?.color || Colors.primary}
+        onAddNewAccount={handleAddNewAccount}
+      />
+    </>
   );
 };
 
@@ -133,14 +147,26 @@ const HeaderAccountButton = ({ platform, navigation }) => {
 const CustomDrawerContent = (props) => {
   const { state, descriptors, navigation } = props;
   const [platformAccounts, setPlatformAccounts] = useState({});
+  const [userInfo, setUserInfo] = useState(null);
+  const [activePlatform, setActivePlatform] = useState(null);
   
   useEffect(() => {
     loadPlatformAccounts();
+    loadUserInfo();
+    
+    // Get active route
+    if (state.routes && state.index >= 0) {
+      const activeRouteName = state.routes[state.index].name;
+      setActivePlatform(activeRouteName.toLowerCase());
+    }
     
     // Reload accounts when drawer opens
-    const unsubscribe = navigation.addListener('focus', loadPlatformAccounts);
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadPlatformAccounts();
+      loadUserInfo();
+    });
     return unsubscribe;
-  }, [navigation]);
+  }, [navigation, state]);
   
   const loadPlatformAccounts = async () => {
     try {
@@ -154,8 +180,54 @@ const CustomDrawerContent = (props) => {
     }
   };
   
+  const loadUserInfo = async () => {
+    try {
+      const account = await AccountService.getCurrentAccount();
+      if (account) {
+        setUserInfo(account);
+      }
+    } catch (error) {
+      console.error('Error loading user info:', error);
+    }
+  };
+  
   return (
     <ScrollView style={styles.drawerContainer}>
+      {/* User info section at the top */}
+      {userInfo && (
+        <View style={styles.userInfoContainer}>
+          <View style={styles.avatar}>
+            {userInfo.photo ? (
+              <Image 
+                source={{ uri: userInfo.photo }} 
+                style={styles.avatarImage} 
+              />
+            ) : (
+              <Text style={styles.avatarText}>
+                {userInfo.name ? userInfo.name.charAt(0).toUpperCase() : 'U'}
+              </Text>
+            )}
+          </View>
+          <View>
+            <Text style={styles.userName}>
+              {userInfo.name || 'User'}
+            </Text>
+            <Text style={styles.userEmail}>
+              {activePlatform ? (
+                <>
+                  <Text style={styles.platformLabel}>
+                    {activePlatform.charAt(0).toUpperCase() + activePlatform.slice(1)}:{' '}
+                  </Text>
+                  {userInfo.email || 'Loading...'}
+                </>
+              ) : (
+                userInfo.email || 'Loading...'
+              )}
+            </Text>
+          </View>
+        </View>
+      )}
+      
       <View style={styles.drawerHeader}>
         <Text style={styles.drawerTitle}>Platforms</Text>
       </View>
@@ -223,6 +295,52 @@ const CustomDrawerContent = (props) => {
           </View>
         );
       })}
+      
+      {/* Settings and Logout options */}
+      <View style={styles.drawerFooter}>
+        <TouchableOpacity 
+          style={styles.drawerFooterButton}
+          onPress={() => {
+            navigation.navigate('Settings');
+            navigation.closeDrawer();
+          }}
+        >
+          <Icon name="settings" size={20} color="#666" />
+          <Text style={styles.drawerFooterButtonText}>Settings</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.drawerFooterButton, styles.logoutButton]}
+          onPress={() => {
+            navigation.closeDrawer();
+            Alert.alert(
+              'Sign Out',
+              'Are you sure you want to sign out?',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { 
+                  text: 'Sign Out', 
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      await AuthService.signOut();
+                      navigation.reset({
+                        index: 0,
+                        routes: [{ name: 'Intro' }],
+                      });
+                    } catch (error) {
+                      console.error('Error signing out:', error);
+                    }
+                  } 
+                },
+              ]
+            );
+          }}
+        >
+          <Icon name="logout" size={20} color={Colors.accent} />
+          <Text style={[styles.drawerFooterButtonText, { color: Colors.accent }]}>Sign Out</Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 };
@@ -341,7 +459,6 @@ const MainScreen = () => {
       }
       
       const storageKey = `platforms_${account.email}`;
-      console.log('Looking for platforms with key:', storageKey);
       
       const platformsData = await AsyncStorage.getItem(storageKey);
       console.log('Platforms data loaded:', platformsData);
@@ -404,52 +521,6 @@ const MainScreen = () => {
 
   return (
     <View style={styles.container}>
-      {/* Header with user info */}
-      <View style={styles.header}>
-        <View style={styles.userInfo}>
-          <View style={styles.avatar}>
-            {userInfo?.photo ? (
-              <Image 
-                source={{ uri: userInfo.photo }} 
-                style={styles.avatarImage} 
-              />
-            ) : (
-              <Text style={styles.avatarText}>
-                {userInfo?.name ? userInfo.name.charAt(0).toUpperCase() : 'U'}
-              </Text>
-            )}
-          </View>
-          <View>
-            <Text style={styles.userName}>
-              {userInfo?.name || 'User'}
-            </Text>
-            <Text style={styles.userEmail}>
-              {activePlatform ? (
-                <>
-                  <Text style={styles.platformLabel}>
-                    {activePlatform.charAt(0).toUpperCase() + activePlatform.slice(1)}:{' '}
-                  </Text>
-                  {userInfo?.email || 'Loading...'}
-                </>
-              ) : (
-                userInfo?.email || 'Loading...'
-              )}
-            </Text>
-          </View>
-        </View>
-        <View style={styles.headerActions}>
-          <TouchableOpacity 
-            style={styles.headerButton} 
-            onPress={() => navigation.navigate('Settings')}
-          >
-            <Icon name="settings" size={24} color={Colors.white} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.headerButton} onPress={handleSignOut}>
-            <Icon name="logout" size={24} color={Colors.white} />
-          </TouchableOpacity>
-        </View>
-      </View>
-      
       {/* Main Content */}
       {selectedPlatforms.length > 0 ? (
         <Drawer.Navigator
@@ -512,6 +583,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.lightGray,
+  },
+  userInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: Colors.primary,
   },
   header: {
     flexDirection: 'row',
@@ -643,6 +720,27 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     marginRight: 4,
   },
+  // Footer styles
+  drawerFooter: {
+    marginTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  drawerFooterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  drawerFooterButtonText: {
+    fontSize: 16,
+    color: '#666',
+    marginLeft: 16,
+  },
+  logoutButton: {
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  }
 });
 
 export default MainScreen;
