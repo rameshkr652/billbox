@@ -48,17 +48,14 @@ const TopFavoritesSection = ({ emails, platformColor }) => {
         if (email.orderDetails?.orderItems && Array.isArray(email.orderDetails.orderItems)) {
           email.orderDetails.orderItems.forEach(item => {
             // Extract food name from format like "1 X Food Name"
-            const match = item.match(/\d+\s*[Xx×]\s+(.*)/);
-            if (match && match[1]) {
-              const foodName = match[1].trim();
-              if (!foodItemsMap[foodName]) {
-                foodItemsMap[foodName] = {
-                  name: foodName,
-                  count: 1
-                };
-              } else {
-                foodItemsMap[foodName].count += 1;
-              }
+            const foodName = item.trim()
+            if (!foodItemsMap[foodName]) {
+              foodItemsMap[foodName] = {
+                name: foodName,
+                count: 1
+              };
+            } else {
+              foodItemsMap[foodName].count += 1;
             }
           });
         }
