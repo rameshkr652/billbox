@@ -1,4 +1,4 @@
-// src/screens/BankTransactionScreen.js
+// src/screens/BankTransactionScreen.js - Updated with manage banks button
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -18,7 +18,6 @@ import Colors from '../constants/colors';
 import banks from '../constants/banks';
 import * as AccountService from '../services/AccountService';
 import * as StorageService from '../services/StorageService';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Import the account switcher component
 import AccountSwitcherModal from '../components/AccountSwitcherModal';
@@ -221,6 +220,18 @@ const BankTransactionScreen = () => {
     navigation.navigate('WebAuth');
   };
   
+  // Navigate to manage banks screen
+  const navigateToManageBanks = () => {
+    if (!currentAccount) {
+      Alert.alert('Error', 'No account selected.');
+      return;
+    }
+    
+    navigation.navigate('ManageBanksScreen', {
+      accountEmail: currentAccount.email
+    });
+  };
+  
   // Render bank dropdown modal
   const renderAddBankDropdown = () => (
     <Modal
@@ -310,13 +321,48 @@ const BankTransactionScreen = () => {
             <Icon name="add" size={24} color="#FFF" style={styles.addBankButtonIcon} />
             <Text style={styles.addBankButtonText}>Add Bank</Text>
           </TouchableOpacity>
+          
+          {/* Account button */}
+          <TouchableOpacity
+            style={styles.accountButton}
+            onPress={() => setShowAccountModal(true)}
+          >
+            <Icon name="account-circle" size={18} color={Colors.primary} />
+            <Text style={styles.accountButtonText}>
+              {currentAccount ? currentAccount.email.split('@')[0] : 'Account'}
+            </Text>
+            <Icon name="arrow-drop-down" size={18} color={Colors.primary} />
+          </TouchableOpacity>
         </View>
       ) : (
         // Banks added - show bank selector dropdown and user banks list
         <View style={styles.contentContainer}>
+          {/* Account Info */}
+          <TouchableOpacity
+            style={styles.accountInfoContainer}
+            onPress={() => setShowAccountModal(true)}
+          >
+            <Icon name="account-circle" size={20} color={bankColor} />
+            <Text style={[styles.accountInfoText, { borderColor: bankColor }]}>
+              Using account: <Text style={styles.accountEmail}>{currentAccount.email}</Text>
+            </Text>
+            <Icon name="arrow-drop-down" size={20} color={bankColor} />
+          </TouchableOpacity>
+          
           {/* Bank Selector */}
           <View style={styles.bankSelectorContainer}>
-            <Text style={styles.sectionLabel}>Selected Bank</Text>
+            <View style={styles.bankSelectorHeader}>
+              <Text style={styles.sectionLabel}>Selected Bank</Text>
+              
+              {/* New Manage Banks Button */}
+              <TouchableOpacity
+                style={[styles.manageBanksButton, { borderColor: bankColor }]}
+                onPress={navigateToManageBanks}
+              >
+                <Icon name="settings" size={16} color={bankColor} />
+                <Text style={[styles.manageBanksText, { color: bankColor }]}>Manage Banks</Text>
+              </TouchableOpacity>
+            </View>
             
             <View style={styles.bankSelectorWrapper}>
               <TouchableOpacity 
@@ -330,66 +376,6 @@ const BankTransactionScreen = () => {
                 <Icon name="keyboard-arrow-down" size={24} color="#666" />
               </TouchableOpacity>
             </View>
-          </View>
-          
-          {/* Your Banks List */}
-          <View style={styles.yourBanksContainer}>
-            <View style={styles.yourBanksHeader}>
-              <Text style={styles.yourBanksTitle}>Your Banks</Text>
-              <TouchableOpacity
-                style={styles.addButton}
-                onPress={() => setShowAddBankModal(true)}
-              >
-                <Icon name="add" size={20} color={Colors.primary} />
-                <Text style={styles.addButtonText}>Add</Text>
-              </TouchableOpacity>
-            </View>
-            
-            <FlatList
-              data={userBanks}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <View style={styles.bankListItem}>
-                  <View style={styles.bankListItemLeft}>
-                    <View style={[styles.bankListItemIcon, { backgroundColor: item.color }]}>
-                      <Icon name={item.icon} size={20} color="#FFF" />
-                    </View>
-                    <Text style={styles.bankListItemName}>{item.name}</Text>
-                  </View>
-                  
-                  <View style={styles.bankListItemActions}>
-                    <TouchableOpacity
-                      style={[
-                        styles.selectBankButton,
-                        selectedBankId === item.id && { backgroundColor: item.color + '20' }
-                      ]}
-                      onPress={() => setSelectedBankId(item.id)}
-                    >
-                      <Text 
-                        style={[
-                          styles.selectBankButtonText,
-                          selectedBankId === item.id && { color: item.color }
-                        ]}
-                      >
-                        {selectedBankId === item.id ? 'Selected' : 'Select'}
-                      </Text>
-                    </TouchableOpacity>
-                    
-                    <TouchableOpacity
-                      style={styles.removeBankButton}
-                      onPress={() => removeBank(item.id)}
-                    >
-                      <Icon name="delete-outline" size={20} color={Colors.accent} />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              )}
-              ListEmptyComponent={
-                <View style={styles.noBanksContainer}>
-                  <Text style={styles.noBanksText}>No banks added yet</Text>
-                </View>
-              }
-            />
           </View>
           
           {/* Transactions placeholder */}
@@ -456,9 +442,10 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingVertical: 6,
     paddingHorizontal: 12,
+    marginTop: 20,
   },
   accountButtonText: {
-    color: '#fff',
+    color: Colors.primary,
     marginLeft: 6,
     fontSize: 14,
     marginRight: 4,
@@ -514,6 +501,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     borderRadius: 8,
     elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
   },
   addBankButtonIcon: {
     marginRight: 8,
@@ -523,14 +514,57 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
+  accountInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  accountInfoText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#555',
+    marginHorizontal: 8,
+    paddingLeft: 8,
+    borderLeftWidth: 2,
+  },
+  accountEmail: {
+    fontWeight: 'bold',
+    color: '#333',
+  },
   bankSelectorContainer: {
     marginBottom: 16,
+  },
+  bankSelectorHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   sectionLabel: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 8,
+  },
+  manageBanksButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
+  manageBanksText: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginLeft: 4,
   },
   bankSelectorWrapper: {
     flexDirection: 'row',
@@ -767,6 +801,6 @@ const styles = StyleSheet.create({
     color: '#888',
     marginTop: 2,
   }
-});
+})
 
-export default BankTransactionScreen;
+export default BankTransactionScreen

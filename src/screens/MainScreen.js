@@ -533,10 +533,12 @@ const MainScreen = () => {
                     backgroundColor: platformInfo.color,
                   },
                   headerRight: () => (
-                    <HeaderAccountButton 
+                    platform !== 'banks' ? (
+                      <HeaderAccountButton 
                         platform={platform} 
                         navigation={navigation}
                       />
+                    ) : null
                   )
                 })}
               >
