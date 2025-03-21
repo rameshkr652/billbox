@@ -1,5 +1,5 @@
-// src/screens/MainScreen.js
-import React, { useEffect, useState } from 'react';
+// src/screens/MainScreen.js (updated to show all platforms)
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Image, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
@@ -15,7 +15,6 @@ import * as StorageService from '../services/StorageService';
 import platforms from '../constants/platforms';
 import AccountSwitcherModal from '../components/AccountSwitcherModal';
 import BankTransactionScreen from './BankTransactionScreen';
-
 
 const Drawer = createDrawerNavigator();
 const Tab = createBottomTabNavigator();
@@ -330,9 +329,11 @@ const CustomDrawerContent = (props) => {
 const MainScreen = () => {
   const navigation = useNavigation();
   const [userInfo, setUserInfo] = useState(null);
-  const [selectedPlatforms, setSelectedPlatforms] = useState([]);
   const [activePlatform, setActivePlatform] = useState(null);
   const [navigationKey, setNavigationKey] = useState(Date.now());
+
+  // Get all platform IDs from the platform constants
+  const allPlatformIds = platforms.map(platform => platform.id);
 
   // Listen for route changes to update active platform
   useEffect(() => {
@@ -383,32 +384,17 @@ const MainScreen = () => {
     return unsubscribe;
   }, [navigation]);
 
-  // Listen for focus to reload platforms when returning to screen
+  // Listen for focus to reload user info when returning to screen
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
-      loadSelectedPlatforms();
+      loadUserInfo();
     });
     
     return unsubscribe;
   }, [navigation]);
 
-  // Check for updates triggered by platform selection screen
   useEffect(() => {
-    const checkPlatformsUpdate = async () => {
-      try {
-        const updated = await AsyncStorage.getItem('platformsUpdated');
-        if (updated === 'true') {
-          await AsyncStorage.removeItem('platformsUpdated');
-          loadSelectedPlatforms();
-        }
-      } catch (error) {
-        console.error('Error checking platform updates:', error);
-      }
-    };
-    
-    checkPlatformsUpdate();
     loadUserInfo();
-    loadSelectedPlatforms();
   }, []);
 
   const loadUserInfo = async () => {
@@ -429,55 +415,10 @@ const MainScreen = () => {
     }
   };
 
-  const loadSelectedPlatforms = async () => {
-    try {
-      console.log('Loading platforms...');
-      
-      const account = await AccountService.getCurrentAccount();
-      if (!account) {
-        console.log('No account found');
-        setSelectedPlatforms([]);
-        return;
-      }
-      
-      const storageKey = `platforms_${account.email}`;
-      
-      const platformsData = await AsyncStorage.getItem(storageKey);
-      console.log('Platforms data loaded:', platformsData);
-      
-      let newPlatforms = [];
-      if (platformsData) {
-        const platformsConfig = JSON.parse(platformsData);
-        newPlatforms = Object.keys(platformsConfig);
-        console.log('Found platforms:', newPlatforms);
-      }
-      
-      // Check if there are any changes to the platforms list
-      const platformsChanged = 
-        newPlatforms.length !== selectedPlatforms.length || 
-        newPlatforms.some(p => !selectedPlatforms.includes(p)) ||
-        selectedPlatforms.some(p => !newPlatforms.includes(p));
-      
-      if (platformsChanged) {
-        console.log('Platforms changed, updating UI');
-        setSelectedPlatforms(newPlatforms);
-        // Force re-render of navigator
-        setNavigationKey(Date.now());
-      }
-    } catch (error) {
-      console.error('Error loading selected platforms:', error);
-    }
-  };
-
-  const getPlatformIcon = (platformId) => {
-    const platform = platforms.find(p => p.id === platformId);
-    return platform ? platform.icon : 'inbox';
-  };
-
   const handleSignOut = () => {
     Alert.alert(
       'Sign Out',
-      'Are you sure you want to sign out?',
+      'Are you sure you want to sign out? This will remove all your saved data.',
       [
         { text: 'Cancel', style: 'cancel' },
         { 
@@ -491,79 +432,62 @@ const MainScreen = () => {
               console.error('Error signing out:', error);
               Alert.alert('Error', 'Failed to sign out. Please try again.');
             }
-          } 
-        },
+          }
+        }
       ]
     );
   };
 
-  const handleEditPlatforms = () => {
-    navigation.navigate('PlatformSelection');
-  };
-
   return (
     <View style={styles.container}>
-      {/* Main Content */}
-      {selectedPlatforms.length > 0 ? (
-        <Drawer.Navigator
-          key={navigationKey}
-          drawerContent={props => <CustomDrawerContent {...props} />}
-          screenOptions={{
-            drawerActiveTintColor: Colors.primary,
-            drawerInactiveTintColor: Colors.gray,
-            headerTintColor: '#fff',
-          }}
-        >
-          {selectedPlatforms.map((platform) => {
-            const platformInfo = platforms.find(p => p.id === platform) || {
-              name: platform.charAt(0).toUpperCase() + platform.slice(1),
-              color: Colors.primary,
-              icon: 'inbox'
-            };
-            
-            return (
-              <Drawer.Screen
-                key={platform}
-                name={platform.charAt(0).toUpperCase() + platform.slice(1)}
-                options={({ navigation }) => ({
-                  drawerIcon: ({color, size}) => (
-                    <Icon name={getPlatformIcon(platform)} size={size} color={color} />
-                  ),
-                  headerStyle: { 
-                    backgroundColor: platformInfo.color,
-                  },
-                  headerRight: () => (
-                    platform !== 'banks' ? (
-                      <HeaderAccountButton 
-                        platform={platform} 
-                        navigation={navigation}
-                      />
-                    ) : null
-                  )
-                })}
-              >
-                {(props) => 
-                  // Check if the platform is 'banks' and render BankTransactionScreen instead
-                  platform === 'banks' 
-                    ? <BankTransactionScreen {...props} /> 
-                    : <PlatformTab {...props} platform={platform} />
-                }
-              </Drawer.Screen>
-            );
-          })}
-        </Drawer.Navigator>
-      ) : (
-        <View style={styles.noPlatformsContainer}>
-          <Icon name="inbox" size={80} color={Colors.gray} />
-          <Text style={styles.noPlatformsText}>No platforms selected</Text>
-          <TouchableOpacity
-            style={styles.selectPlatformsButton}
-            onPress={handleEditPlatforms}
-          >
-            <Text style={styles.selectPlatformsText}>Select Platforms</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      {/* Main Content - Always show drawer with all platforms */}
+      <Drawer.Navigator
+        key={navigationKey}
+        drawerContent={props => <CustomDrawerContent {...props} />}
+        screenOptions={{
+          drawerActiveTintColor: Colors.primary,
+          drawerInactiveTintColor: Colors.gray,
+          headerTintColor: '#fff',
+        }}
+      >
+        {allPlatformIds.map((platform) => {
+          const platformInfo = platforms.find(p => p.id === platform) || {
+            name: platform.charAt(0).toUpperCase() + platform.slice(1),
+            color: Colors.primary,
+            icon: 'inbox'
+          };
+          
+          return (
+            <Drawer.Screen
+              key={platform}
+              name={platform.charAt(0).toUpperCase() + platform.slice(1)}
+              options={({ navigation }) => ({
+                drawerIcon: ({color, size}) => (
+                  <Icon name={platformInfo.icon} size={size} color={color} />
+                ),
+                headerStyle: { 
+                  backgroundColor: platformInfo.color,
+                },
+                headerRight: () => (
+                  platform !== 'banks' ? (
+                    <HeaderAccountButton 
+                      platform={platform} 
+                      navigation={navigation}
+                    />
+                  ) : null
+                )
+              })}
+            >
+              {(props) => 
+                // Check if the platform is 'banks' and render BankTransactionScreen instead
+                platform === 'banks' 
+                  ? <BankTransactionScreen {...props} /> 
+                  : <PlatformTab {...props} platform={platform} />
+              }
+            </Drawer.Screen>
+          );
+        })}
+      </Drawer.Navigator>
     </View>
   );
 };
@@ -732,4 +656,4 @@ const styles = StyleSheet.create({
   }
 });
 
-export default MainScreen;
+export default MainScreen
