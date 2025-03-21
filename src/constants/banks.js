@@ -5,7 +5,7 @@ export default [
       name: 'HDFC Bank',
       color: '#ED232A',
       icon: 'account-balance',
-      emailQuery: 'from:alerts@hdfcbank.net OR from:info@hdfcbank.com',
+      emailQuery: 'from:alerts@hdfcbank.net',
     },
     {
       id: 'icici',
