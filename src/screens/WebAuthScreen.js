@@ -1,7 +1,7 @@
-// src/screens/WebAuthScreen.js
+// src/screens/WebAuthScreen.js - Updated with generic navigation solution
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, Text, Alert } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { View, StyleSheet, TouchableOpacity, Text, Alert } from 'react-native';
+import { useNavigation, useRoute, CommonActions } from '@react-navigation/native';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -9,6 +9,7 @@ import Colors from '../constants/colors';
 
 const WebAuthScreen = () => {
   const navigation = useNavigation();
+  const route = useRoute();
   const [loading, setLoading] = useState(false);
   
   const addNewGoogleAccount = async () => {
@@ -51,6 +52,11 @@ const WebAuthScreen = () => {
           await AsyncStorage.setItem('accounts', JSON.stringify(accountsList));
           
           Alert.alert('Success', 'Account added successfully');
+          
+          // Set a global flag to notify any screens that account data has changed
+          await AsyncStorage.setItem('accountsUpdated', Date.now().toString());
+          
+          // Go back to previous screen
           navigation.goBack();
         }
       }
