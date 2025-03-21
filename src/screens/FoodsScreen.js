@@ -1,3 +1,4 @@
+// src/screens/FoodsScreen.js - Enhanced version
 import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView,
@@ -7,11 +8,13 @@ import {
   FlatList,
   TouchableOpacity,
   TextInput,
+  Image,
   ActivityIndicator
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Colors from '../constants/colors';
+import { advancedCombinedFoods } from '../utils/FoodPraser'; // Import the advanced food parser
 
 const FoodsScreen = () => {
   const navigation = useNavigation();
@@ -22,7 +25,7 @@ const FoodsScreen = () => {
   const [allFoods, setAllFoods] = useState([]);
   const [filteredFoods, setFilteredFoods] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [sortOption, setSortOption] = useState('orderCount'); // 'orderCount', 'name'
+  const [sortOption, setSortOption] = useState('orderCount'); // 'orderCount', 'totalSpent', 'name'
   
   useEffect(() => {
     if (allEmails && allEmails.length > 0) {
@@ -32,23 +35,125 @@ const FoodsScreen = () => {
     }
   }, [allEmails]);
   
+  // Enhanced food search with partial matching and fuzzy search
   useEffect(() => {
     if (searchQuery.trim() === '') {
       setFilteredFoods(allFoods);
     } else {
-      const filtered = allFoods.filter(food => 
-        food.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      const filtered = filterFoodItems(allFoods, searchQuery);
       setFilteredFoods(filtered);
     }
   }, [searchQuery, allFoods]);
+  
+  /**
+   * Enhanced food item filtering function with partial matching
+   */
+  const filterFoodItems = (foodItems, query) => {
+    if (!query || query.trim() === '') {
+      return foodItems;
+    }
+    
+    const searchTerms = query.toLowerCase().trim().split(/\s+/);
+    
+    // Calculate score for each food item based on how well it matches the search
+    const scoredItems = foodItems.map(item => {
+      // Create a searchable string of all variants
+      const searchableText = [
+        item.name.toLowerCase(),
+        ...(item.variants ? item.variants.map(variant => variant.toLowerCase()) : [])
+      ].join(' ');
+      
+      // Calculate match score
+      let score = 0;
+      
+      // Exact match bonus
+      if (searchableText.includes(query.toLowerCase())) {
+        score += 100; // High score for exact match
+      }
+      
+      // Check each search term
+      searchTerms.forEach(term => {
+        // Full term match
+        if (searchableText.includes(term)) {
+          score += 20 * term.length; // Reward longer term matches more
+        }
+        
+        // Partial word matches
+        const words = searchableText.split(/\s+/);
+        words.forEach(word => {
+          if (word.startsWith(term)) {
+            score += 15; // Good score for prefix match
+          } else if (word.includes(term)) {
+            score += 10; // Medium score for substring match
+          }
+          
+          // Calculate Levenshtein distance for fuzzy matching
+          const distance = levenshteinDistance(word, term);
+          if (distance <= 2 && term.length > 3) { // Only for significant terms
+            score += (10 - distance * 3); // Score based on similarity
+          }
+        });
+      });
+      
+      return { item, score };
+    });
+    
+    // Filter items with a minimum score and sort by score
+    return scoredItems
+      .filter(({ score }) => score > 0)
+      .sort((a, b) => b.score - a.score)
+      .map(({ item }) => item);
+  };
+  
+  /**
+   * Levenshtein distance calculation for fuzzy text matching
+   */
+  const levenshteinDistance = (str1, str2) => {
+    const track = Array(str2.length + 1).fill(null).map(() => 
+      Array(str1.length + 1).fill(null));
+    
+    for (let i = 0; i <= str1.length; i += 1) {
+      track[0][i] = i;
+    }
+    
+    for (let j = 0; j <= str2.length; j += 1) {
+      track[j][0] = j;
+    }
+    
+    for (let j = 1; j <= str2.length; j += 1) {
+      for (let i = 1; i <= str1.length; i += 1) {
+        const indicator = str1[i - 1] === str2[j - 1] ? 0 : 1;
+        track[j][i] = Math.min(
+          track[j][i - 1] + 1, // deletion
+          track[j - 1][i] + 1, // insertion
+          track[j - 1][i - 1] + indicator, // substitution
+        );
+      }
+    }
+    
+    return track[str2.length][str1.length];
+  };
   
   const analyzeData = () => {
     try {
       setLoading(true);
       
-      // Process food items data
-      const foodMap = {};
+      // If we already have pre-normalized foods data from TopFavoritesSection
+      if (foods && Array.isArray(foods) && foods.length > 0 && foods[0].normalizedName) {
+        // If we received already normalized foods, use them directly
+        const enhancedFoods = [...foods];
+        
+        // Sort by count (descending)
+        enhancedFoods.sort((a, b) => b.count - a.count);
+        
+        setAllFoods(enhancedFoods);
+        setFilteredFoods(enhancedFoods);
+        setLoading(false);
+        return;
+      }
+      
+      // Otherwise, process from scratch
+      const foodItemsMap = {};
       
       // Filter valid emails
       const validEmails = allEmails.filter(email => 
@@ -57,7 +162,7 @@ const FoodsScreen = () => {
         Array.isArray(email.orderDetails.orderItems)
       );
       
-      // Extract and count food items
+      // Extract and count food items with improved normalization
       validEmails.forEach(email => {
         const restaurant = email.orderDetails.restaurantName;
         const orderDate = new Date(email.date);
@@ -66,43 +171,66 @@ const FoodsScreen = () => {
           // Extract food name from format like "1 X Food Name"
           const match = item.match(/\d+\s*[Xx×]\s+(.*)/);
           if (match && match[1]) {
-            const foodName = match[1].trim();
+            const originalFoodName = match[1].trim();
             
-            if (!foodMap[foodName]) {
-              foodMap[foodName] = {
-                name: foodName,
+            // Use advanced food normalization
+            const normalizedFoodName = advancedCombinedFoods(originalFoodName);
+            
+            // Skip if empty after normalization
+            if (!normalizedFoodName) return;
+            
+            if (!foodItemsMap[normalizedFoodName]) {
+              foodItemsMap[normalizedFoodName] = {
+                name: originalFoodName,
+                normalizedName: normalizedFoodName,
                 count: 1,
                 restaurants: { [restaurant]: 1 },
+                variants: [originalFoodName],
                 firstOrdered: orderDate,
                 lastOrdered: orderDate
               };
             } else {
-              foodMap[foodName].count += 1;
+              foodItemsMap[normalizedFoodName].count += 1;
               
               // Update restaurant count
-              if (foodMap[foodName].restaurants[restaurant]) {
-                foodMap[foodName].restaurants[restaurant] += 1;
+              if (foodItemsMap[normalizedFoodName].restaurants[restaurant]) {
+                foodItemsMap[normalizedFoodName].restaurants[restaurant] += 1;
               } else {
-                foodMap[foodName].restaurants[restaurant] = 1;
+                foodItemsMap[normalizedFoodName].restaurants[restaurant] = 1;
+              }
+              
+              // Track variants if this is a different name than we've seen
+              const isNewVariant = !foodItemsMap[normalizedFoodName].variants.includes(originalFoodName);
+              if (isNewVariant) {
+                foodItemsMap[normalizedFoodName].variants.push(originalFoodName);
+                
+                // Use the shortest name for display (usually the base version)
+                if (originalFoodName.length < foodItemsMap[normalizedFoodName].name.length) {
+                  foodItemsMap[normalizedFoodName].name = originalFoodName;
+                }
               }
               
               // Update first & last order dates
-              if (orderDate < foodMap[foodName].firstOrdered) {
-                foodMap[foodName].firstOrdered = orderDate;
+              if (orderDate < foodItemsMap[normalizedFoodName].firstOrdered) {
+                foodItemsMap[normalizedFoodName].firstOrdered = orderDate;
               }
-              if (orderDate > foodMap[foodName].lastOrdered) {
-                foodMap[foodName].lastOrdered = orderDate;
+              if (orderDate > foodItemsMap[normalizedFoodName].lastOrdered) {
+                foodItemsMap[normalizedFoodName].lastOrdered = orderDate;
               }
             }
           }
         });
       });
       
-      // Process and convert to array
-      let foodsArray = Object.values(foodMap);
+      // Convert to array
+      let foodsArray = Object.values(foodItemsMap);
       
-      // Process restaurant data into top restaurants
+      // Process and enhance with additional data
       foodsArray.forEach(food => {
+        // Get variant count
+        food.variantCount = food.variants.length;
+        
+        // Process restaurant data into top restaurants
         const restaurantEntries = Object.entries(food.restaurants);
         food.uniqueRestaurants = restaurantEntries.length;
         
@@ -224,15 +352,39 @@ const FoodsScreen = () => {
           </View>
         </View>
         
+        {/* Enhanced: Show variants if applicable */}
+        {item.variantCount > 1 && (
+          <View style={styles.variantsContainer}>
+            <Text style={styles.variantsTitle}>
+              <Icon name="layers" size={14} color="#888" /> {item.variantCount} variants:
+            </Text>
+            <View style={styles.variantsList}>
+              {item.variants.slice(0, 3).map((variant, idx) => (
+                <View key={`variant-${idx}`} style={styles.variantBadge}>
+                  <Text style={styles.variantText} numberOfLines={1}>
+                    {variant}
+                  </Text>
+                </View>
+              ))}
+              {item.variants.length > 3 && (
+                <View style={styles.variantBadge}>
+                  <Text style={styles.variantText}>+{item.variants.length - 3} more</Text>
+                </View>
+              )}
+            </View>
+          </View>
+        )}
+        
+        {/* Enhanced: Show top restaurants */}
         {item.topRestaurants && item.topRestaurants.length > 0 && (
-          <View style={styles.topRestaurantsContainer}>
-            <Text style={styles.topRestaurantsTitle}>Top Restaurants:</Text>
-            <View style={styles.topRestaurantsList}>
+          <View style={styles.topItemsContainer}>
+            <Text style={styles.topItemsTitle}>Top Restaurants:</Text>
+            <View style={styles.topItemsList}>
               {item.topRestaurants.map((restaurant, idx) => (
-                <View key={`${item.name}-restaurant-${idx}`} style={styles.topRestaurantBadge}>
-                  <Text style={styles.topRestaurantText}>{restaurant.name}</Text>
-                  <View style={styles.topRestaurantCount}>
-                    <Text style={styles.topRestaurantCountText}>{restaurant.count}</Text>
+                <View key={`${item.name}-restaurant-${idx}`} style={styles.topItemBadge}>
+                  <Text style={styles.topItemText}>{restaurant.name}</Text>
+                  <View style={styles.topItemCount}>
+                    <Text style={styles.topItemCountText}>{restaurant.count}</Text>
                   </View>
                 </View>
               ))}
@@ -348,7 +500,7 @@ const FoodsScreen = () => {
       <FlatList
         data={filteredFoods}
         renderItem={renderFoodItem}
-        keyExtractor={(item, index) => `food-${index}-${item.name}`}
+        keyExtractor={(item, index) => `food-${index}-${item.normalizedName || item.name}`}
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
@@ -541,22 +693,52 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#333',
   },
-  topRestaurantsContainer: {
+  // Enhanced: Variants display
+  variantsContainer: {
+    borderTopWidth: 1, 
+    borderTopColor: '#f0f0f0',
+    paddingTop: 12,
+    marginBottom: 12,
+  },
+  variantsTitle: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 8,
+  },
+  variantsList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  variantBadge: {
+    backgroundColor: '#f0f0f0',
+    paddingVertical: 4, 
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    marginRight: 6,
+    marginBottom: 6,
+  },
+  variantText: {
+    fontSize: 12,
+    color: '#666',
+    maxWidth: 120,
+  },
+  // Enhanced: Top restaurants display
+  topItemsContainer: {
     borderTopWidth: 1,
     borderTopColor: '#f0f0f0',
     paddingTop: 12,
   },
-  topRestaurantsTitle: {
+  topItemsTitle: {
     fontSize: 14,
     fontWeight: '500',
     color: '#666',
     marginBottom: 8,
   },
-  topRestaurantsList: {
+  topItemsList: {
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
-  topRestaurantBadge: {
+  topItemBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f0f0f0',
@@ -566,18 +748,18 @@ const styles = StyleSheet.create({
     marginRight: 8,
     marginBottom: 8,
   },
-  topRestaurantText: {
+  topItemText: {
     fontSize: 12,
     color: '#666',
   },
-  topRestaurantCount: {
+  topItemCount: {
     backgroundColor: '#ddd',
     borderRadius: 8,
     paddingHorizontal: 6,
     paddingVertical: 2,
     marginLeft: 6,
   },
-  topRestaurantCountText: {
+  topItemCountText: {
     fontSize: 10,
     color: '#666',
     fontWeight: 'bold',
