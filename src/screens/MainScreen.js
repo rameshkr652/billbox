@@ -14,6 +14,7 @@ import * as AccountService from '../services/AccountService';
 import * as StorageService from '../services/StorageService';
 import platforms from '../constants/platforms';
 import AccountSwitcherModal from '../components/AccountSwitcherModal';
+import BankTransactionScreen from './BankTransactionScreen';
 
 
 const Drawer = createDrawerNavigator();
@@ -273,25 +274,6 @@ const CustomDrawerContent = (props) => {
                 </Text>
               </View>
             </TouchableOpacity>
-            
-            {accountEmail && (
-              <TouchableOpacity 
-                style={styles.accountButton}
-                onPress={() => {
-                  navigation.navigate(route.name);
-                  // Allow time for navigation to complete
-                  setTimeout(() => {
-                    props.navigation.closeDrawer();
-                  }, 300);
-                }}
-              >
-                <Icon name="account-circle" size={16} color="#666" />
-                <Text style={styles.accountButtonText}>
-                  {accountEmail.split('@')[0]}
-                </Text>
-                <Icon name="arrow-drop-down" size={16} color="#666" />
-              </TouchableOpacity>
-            )}
           </View>
         );
       })}
@@ -562,6 +544,18 @@ const MainScreen = () => {
               </Drawer.Screen>
             );
           })}
+          <Drawer.Screen
+            name="Banks"
+            component={BankTransactionScreen}
+            options={{
+              drawerIcon: ({color, size}) => (
+                <Icon name="account-balance" size={size} color={color} />
+              ),
+              headerStyle: { 
+                backgroundColor: Colors.primary,
+              },
+            }}
+          />
         </Drawer.Navigator>
       ) : (
         <View style={styles.noPlatformsContainer}>
