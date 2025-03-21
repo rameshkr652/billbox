@@ -1,7 +1,6 @@
-// src/screens/WebAuthScreen.js
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, Text, Alert } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { View, StyleSheet, TouchableOpacity, Text, Alert } from 'react-native';
+import { useNavigation, useRoute, CommonActions } from '@react-navigation/native';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -9,6 +8,7 @@ import Colors from '../constants/colors';
 
 const WebAuthScreen = () => {
   const navigation = useNavigation();
+  const route = useRoute();
   const [loading, setLoading] = useState(false);
   
   const addNewGoogleAccount = async () => {
@@ -51,7 +51,27 @@ const WebAuthScreen = () => {
           await AsyncStorage.setItem('accounts', JSON.stringify(accountsList));
           
           Alert.alert('Success', 'Account added successfully');
-          navigation.goBack();
+          
+          // Set a global flag to notify any screens that account data has changed
+          await AsyncStorage.setItem('accountsUpdated', Date.now().toString());
+          
+          // ADDED: Force refresh in parent screens and return to previous screen
+          if (navigation.canGoBack()) {
+            // Set accountsUpdated parameter on the previous screen
+            navigation.setParams({ accountsUpdated: Date.now() });
+            
+            // Simply go back to previous screen - this preserves the navigation stack
+            navigation.goBack();
+            
+            // Dispatch an event that screens can listen for to refresh their data
+            const timestamp = Date.now().toString();
+            AsyncStorage.setItem('accountsUpdated', timestamp);
+            
+            console.log('Account added successfully, returning to previous screen');
+          } else {
+            // Fallback if we can't go back (unlikely)
+            navigation.navigate('Main', { accountsUpdated: Date.now() });
+          }
         }
       }
     } catch (error) {
