@@ -176,8 +176,10 @@ const FoodsScreen = () => {
         email.orderDetails.orderItems.forEach(item => {
           // Extract food name from format like "1 X Food Name"
           const match = item.match(/\d+\s*[Xx×]\s+(.*)/);
+          let originalFoodName = item
           if (match && match[1]) {
-            const originalFoodName = match[1].trim();
+            originalFoodName = match[1].trim();            
+          }
             
             // Use advanced food normalization
             const normalizedFoodName = advancedCombinedFoods(originalFoodName);
@@ -224,7 +226,6 @@ const FoodsScreen = () => {
                 foodItemsMap[normalizedFoodName].lastOrdered = orderDate;
               }
             }
-          }
         });
       });
       

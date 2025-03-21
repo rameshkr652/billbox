@@ -260,3 +260,219 @@ export const removePlatformFromAccount = async (accountEmail, platform) => {
     return false;
   }
 };
+
+// Enhanced bank-related methods for StorageService.js
+
+// Get banks for a specific account
+export const getBanksForAccount = async (accountEmail) => {
+  try {
+    if (!accountEmail) {
+      console.error('getBanksForAccount: No account email provided');
+      return [];
+    }
+    
+    const storageKey = `banks_${accountEmail}`;
+    const banks = await AsyncStorage.getItem(storageKey);
+    
+    if (!banks) {
+      console.log(`No banks found for ${accountEmail}, returning empty array`);
+      return [];
+    }
+    
+    const parsedBanks = JSON.parse(banks);
+    console.log(`Retrieved ${parsedBanks.length} banks for ${accountEmail}`);
+    return parsedBanks;
+  } catch (error) {
+    console.error(`Error getting banks for account ${accountEmail}:`, error);
+    return [];
+  }
+};
+
+// Save banks for a specific account
+export const saveBanksForAccount = async (accountEmail, banks) => {
+  try {
+    if (!accountEmail) {
+      console.error('saveBanksForAccount: No account email provided');
+      return false;
+    }
+    
+    const storageKey = `banks_${accountEmail}`;
+    await AsyncStorage.setItem(storageKey, JSON.stringify(banks));
+    console.log(`Saved ${banks.length} banks for ${accountEmail}`);
+    
+    // Verify the save was successful
+    const savedBanks = await AsyncStorage.getItem(storageKey);
+    if (!savedBanks) {
+      console.error(`Failed to verify saved banks for ${accountEmail}`);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error(`Error saving banks for account ${accountEmail}:`, error);
+    return false;
+  }
+};
+
+// Add a bank to an account
+export const addBankToAccount = async (accountEmail, bank) => {
+  try {
+    if (!accountEmail || !bank) {
+      return false;
+    }
+    
+    // Get existing banks
+    const banks = await getBanksForAccount(accountEmail);
+    
+    // Check if bank already exists
+    const existingIndex = banks.findIndex(b => b.id === bank.id);
+    if (existingIndex >= 0) {
+      // Update existing bank
+      banks[existingIndex] = {...banks[existingIndex], ...bank};
+    } else {
+      // Add new bank
+      banks.push(bank);
+    }
+    
+    // Save updated banks
+    return await saveBanksForAccount(accountEmail, banks);
+  } catch (error) {
+    console.error(`Error adding bank for account ${accountEmail}:`, error);
+    return false;
+  }
+};
+
+// Remove a bank from an account
+export const removeBankFromAccount = async (accountEmail, bankId) => {
+  try {
+    if (!accountEmail || !bankId) {
+      return false;
+    }
+    
+    // Get existing banks
+    const banks = await getBanksForAccount(accountEmail);
+    
+    // Filter out the bank
+    const updatedBanks = banks.filter(bank => bank.id !== bankId);
+    
+    // Save updated banks
+    const saved = await saveBanksForAccount(accountEmail, updatedBanks);
+    
+    if (saved) {
+      // Also clean up any transaction data
+      await clearBankData(accountEmail, bankId);
+    }
+    
+    return saved;
+  } catch (error) {
+    console.error(`Error removing bank for account ${accountEmail}:`, error);
+    return false;
+  }
+};
+
+// Clear bank data for a specific bank and account
+export const clearBankData = async (accountEmail, bankId) => {
+  try {
+    if (!accountEmail || !bankId) {
+      return false;
+    }
+    
+    const transactionsKey = `bank_transactions_${bankId}_${accountEmail}`;
+    const timestampKey = `bank_last_updated_${bankId}_${accountEmail}`;
+    
+    await AsyncStorage.removeItem(transactionsKey);
+    await AsyncStorage.removeItem(timestampKey);
+    
+    console.log(`Cleared data for bank ${bankId} with account ${accountEmail}`);
+    return true;
+  } catch (error) {
+    console.error(`Error clearing bank data for ${bankId} with ${accountEmail}:`, error);
+    return false;
+  }
+};
+
+// Clear all bank data for an account
+export const clearAllBankData = async (accountEmail) => {
+  try {
+    if (!accountEmail) {
+      return false;
+    }
+    
+    // Get all banks for this account
+    const banks = await getBanksForAccount(accountEmail);
+    
+    // Clear data for each bank
+    for (const bank of banks) {
+      await clearBankData(accountEmail, bank.id);
+    }
+    
+    // Remove the banks list
+    const storageKey = `banks_${accountEmail}`;
+    await AsyncStorage.removeItem(storageKey);
+    
+    console.log(`Cleared all bank data for account ${accountEmail}`);
+    return true;
+  } catch (error) {
+    console.error(`Error clearing all bank data for account ${accountEmail}:`, error);
+    return false;
+  }
+};
+
+// Get transactions for a specific bank and account
+export const getBankTransactions = async (accountEmail, bankId) => {
+  try {
+    if (!accountEmail || !bankId) {
+      return [];
+    }
+    
+    const storageKey = `bank_transactions_${bankId}_${accountEmail}`;
+    const transactions = await AsyncStorage.getItem(storageKey);
+    
+    if (!transactions) {
+      return [];
+    }
+    
+    return JSON.parse(transactions);
+  } catch (error) {
+    console.error(`Error getting transactions for ${bankId} with ${accountEmail}:`, error);
+    return [];
+  }
+};
+
+// Save transactions for a specific bank and account
+export const saveBankTransactions = async (accountEmail, bankId, transactions) => {
+  try {
+    if (!accountEmail || !bankId) {
+      return false;
+    }
+    
+    const storageKey = `bank_transactions_${bankId}_${accountEmail}`;
+    await AsyncStorage.setItem(storageKey, JSON.stringify(transactions));
+    
+    // Update last updated timestamp
+    const timestampKey = `bank_last_updated_${bankId}_${accountEmail}`;
+    await AsyncStorage.setItem(timestampKey, Date.now().toString());
+    
+    return true;
+  } catch (error) {
+    console.error(`Error saving transactions for ${bankId} with ${accountEmail}:`, error);
+    return false;
+  }
+};
+
+// Get last updated timestamp for bank transactions
+export const getBankLastUpdated = async (accountEmail, bankId) => {
+  try {
+    if (!accountEmail || !bankId) {
+      return null;
+    }
+    
+    const timestampKey = `bank_last_updated_${bankId}_${accountEmail}`;
+    const timestamp = await AsyncStorage.getItem(timestampKey);
+    
+    return timestamp ? parseInt(timestamp) : null;
+  } catch (error) {
+    console.error(`Error getting last updated timestamp for ${bankId} with ${accountEmail}:`, error);
+    return null;
+  }
+};
