@@ -244,55 +244,58 @@ const TopFavoritesSection = ({ emails, platformColor }) => {
       
       if (email.orderDetails?.orderItems && Array.isArray(email.orderDetails.orderItems)) {
         email.orderDetails.orderItems.forEach(item => {
+          let originalFoodName = item
+
           // Extract food name from format like "1 X Food Name"
           const match = item.match(/\d+\s*[Xx×]\s+(.*)/);
+
           if (match && match[1]) {
-            const originalFoodName = match[1].trim();
+            originalFoodName = match[1].trim();            
+          }
             
             // Enhanced: Use advanced food normalization
-            const normalizedFoodName = advancedCombinedFoods(originalFoodName);
+          const normalizedFoodName = advancedCombinedFoods(originalFoodName);
+          
+          // Skip if normalization returned empty string
+          if (!normalizedFoodName) return;
+          
+          if (!foodItemsMap[normalizedFoodName]) {
+            foodItemsMap[normalizedFoodName] = {
+              name: originalFoodName, // Keep original name for display
+              normalizedName: normalizedFoodName, // Normalized for grouping
+              count: 1,
+              restaurants: {[restaurant]: 1},
+              variants: [originalFoodName],
+              firstOrdered: orderDate,
+              lastOrdered: orderDate
+            };
+          } else {
+            foodItemsMap[normalizedFoodName].count += 1;
             
-            // Skip if normalization returned empty string
-            if (!normalizedFoodName) return;
-            
-            if (!foodItemsMap[normalizedFoodName]) {
-              foodItemsMap[normalizedFoodName] = {
-                name: originalFoodName, // Keep original name for display
-                normalizedName: normalizedFoodName, // Normalized for grouping
-                count: 1,
-                restaurants: {[restaurant]: 1},
-                variants: [originalFoodName],
-                firstOrdered: orderDate,
-                lastOrdered: orderDate
-              };
+            // Track which restaurants this food is from
+            if (foodItemsMap[normalizedFoodName].restaurants[restaurant]) {
+              foodItemsMap[normalizedFoodName].restaurants[restaurant] += 1;
             } else {
-              foodItemsMap[normalizedFoodName].count += 1;
+              foodItemsMap[normalizedFoodName].restaurants[restaurant] = 1;
+            }
+            
+            // Track variants if this is a different name than we've seen
+            const isNewVariant = !foodItemsMap[normalizedFoodName].variants.includes(originalFoodName);
+            if (isNewVariant) {
+              foodItemsMap[normalizedFoodName].variants.push(originalFoodName);
               
-              // Track which restaurants this food is from
-              if (foodItemsMap[normalizedFoodName].restaurants[restaurant]) {
-                foodItemsMap[normalizedFoodName].restaurants[restaurant] += 1;
-              } else {
-                foodItemsMap[normalizedFoodName].restaurants[restaurant] = 1;
+              // Use the shortest name for display (usually the base version)
+              if (originalFoodName.length < foodItemsMap[normalizedFoodName].name.length) {
+                foodItemsMap[normalizedFoodName].name = originalFoodName;
               }
-              
-              // Track variants if this is a different name than we've seen
-              const isNewVariant = !foodItemsMap[normalizedFoodName].variants.includes(originalFoodName);
-              if (isNewVariant) {
-                foodItemsMap[normalizedFoodName].variants.push(originalFoodName);
-                
-                // Use the shortest name for display (usually the base version)
-                if (originalFoodName.length < foodItemsMap[normalizedFoodName].name.length) {
-                  foodItemsMap[normalizedFoodName].name = originalFoodName;
-                }
-              }
-              
-              // Update first & last order dates
-              if (orderDate < foodItemsMap[normalizedFoodName].firstOrdered) {
-                foodItemsMap[normalizedFoodName].firstOrdered = orderDate;
-              }
-              if (orderDate > foodItemsMap[normalizedFoodName].lastOrdered) {
-                foodItemsMap[normalizedFoodName].lastOrdered = orderDate;
-              }
+            }
+            
+            // Update first & last order dates
+            if (orderDate < foodItemsMap[normalizedFoodName].firstOrdered) {
+              foodItemsMap[normalizedFoodName].firstOrdered = orderDate;
+            }
+            if (orderDate > foodItemsMap[normalizedFoodName].lastOrdered) {
+              foodItemsMap[normalizedFoodName].lastOrdered = orderDate;
             }
           }
         });
