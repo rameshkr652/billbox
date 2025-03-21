@@ -1,4 +1,3 @@
-// AccountSwitcherModal.js - A beautiful modal for switching accounts
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -9,10 +8,14 @@ import {
   FlatList,
   Animated,
   Dimensions,
-  Image
+  Image,
+  AppState,
+  Alert
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Colors from '../constants/colors';
+import * as AccountService from '../services/AccountService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window');
 
@@ -28,7 +31,46 @@ const AccountSwitcherModal = ({
 }) => {
   const [slideAnim] = useState(new Animated.Value(height));
   const [fadeAnim] = useState(new Animated.Value(0));
+  const [localAccounts, setLocalAccounts] = useState(accounts);
+  const [lastAccountUpdate, setLastAccountUpdate] = useState(null);
+  const [appState, setAppState] = useState(AppState.currentState);
   
+  // Load latest accounts on mount and on visibility change
+  useEffect(() => {
+    // Load accounts whenever the modal becomes visible
+    if (visible) {
+      checkForAccountUpdates();
+      loadAccounts();
+    }
+  }, [visible]);
+  
+  // Listen for app state changes to refresh accounts when app comes to foreground
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (appState.match(/inactive|background/) && nextAppState === 'active') {
+        // App has come to the foreground
+        checkForAccountUpdates();
+      }
+      setAppState(nextAppState);
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [appState]);
+  
+  // Subscribe to the global account update flag
+  useEffect(() => {
+    const checkInterval = setInterval(() => {
+      if (visible) {
+        checkForAccountUpdates();
+      }
+    }, 1000); // Check every second while visible
+    
+    return () => clearInterval(checkInterval);
+  }, [visible, lastAccountUpdate]);
+  
+  // Animation controls
   useEffect(() => {
     if (visible) {
       // Animate modal sliding up and background fading in
@@ -50,6 +92,156 @@ const AccountSwitcherModal = ({
       fadeAnim.setValue(0);
     }
   }, [visible]);
+  
+  // Handle account removal with data cleanup
+  const handleRemoveAccount = (account) => {
+    // Don't allow removing the only account
+    if (localAccounts.length <= 1) {
+      Alert.alert(
+        "Cannot Remove Account",
+        "You must have at least one account. Add another account before removing this one.",
+        [{ text: "OK" }]
+      );
+      return;
+    }
+    
+    // Don't allow removing the current account in use
+    if (account.email === currentAccount) {
+      Alert.alert(
+        "Account In Use",
+        "You cannot remove the account that is currently in use. Please switch to another account first.",
+        [{ text: "OK" }]
+      );
+      return;
+    }
+
+    // Show confirmation alert with warning about data deletion
+    Alert.alert(
+      "Remove Account",
+      `Are you sure you want to remove ${account.name || account.email}?\n\nThis will permanently delete all associated emails and data for this account from the app.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Remove", 
+          style: "destructive",
+          onPress: async () => {
+            try {
+              // Call function to remove account and associated data
+              await removeAccountWithData(account.email);
+              
+              // Refresh account list
+              const updatedAccounts = await loadAccounts();
+              setLocalAccounts(updatedAccounts);
+              
+              // Set update flag to notify other components
+              const timestamp = Date.now().toString();
+              await AsyncStorage.setItem('accountsUpdated', timestamp);
+              setLastAccountUpdate(timestamp);
+              
+              // Confirmation to user
+              Alert.alert(
+                "Account Removed",
+                `${account.name || account.email} has been removed successfully.`
+              );
+            } catch (error) {
+              console.error('Error removing account:', error);
+              Alert.alert(
+                "Error",
+                "Failed to remove account. Please try again."
+              );
+            }
+          }
+        }
+      ]
+    );
+  };
+  
+  // Function to remove account and all associated data
+  const removeAccountWithData = async (email) => {
+    if (!email) {
+      throw new Error('Email is required to remove account');
+    }
+    
+    try {
+      // 1. Get platforms associated with this account
+      const platforms = await AsyncStorage.getAllKeys();
+      const platformKeys = platforms.filter(key => 
+        key.startsWith('emails_') && key.endsWith(`_${email}`)
+      );
+      
+      // 2. Remove emails for each platform
+      for (const platformKey of platformKeys) {
+        const platform = platformKey.split('_')[1]; // Extract platform name
+        console.log(`Removing data for platform ${platform} with account ${email}`);
+        await AsyncStorage.removeItem(platformKey);
+        
+        // Also remove last fetched timestamp
+        const timestampKey = `lastFetched_${platform}_${email}`;
+        await AsyncStorage.removeItem(timestampKey);
+      }
+      
+      // 3. Remove platform configurations for this account
+      const platformsConfig = await AsyncStorage.getItem(`platforms_${email}`);
+      if (platformsConfig) {
+        await AsyncStorage.removeItem(`platforms_${email}`);
+      }
+      
+      // 4. Remove bank data if any
+      const bankKeys = platforms.filter(key => 
+        key.startsWith('bank_') && key.includes(`_${email}`)
+      );
+      for (const bankKey of bankKeys) {
+        await AsyncStorage.removeItem(bankKey);
+      }
+      
+      // 5. Remove refresh token and other auth data
+      await AsyncStorage.removeItem(`refresh_token_${email}`);
+      await AsyncStorage.removeItem(`token_expiry_${email}`);
+      
+      // 6. Remove the account from accounts list
+      const accounts = await AccountService.getAccounts();
+      const updatedAccounts = accounts.filter(acc => acc.email !== email);
+      await AsyncStorage.setItem('accounts', JSON.stringify(updatedAccounts));
+      
+      console.log(`Account ${email} removed successfully with all associated data`);
+      return true;
+    } catch (error) {
+      console.error(`Error removing account ${email} with data:`, error);
+      throw error;
+    }
+  };
+  
+  // More robust account update checking
+  const checkForAccountUpdates = async () => {
+    try {
+      const accountsUpdated = await AsyncStorage.getItem('accountsUpdated');
+      
+      if (accountsUpdated && accountsUpdated !== lastAccountUpdate) {
+        // Accounts have been updated since our last check
+        console.log('Accounts updated, refreshing account list');
+        setLastAccountUpdate(accountsUpdated);
+        await loadAccounts();
+      }
+    } catch (error) {
+      console.error('Error checking for account updates:', error);
+    }
+  };
+  
+  // Load accounts from storage with error handling
+  const loadAccounts = async () => {
+    try {
+      console.log('Loading accounts in AccountSwitcherModal');
+      const accountsList = await AccountService.getAccounts();
+      if (JSON.stringify(accountsList) !== JSON.stringify(localAccounts)) {
+        console.log('New accounts loaded, updating state');
+        setLocalAccounts(accountsList);
+      }
+      return accountsList;
+    } catch (error) {
+      console.error('Error loading accounts:', error);
+      return [];
+    }
+  };
   
   const handleClose = () => {
     // Animate modal sliding down and background fading out
@@ -74,6 +266,12 @@ const AccountSwitcherModal = ({
     handleClose();
   };
   
+  const handleAddNewAccount = () => {
+    // Use the passed callback to handle navigation
+    onAddNewAccount();
+  };
+  
+  // Render account item function with delete button
   const renderAccountItem = ({ item }) => {
     const isCurrentAccount = item.email === currentAccount;
     
@@ -100,16 +298,21 @@ const AccountSwitcherModal = ({
           <Text style={styles.accountEmail}>{item.email}</Text>
         </View>
         
-        {isCurrentAccount && (
+        {isCurrentAccount ? (
           <View style={[styles.checkCircle, { backgroundColor: platformColor }]}>
             <Icon name="check" size={16} color="#fff" />
           </View>
+        ) : (
+          <TouchableOpacity 
+            style={styles.deleteButton}
+            onPress={() => handleRemoveAccount(item)}
+          >
+            <Icon name="delete-outline" size={22} color={Colors.accent} />
+          </TouchableOpacity>
         )}
       </TouchableOpacity>
     );
   };
-  
-  if (!visible) return null;
   
   return (
     <Modal
@@ -154,7 +357,7 @@ const AccountSwitcherModal = ({
             <View style={styles.divider} />
             
             <FlatList
-              data={accounts}
+              data={localAccounts}
               renderItem={renderAccountItem}
               keyExtractor={(item) => item.email}
               contentContainerStyle={styles.accountsList}
@@ -287,6 +490,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  deleteButton: {
+    padding: 8,
+    borderRadius: 20,
   },
   addAccountButton: {
     flexDirection: 'row',
