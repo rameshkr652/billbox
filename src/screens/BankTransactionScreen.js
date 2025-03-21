@@ -1,4 +1,4 @@
-// src/screens/BankTransactionScreen.js - Updated with manage banks button
+// src/screens/BankTransactionScreen.js - Enhanced with bank switching functionality
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -34,6 +34,9 @@ const BankTransactionScreen = () => {
   const [currentAccount, setCurrentAccount] = useState(null);
   const [accounts, setAccounts] = useState([]);
   const [showAccountModal, setShowAccountModal] = useState(false);
+  
+  // New state for bank switching
+  const [showBankSwitcherModal, setShowBankSwitcherModal] = useState(false);
   
   // Load user banks on component mount
   useEffect(() => {
@@ -221,6 +224,12 @@ const BankTransactionScreen = () => {
     navigation.navigate('WebAuth');
   };
   
+  // Handle bank selection
+  const handleBankSelect = (bankId) => {
+    setSelectedBankId(bankId);
+    setShowBankSwitcherModal(false);
+  };
+  
   // Navigate to manage banks screen
   const navigateToManageBanks = () => {
     if (!currentAccount) {
@@ -292,6 +301,65 @@ const BankTransactionScreen = () => {
     </Modal>
   );
   
+  // NEW: Render bank switcher modal
+  const renderBankSwitcherModal = () => (
+    <Modal
+      visible={showBankSwitcherModal}
+      transparent={true}
+      animationType="fade"
+      onRequestClose={() => setShowBankSwitcherModal(false)}
+    >
+      <TouchableOpacity 
+        style={styles.modalOverlay}
+        activeOpacity={1}
+        onPress={() => setShowBankSwitcherModal(false)}
+      >
+        <View style={styles.dropdownContainer}>
+          <View style={styles.dropdownHeader}>
+            <Text style={styles.dropdownTitle}>Switch Bank</Text>
+            <TouchableOpacity onPress={() => setShowBankSwitcherModal(false)}>
+              <Icon name="close" size={24} color="#666" />
+            </TouchableOpacity>
+          </View>
+          
+          <ScrollView style={styles.banksList}>
+            {userBanks.map((bank) => (
+              <TouchableOpacity
+                key={bank.id}
+                style={[
+                  styles.bankOption,
+                  selectedBankId === bank.id && styles.bankOptionSelected
+                ]}
+                onPress={() => handleBankSelect(bank.id)}
+              >
+                <View style={[styles.bankIcon, { backgroundColor: bank.color }]}>
+                  <Icon name={bank.icon} size={24} color="#FFF" />
+                </View>
+                <View style={styles.bankOptionInfo}>
+                  <Text style={styles.bankOptionName}>{bank.name}</Text>
+                </View>
+                {selectedBankId === bank.id && (
+                  <Icon name="check-circle" size={24} color={Colors.primary} />
+                )}
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+          
+          <TouchableOpacity 
+            style={styles.addMoreBanksButton}
+            onPress={() => {
+              setShowBankSwitcherModal(false);
+              setShowAddBankModal(true);
+            }}
+          >
+            <Icon name="add" size={18} color={Colors.primary} />
+            <Text style={styles.addMoreBanksText}>Add More Banks</Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  );
+  
   // Get the selected bank info for styling
   const selectedBank = userBanks.find(bank => bank.id === selectedBankId);
   const bankColor = selectedBank ? selectedBank.color : Colors.primary;
@@ -355,7 +423,7 @@ const BankTransactionScreen = () => {
             <View style={styles.bankSelectorHeader}>
               <Text style={styles.sectionLabel}>Selected Bank</Text>
               
-              {/* New Manage Banks Button */}
+              {/* Manage Banks Button */}
               <TouchableOpacity
                 style={[styles.manageBanksButton, { borderColor: bankColor }]}
                 onPress={navigateToManageBanks}
@@ -368,7 +436,7 @@ const BankTransactionScreen = () => {
             <View style={styles.bankSelectorWrapper}>
               <TouchableOpacity 
                 style={styles.bankSelector}
-                onPress={() => setShowAddBankModal(true)}
+                onPress={() => setShowBankSwitcherModal(true)}
               >
                 <View style={[styles.selectedBankIcon, { backgroundColor: bankColor }]}>
                   <Icon name="account-balance" size={24} color="#FFF" />
@@ -398,6 +466,9 @@ const BankTransactionScreen = () => {
       
       {/* Add Bank Dropdown */}
       {renderAddBankDropdown()}
+      
+      {/* NEW: Bank Switcher Modal */}
+      {renderBankSwitcherModal()}
       
       {/* Account Switcher Modal */}
       <AccountSwitcherModal
@@ -781,6 +852,9 @@ const styles = StyleSheet.create({
   bankOptionDisabled: {
     opacity: 0.7,
   },
+  bankOptionSelected: {
+    backgroundColor: '#f0f8ff',
+  },
   bankIcon: {
     width: 40,
     height: 40,
@@ -801,7 +875,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#888',
     marginTop: 2,
+  },
+  // New styles for bank switcher modal
+  addMoreBanksButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  addMoreBanksText: {
+    fontSize: 14,
+    color: Colors.primary,
+    fontWeight: '500',
+    marginLeft: 8,
   }
-})
+});
 
-export default BankTransactionScreen
+export default BankTransactionScreen;
