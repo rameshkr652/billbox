@@ -113,16 +113,9 @@ const SplashScreen = () => {
         const account = await AccountService.getCurrentAccount();
         
         if (account) {
-          // Check if platforms are selected for this account
-          const platformsConfig = await StorageService.getPlatformsForAccount(account.email);
-          
-          if (platformsConfig && Object.keys(platformsConfig).length > 0) {
-            // User has selected platforms
-            navigation.replace('Main');
-          } else {
-            // User is signed in but hasn't selected platforms
-            navigation.replace('PlatformSelection');
-          }
+          // User is signed in, go directly to Main screen
+          // Skip the platform selection screen entirely
+          navigation.replace('Main');
         } else {
           // User is not signed in
           navigation.replace('Intro');

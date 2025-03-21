@@ -412,26 +412,7 @@ const fetchLatestEmails = async () => {
       )}
       
       {/* Progress Modal */}
-      {renderProgressModal()}
-      
-      {/* Account Drawer */}
-      {showAccountDrawer && (
-        <Animated.View 
-          style={[
-            styles.accountDrawerContainer,
-            {
-              transform: [{ translateX: drawerAnimation }]
-            }
-          ]}
-        >
-          <AccountDrawer 
-            platform={platform}
-            accountEmail={accountEmail}
-            onAccountChange={handleAccountChange}
-            onClose={closeAccountDrawer}
-          />
-        </Animated.View>
-      )}
+      {renderProgressModal()}      
       
       {showConfirmClear && (
         <View style={styles.modalOverlay}>

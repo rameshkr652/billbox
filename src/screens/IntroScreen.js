@@ -75,7 +75,10 @@ const IntroScreen = () => {
       animateButton();
       setLoading(true);
       await AuthService.signIn();
-      navigation.replace('PlatformSelection');
+      
+      // Go directly to Main screen after sign in
+      // No need to go to platform selection screen anymore
+      navigation.replace('Main');
     } catch (error) {
       console.error('Error signing in:', error);
       setLoading(false);
@@ -465,4 +468,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default IntroScreen;
+export default IntroScreen

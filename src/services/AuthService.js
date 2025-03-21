@@ -2,6 +2,7 @@
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as AccountService from './AccountService';
+import platforms from '../constants/platforms';
 
 // Constants
 const TOKEN_EXPIRY_KEY = 'token_expiry';
@@ -15,6 +16,42 @@ export const configureGoogleSignIn = () => {
     webClientId: '533100730063-856k8l5r6uh2fe2fl7iovkf4t8tjdm69.apps.googleusercontent.com',
     offlineAccess: true, // This is crucial for getting refresh token
   });
+};
+
+// Helper function to automatically select all platforms for an account
+const autoSelectAllPlatforms = async (accountEmail) => {
+  try {
+    if (!accountEmail) return;
+    
+    // Create platform config with all available platforms
+    const platformConfig = {};
+    
+    // Add all platforms from the constants file
+    platforms.forEach(platform => {
+      platformConfig[platform.id] = { accountEmail: accountEmail };
+    });
+    
+    console.log(`Auto-selecting all platforms for ${accountEmail}:`, Object.keys(platformConfig));
+    
+    // Save the platform configuration for this account
+    const storageKey = `platforms_${accountEmail}`;
+    await AsyncStorage.setItem(storageKey, JSON.stringify(platformConfig));
+    
+    // Verify it was saved correctly
+    const savedData = await AsyncStorage.getItem(storageKey);
+    const verified = savedData ? JSON.parse(savedData) : null;
+    
+    if (verified && Object.keys(verified).length === platforms.length) {
+      console.log(`Successfully auto-selected all platforms for ${accountEmail}`);
+      return true;
+    } else {
+      console.warn(`Failed to verify auto-selected platforms for ${accountEmail}`);
+      return false;
+    }
+  } catch (error) {
+    console.error('Error auto-selecting platforms:', error);
+    return false;
+  }
 };
 
 export const signIn = async () => {
@@ -61,6 +98,9 @@ export const signIn = async () => {
     
     await AsyncStorage.setItem('accounts', JSON.stringify(accountsList));
     await AsyncStorage.setItem('currentAccount', account.email);
+    
+    // Auto-select all platforms for this account
+    await autoSelectAllPlatforms(account.email);
     
     return account;
   } catch (error) {
@@ -161,6 +201,7 @@ export const refreshTokenIfNeeded = async (email) => {
     return false;
   }
 };
+
 export const signOut = async () => {
   try {
     // Get current user email before signing out
@@ -182,8 +223,8 @@ export const signOut = async () => {
     await AsyncStorage.removeItem('currentAccount');
     
     // Clear all platform emails from storage
-    const platforms = ['swiggy', 'zomato', 'flipkart', 'amazon'];
-    for (const platform of platforms) {
+    const allPlatforms = platforms.map(p => p.id);
+    for (const platform of allPlatforms) {
       await AsyncStorage.removeItem(`emails_${platform}`);
     }
   } catch (error) {

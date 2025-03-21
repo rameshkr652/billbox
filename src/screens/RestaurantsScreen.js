@@ -1,4 +1,4 @@
-// src/screens/RestaurantsScreen.js
+// src/screens/RestaurantsScreen.js - Enhanced version
 import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView,
@@ -14,6 +14,7 @@ import {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Colors from '../constants/colors';
+import { advancedCombinedFoods } from '../utils/FoodPraser'; // Import the advanced food parser
 
 const RestaurantsScreen = () => {
   const navigation = useNavigation();
@@ -34,23 +35,136 @@ const RestaurantsScreen = () => {
     }
   }, [allEmails]);
   
+  // Enhanced search with partial matching and fuzzy search
   useEffect(() => {
     if (searchQuery.trim() === '') {
       setFilteredRestaurants(allRestaurants);
     } else {
-      const filtered = allRestaurants.filter(restaurant => 
-        restaurant.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      const filtered = filterRestaurants(allRestaurants, searchQuery);
       setFilteredRestaurants(filtered);
     }
   }, [searchQuery, allRestaurants]);
+  
+  /**
+   * Enhanced restaurant filtering function with partial matching
+   */
+  const filterRestaurants = (restaurantItems, query) => {
+    if (!query || query.trim() === '') {
+      return restaurantItems;
+    }
+    
+    const searchTerms = query.toLowerCase().trim().split(/\s+/);
+    
+    // Calculate score for each restaurant based on how well it matches the search
+    const scoredItems = restaurantItems.map(item => {
+      // Create a searchable string with name and related data
+      const searchableText = item.name.toLowerCase();
+      
+      // Calculate match score
+      let score = 0;
+      
+      // Exact match bonus
+      if (searchableText.includes(query.toLowerCase())) {
+        score += 100; // High score for exact match
+      }
+      
+      // Check each search term
+      searchTerms.forEach(term => {
+        // Full term match
+        if (searchableText.includes(term)) {
+          score += 20 * term.length; // Reward longer term matches more
+        }
+        
+        // Partial word matches
+        const words = searchableText.split(/\s+/);
+        words.forEach(word => {
+          if (word.startsWith(term)) {
+            score += 15; // Good score for prefix match
+          } else if (word.includes(term)) {
+            score += 10; // Medium score for substring match
+          }
+          
+          // Calculate Levenshtein distance for fuzzy matching
+          const distance = levenshteinDistance(word, term);
+          if (distance <= 2 && term.length > 3) { // Only for significant terms
+            score += (10 - distance * 3); // Score based on similarity
+          }
+        });
+      });
+      
+      return { item, score };
+    });
+    
+    // Filter items with a minimum score and sort by score
+    return scoredItems
+      .filter(({ score }) => score > 0)
+      .sort((a, b) => b.score - a.score)
+      .map(({ item }) => item);
+  };
+  
+  /**
+   * Levenshtein distance calculation for fuzzy text matching
+   */
+  const levenshteinDistance = (str1, str2) => {
+    const track = Array(str2.length + 1).fill(null).map(() => 
+      Array(str1.length + 1).fill(null));
+    
+    for (let i = 0; i <= str1.length; i += 1) {
+      track[0][i] = i;
+    }
+    
+    for (let j = 0; j <= str2.length; j += 1) {
+      track[j][0] = j;
+    }
+    
+    for (let j = 1; j <= str2.length; j += 1) {
+      for (let i = 1; i <= str1.length; i += 1) {
+        const indicator = str1[i - 1] === str2[j - 1] ? 0 : 1;
+        track[j][i] = Math.min(
+          track[j][i - 1] + 1, // deletion
+          track[j - 1][i] + 1, // insertion
+          track[j - 1][i - 1] + indicator, // substitution
+        );
+      }
+    }
+    
+    return track[str2.length][str1.length];
+  };
   
   const analyzeData = () => {
     try {
       setLoading(true);
       
-      // Process restaurant data
+      // If we already have pre-normalized restaurant data from TopFavoritesSection
+      if (restaurants && Array.isArray(restaurants) && restaurants.length > 0) {
+        // Create new objects rather than mutating existing ones
+        const preppedRestaurants = restaurants.map(restaurant => {
+          // Create a fresh object with all the original properties
+          return {
+            ...restaurant,
+            // Add default values for properties we'll access later
+            topItems: restaurant.topItems || [],
+            totalSpent: restaurant.totalSpent || 0,
+            avgOrderValue: restaurant.avgOrderValue || 
+              (restaurant.totalSpent ? restaurant.totalSpent / (restaurant.count || 1) : 0),
+            monthlyStats: restaurant.monthlyStats || [],
+            firstOrder: restaurant.firstOrder || null,
+            lastOrder: restaurant.lastOrder || null
+          };
+        });
+        
+        // Sort by count (descending)
+        preppedRestaurants.sort((a, b) => b.count - a.count);
+        
+        setAllRestaurants(preppedRestaurants);
+        setFilteredRestaurants(preppedRestaurants);
+        setLoading(false);
+        return;
+      }
+      
+      // Otherwise, process from scratch
       const restaurantMap = {};
+      const foodItemsByRestaurant = {};
       
       // Filter valid emails
       const validEmails = allEmails.filter(email => 
@@ -66,6 +180,7 @@ const RestaurantsScreen = () => {
           const price = parseFloat(email.orderDetails.totalPrice.replace(/[^\d.-]/g, '') || 0);
           const date = new Date(email.date);
           
+          // Initialize restaurant data if first encounter
           if (!restaurantMap[restaurant]) {
             restaurantMap[restaurant] = {
               name: restaurant,
@@ -74,12 +189,21 @@ const RestaurantsScreen = () => {
               firstOrder: date,
               lastOrder: date,
               avgOrderValue: price,
-              mostOrdered: {}
+              monthlyData: {},
+              emailIds: [email.id]
             };
+            
+            // Initialize food tracking
+            foodItemsByRestaurant[restaurant] = {};
           } else {
+            // Update counts
             restaurantMap[restaurant].count += 1;
             restaurantMap[restaurant].totalSpent += price;
-            restaurantMap[restaurant].avgOrderValue = restaurantMap[restaurant].totalSpent / restaurantMap[restaurant].count;
+            restaurantMap[restaurant].avgOrderValue = 
+              restaurantMap[restaurant].totalSpent / restaurantMap[restaurant].count;
+            
+            // Track email IDs
+            restaurantMap[restaurant].emailIds.push(email.id);
             
             // Update first & last order dates
             if (date < restaurantMap[restaurant].firstOrder) {
@@ -90,16 +214,47 @@ const RestaurantsScreen = () => {
             }
           }
           
+          // Track monthly data
+          const monthYear = date.toLocaleString('default', { month: 'short', year: 'numeric' });
+          if (!restaurantMap[restaurant].monthlyData[monthYear]) {
+            restaurantMap[restaurant].monthlyData[monthYear] = {
+              orderCount: 1,
+              totalSpent: price
+            };
+          } else {
+            restaurantMap[restaurant].monthlyData[monthYear].orderCount += 1;
+            restaurantMap[restaurant].monthlyData[monthYear].totalSpent += price;
+          }
+          
           // Track most ordered items
           if (email.orderDetails?.orderItems && Array.isArray(email.orderDetails.orderItems)) {
             email.orderDetails.orderItems.forEach(item => {
               const match = item.match(/\d+\s*[Xx×]\s+(.*)/);
               if (match && match[1]) {
                 const foodName = match[1].trim();
-                if (!restaurantMap[restaurant].mostOrdered[foodName]) {
-                  restaurantMap[restaurant].mostOrdered[foodName] = 1;
+                const normalizedFoodName = advancedCombinedFoods(foodName);
+                
+                if (!normalizedFoodName) return;
+                
+                if (!foodItemsByRestaurant[restaurant][normalizedFoodName]) {
+                  foodItemsByRestaurant[restaurant][normalizedFoodName] = {
+                    name: foodName,
+                    normalizedName: normalizedFoodName,
+                    count: 1,
+                    variants: [foodName]
+                  };
                 } else {
-                  restaurantMap[restaurant].mostOrdered[foodName] += 1;
+                  foodItemsByRestaurant[restaurant][normalizedFoodName].count += 1;
+                  
+                  // Track variants only if this is a new name
+                  if (!foodItemsByRestaurant[restaurant][normalizedFoodName].variants.includes(foodName)) {
+                    foodItemsByRestaurant[restaurant][normalizedFoodName].variants.push(foodName);
+                    
+                    // Use the shortest name for display
+                    if (foodName.length < foodItemsByRestaurant[restaurant][normalizedFoodName].name.length) {
+                      foodItemsByRestaurant[restaurant][normalizedFoodName].name = foodName;
+                    }
+                  }
                 }
               }
             });
@@ -107,17 +262,37 @@ const RestaurantsScreen = () => {
         }
       });
       
-      // Convert to array
+      // Convert to array and calculate additional metrics
       let restaurantsArray = Object.values(restaurantMap);
       
-      // Process most ordered items into arrays
+      // Add top food items to each restaurant
       restaurantsArray.forEach(restaurant => {
-        const topItems = Object.entries(restaurant.mostOrdered)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 3)
-          .map(([name, count]) => ({ name, count }));
+        const foodItems = foodItemsByRestaurant[restaurant.name] || {};
+        const topItems = Object.values(foodItems)
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 5)
+          .map(item => ({
+            name: item.name,
+            normalizedName: item.normalizedName,
+            count: item.count,
+            variants: item.variants
+          }));
         
         restaurant.topItems = topItems;
+        
+        // Add monthly data as array
+        restaurant.monthlyStats = Object.entries(restaurant.monthlyData || {})
+          .map(([monthYear, data]) => ({
+            monthYear,
+            orderCount: data.orderCount,
+            totalSpent: data.totalSpent,
+            avgOrderValue: data.totalSpent / data.orderCount
+          }))
+          .sort((a, b) => {
+            const dateA = new Date(a.monthYear);
+            const dateB = new Date(b.monthYear);
+            return dateB - dateA; // Sort by date descending (newest first)
+          });
       });
       
       // Initial sort by order count
@@ -243,6 +418,7 @@ const RestaurantsScreen = () => {
           </View>
         </View>
         
+        {/* Top Food Items Section */}
         {item.topItems && item.topItems.length > 0 && (
           <View style={styles.topItemsContainer}>
             <Text style={styles.topItemsTitle}>Most Ordered:</Text>
@@ -250,6 +426,35 @@ const RestaurantsScreen = () => {
               {item.topItems.map((food, idx) => (
                 <View key={`${item.name}-food-${idx}`} style={styles.topItemBadge}>
                   <Text style={styles.topItemText}>{food.name}</Text>
+                  <View style={styles.topItemCount}>
+                    <Text style={styles.topItemCountText}>{food.count}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+        
+        {/* Monthly Trends Section (condensed version) */}
+        {item.monthlyStats && item.monthlyStats.length > 1 && (
+          <View style={styles.monthlyTrendsContainer}>
+            <Text style={styles.monthlyTrendsTitle}>
+              <Icon name="trending-up" size={14} color="#666" /> Recent Trend:
+            </Text>
+            <View style={styles.trendLine}>
+              {item.monthlyStats.slice(0, 3).map((month, idx) => (
+                <View 
+                  key={`trend-${idx}`} 
+                  style={[
+                    styles.trendBar, 
+                    { 
+                      height: Math.max(15, Math.min(60, month.orderCount * 10)),
+                      backgroundColor: `${restaurantColor}${70 + (idx * 10)}`
+                    }
+                  ]}
+                >
+                  <Text style={styles.trendCount}>{month.orderCount}</Text>
+                  <Text style={styles.trendMonth}>{month.monthYear.split(' ')[0]}</Text>
                 </View>
               ))}
             </View>
@@ -565,6 +770,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#f0f0f0',
     paddingTop: 12,
+    marginBottom: 12,
   },
   topItemsTitle: {
     fontSize: 14,
@@ -577,6 +783,8 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   topItemBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#f0f0f0',
     paddingVertical: 4,
     paddingHorizontal: 10,
@@ -587,6 +795,53 @@ const styles = StyleSheet.create({
   topItemText: {
     fontSize: 12,
     color: '#666',
+  },
+  topItemCount: {
+    backgroundColor: '#ddd',
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginLeft: 6,
+  },
+  topItemCountText: {
+    fontSize: 10,
+    color: '#666',
+    fontWeight: 'bold',
+  },
+  monthlyTrendsContainer: {
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+    paddingTop: 12,
+  },
+  monthlyTrendsTitle: {
+    fontSize: 14,
+    fontWeight: '500', 
+    color: '#666',
+    marginBottom: 8,
+  },
+  trendLine: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-around',
+    height: 70,
+    paddingHorizontal: 10,
+  },
+  trendBar: {
+    width: 50,
+    borderRadius: 4,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingBottom: 4,
+  },
+  trendCount: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+  trendMonth: {
+    color: '#fff',
+    fontSize: 9,
+    marginTop: 2,
   },
   emptyContainer: {
     flex: 1,

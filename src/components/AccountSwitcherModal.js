@@ -1,4 +1,4 @@
-// AccountSwitcherModal.js - A beautiful modal for switching accounts
+// src/components/AccountSwitcherModal.js - Updated with auto-refresh capabilities
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -9,10 +9,13 @@ import {
   FlatList,
   Animated,
   Dimensions,
-  Image
+  Image,
+  AppState
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Colors from '../constants/colors';
+import * as AccountService from '../services/AccountService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window');
 
@@ -28,7 +31,46 @@ const AccountSwitcherModal = ({
 }) => {
   const [slideAnim] = useState(new Animated.Value(height));
   const [fadeAnim] = useState(new Animated.Value(0));
+  const [localAccounts, setLocalAccounts] = useState(accounts);
+  const [lastAccountUpdate, setLastAccountUpdate] = useState(null);
+  const [appState, setAppState] = useState(AppState.currentState);
   
+  // Load latest accounts on mount and on visibility change
+  useEffect(() => {
+    // Load accounts whenever the modal becomes visible
+    if (visible) {
+      checkForAccountUpdates();
+      loadAccounts();
+    }
+  }, [visible]);
+  
+  // Listen for app state changes to refresh accounts when app comes to foreground
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (appState.match(/inactive|background/) && nextAppState === 'active') {
+        // App has come to the foreground
+        checkForAccountUpdates();
+      }
+      setAppState(nextAppState);
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [appState]);
+  
+  // Subscribe to the global account update flag
+  useEffect(() => {
+    const checkInterval = setInterval(() => {
+      if (visible) {
+        checkForAccountUpdates();
+      }
+    }, 1000); // Check every second while visible
+    
+    return () => clearInterval(checkInterval);
+  }, [visible, lastAccountUpdate]);
+  
+  // Animation controls
   useEffect(() => {
     if (visible) {
       // Animate modal sliding up and background fading in
@@ -50,6 +92,31 @@ const AccountSwitcherModal = ({
       fadeAnim.setValue(0);
     }
   }, [visible]);
+  
+  // Check if accounts have been updated elsewhere
+  const checkForAccountUpdates = async () => {
+    try {
+      const accountsUpdated = await AsyncStorage.getItem('accountsUpdated');
+      
+      if (accountsUpdated && accountsUpdated !== lastAccountUpdate) {
+        // Accounts have been updated since our last check
+        setLastAccountUpdate(accountsUpdated);
+        loadAccounts();
+      }
+    } catch (error) {
+      console.error('Error checking for account updates:', error);
+    }
+  };
+  
+  // Load accounts from storage
+  const loadAccounts = async () => {
+    try {
+      const accountsList = await AccountService.getAccounts();
+      setLocalAccounts(accountsList);
+    } catch (error) {
+      console.error('Error loading accounts:', error);
+    }
+  };
   
   const handleClose = () => {
     // Animate modal sliding down and background fading out
@@ -154,7 +221,7 @@ const AccountSwitcherModal = ({
             <View style={styles.divider} />
             
             <FlatList
-              data={accounts}
+              data={localAccounts}
               renderItem={renderAccountItem}
               keyExtractor={(item) => item.email}
               contentContainerStyle={styles.accountsList}
