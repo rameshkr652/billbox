@@ -534,28 +534,21 @@ const MainScreen = () => {
                   },
                   headerRight: () => (
                     <HeaderAccountButton 
-                      platform={platform} 
-                      navigation={navigation}
-                    />
+                        platform={platform} 
+                        navigation={navigation}
+                      />
                   )
                 })}
               >
-                {(props) => <PlatformTab {...props} platform={platform} />}
+                {(props) => 
+                  // Check if the platform is 'banks' and render BankTransactionScreen instead
+                  platform === 'banks' 
+                    ? <BankTransactionScreen {...props} /> 
+                    : <PlatformTab {...props} platform={platform} />
+                }
               </Drawer.Screen>
             );
           })}
-          <Drawer.Screen
-            name="Banks"
-            component={BankTransactionScreen}
-            options={{
-              drawerIcon: ({color, size}) => (
-                <Icon name="account-balance" size={size} color={color} />
-              ),
-              headerStyle: { 
-                backgroundColor: Colors.primary,
-              },
-            }}
-          />
         </Drawer.Navigator>
       ) : (
         <View style={styles.noPlatformsContainer}>

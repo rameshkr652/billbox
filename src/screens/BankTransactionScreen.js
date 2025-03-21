@@ -18,7 +18,6 @@ import Colors from '../constants/colors';
 import banks from '../constants/banks';
 import * as AccountService from '../services/AccountService';
 import * as StorageService from '../services/StorageService';
-import * as BankService from '../services/BankService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Import the account switcher component
@@ -32,9 +31,7 @@ const BankTransactionScreen = () => {
   const [userBanks, setUserBanks] = useState([]);
   const [showAddBankModal, setShowAddBankModal] = useState(false);
   const [selectedBankId, setSelectedBankId] = useState(null);
-  const [transactions, setTransactions] = useState([]);
   const [currentAccount, setCurrentAccount] = useState(null);
-  const [fetchingTransactions, setFetchingTransactions] = useState(false);
   const [accounts, setAccounts] = useState([]);
   const [showAccountModal, setShowAccountModal] = useState(false);
   
@@ -74,9 +71,6 @@ const BankTransactionScreen = () => {
       if (userBanksData && userBanksData.length > 0) {
         // Auto-select the first bank
         setSelectedBankId(userBanksData[0].id);
-        
-        // Load transactions for the first bank
-        await loadTransactions(userBanksData[0].id, account.email);
       }
       
       setLoading(false);
@@ -84,35 +78,6 @@ const BankTransactionScreen = () => {
       console.error('Error loading user data:', error);
       setLoading(false);
       Alert.alert('Error', 'Failed to load account information.');
-    }
-  };
-  
-  // Load transactions for a specific bank
-  const loadTransactions = async (bankId, accountEmail) => {
-    try {
-      setLoading(true);
-      
-      // Get bank info
-      const bankInfo = banks.find(bank => bank.id === bankId);
-      if (!bankInfo) {
-        throw new Error('Bank information not found.');
-      }
-      
-      // Load transactions from storage
-      const savedTransactions = await BankService.getTransactions(bankId, accountEmail);
-      
-      if (savedTransactions && savedTransactions.length > 0) {
-        setTransactions(savedTransactions);
-      } else {
-        // No saved transactions - show empty state
-        setTransactions([]);
-      }
-      
-      setLoading(false);
-    } catch (error) {
-      console.error('Error loading transactions:', error);
-      setLoading(false);
-      Alert.alert('Error', 'Failed to load transactions.');
     }
   };
   
@@ -127,6 +92,13 @@ const BankTransactionScreen = () => {
       const bankInfo = banks.find(bank => bank.id === bankId);
       if (!bankInfo) {
         throw new Error('Bank information not found.');
+      }
+      
+      // Check if bank already exists
+      const alreadyExists = userBanks.some(bank => bank.id === bankId);
+      if (alreadyExists) {
+        Alert.alert('Already Added', `${bankInfo.name} is already added.`);
+        return;
       }
       
       // Create bank object
@@ -155,11 +127,62 @@ const BankTransactionScreen = () => {
       // Show success message
       Alert.alert('Success', `${bankInfo.name} added successfully.`);
       
-      // Reset transactions since we're changing banks
-      setTransactions([]);
     } catch (error) {
       console.error('Error adding bank:', error);
       Alert.alert('Error', 'Failed to add bank.');
+    }
+  };
+  
+  // Remove a bank
+  const removeBank = async (bankId) => {
+    try {
+      if (!currentAccount) {
+        throw new Error('No account found. Please sign in first.');
+      }
+      
+      // Get bank info for the message
+      const bankInfo = userBanks.find(bank => bank.id === bankId);
+      if (!bankInfo) {
+        throw new Error('Bank information not found.');
+      }
+      
+      // Ask for confirmation
+      Alert.alert(
+        'Remove Bank',
+        `Are you sure you want to remove ${bankInfo.name}?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Remove', 
+            style: 'destructive',
+            onPress: async () => {
+              // Filter out the bank to remove
+              const updatedBanks = userBanks.filter(bank => bank.id !== bankId);
+              
+              // Save to storage
+              await StorageService.saveBanksForAccount(currentAccount.email, updatedBanks);
+              
+              // Update state
+              setUserBanks(updatedBanks);
+              
+              // Update selected bank ID if needed
+              if (selectedBankId === bankId) {
+                if (updatedBanks.length > 0) {
+                  setSelectedBankId(updatedBanks[0].id);
+                } else {
+                  setSelectedBankId(null);
+                }
+              }
+              
+              // Show success message
+              Alert.alert('Success', `${bankInfo.name} removed successfully.`);
+            }
+          }
+        ]
+      );
+    } catch (error) {
+      console.error('Error removing bank:', error);
+      Alert.alert('Error', 'Failed to remove bank.');
     }
   };
   
@@ -179,13 +202,9 @@ const BankTransactionScreen = () => {
       if (userBanksData && userBanksData.length > 0) {
         // Auto-select the first bank
         setSelectedBankId(userBanksData[0].id);
-        
-        // Load transactions for the first bank
-        await loadTransactions(userBanksData[0].id, account.email);
       } else {
         // No banks for this account
         setSelectedBankId(null);
-        setTransactions([]);
       }
       
       // Close the modal
@@ -202,194 +221,62 @@ const BankTransactionScreen = () => {
     navigation.navigate('WebAuth');
   };
   
-  // Fetch transactions for the selected bank
-  const fetchTransactions = async () => {
-    try {
-      if (!selectedBankId || !currentAccount) {
-        throw new Error('No bank selected or account not found.');
-      }
-      
-      setFetchingTransactions(true);
-      
-      // Get bank info
-      const bankInfo = banks.find(bank => bank.id === selectedBankId);
-      if (!bankInfo) {
-        throw new Error('Bank information not found.');
-      }
-      
-      // Show loading message
-      Alert.alert('Fetching Transactions', 'Please wait while we fetch your bank transactions. This may take a moment.');
-      
-      // In a real app, you would call your BankService to fetch transactions
-      // For this demo, we'll just set some dummy data after a delay
-      setTimeout(() => {
-        const dummyTransactions = [
-          {
-            id: '1',
-            date: new Date(),
-            description: 'Salary Credit',
-            amount: 45000,
-            type: 'credit',
-            category: 'Income'
-          },
-          {
-            id: '2',
-            date: new Date(Date.now() - 86400000), // yesterday
-            description: 'ATM Withdrawal',
-            amount: -10000,
-            type: 'debit',
-            category: 'Cash'
-          },
-          {
-            id: '3',
-            date: new Date(Date.now() - 172800000), // 2 days ago
-            description: 'Amazon Payment',
-            amount: -2499,
-            type: 'debit',
-            category: 'Shopping'
-          },
-          {
-            id: '4',
-            date: new Date(Date.now() - 259200000), // 3 days ago
-            description: 'Restaurant Payment',
-            amount: -1450,
-            type: 'debit',
-            category: 'Dining'
-          },
-          {
-            id: '5',
-            date: new Date(Date.now() - 345600000), // 4 days ago
-            description: 'Mobile Recharge',
-            amount: -999,
-            type: 'debit',
-            category: 'Utilities'
-          }
-        ];
-        
-        // Save to storage and update state
-        BankService.saveTransactions(selectedBankId, currentAccount.email, dummyTransactions);
-        setTransactions(dummyTransactions);
-        setFetchingTransactions(false);
-      }, 2000);
-    } catch (error) {
-      console.error('Error fetching transactions:', error);
-      setFetchingTransactions(false);
-      Alert.alert('Error', 'Failed to fetch transactions.');
-    }
-  };
-  
-  // Format currency
-  const formatCurrency = (amount) => {
-    const isNegative = amount < 0;
-    return `${isNegative ? '-' : ''}₹${Math.abs(amount).toLocaleString('en-IN')}`;
-  };
-  
-  // Format date
-  const formatDate = (date) => {
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-  
-  // Render an individual transaction
-  const renderTransaction = ({ item }) => (
-    <View style={styles.transactionItem}>
-      <View style={styles.transactionLeft}>
-        <View style={[styles.categoryIcon, item.type === 'credit' ? styles.creditIcon : styles.debitIcon]}>
-          <Icon 
-            name={
-              item.type === 'credit' ? 'arrow-downward' : 
-              item.category === 'Shopping' ? 'shopping-cart' :
-              item.category === 'Dining' ? 'restaurant' :
-              item.category === 'Utilities' ? 'smartphone' :
-              item.category === 'Cash' ? 'attach-money' :
-              'payment'
-            } 
-            size={20} 
-            color="#FFF" 
-          />
-        </View>
-      </View>
-      
-      <View style={styles.transactionMiddle}>
-        <Text style={styles.transactionDescription}>{item.description}</Text>
-        <Text style={styles.transactionDate}>{formatDate(item.date)}</Text>
-      </View>
-      
-      <View style={styles.transactionRight}>
-        <Text style={[
-          styles.transactionAmount,
-          item.type === 'credit' ? styles.creditAmount : styles.debitAmount
-        ]}>
-          {formatCurrency(item.amount)}
-        </Text>
-      </View>
-    </View>
-  );
-  
-  // Render bank selection modal (full-screen)
-  const renderAddBankModal = () => (
+  // Render bank dropdown modal
+  const renderAddBankDropdown = () => (
     <Modal
       visible={showAddBankModal}
-      animationType="slide"
+      transparent={true}
+      animationType="fade"
       onRequestClose={() => setShowAddBankModal(false)}
     >
-      <SafeAreaView style={styles.modalContainer}>
-        <View style={styles.modalHeader}>
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={() => setShowAddBankModal(false)}
-          >
-            <Icon name="arrow-back" size={24} color="#333" />
-          </TouchableOpacity>
-          <Text style={styles.modalTitle}>Select Your Bank</Text>
-          <View style={styles.headerRight} />
-        </View>
-        
-        <FlatList
-          data={banks}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.banksList}
-          renderItem={({ item }) => {
-            // Check if bank is already added
-            const isAdded = userBanks.some(userBank => userBank.id === item.id);
-            
-            return (
-              <TouchableOpacity
-                style={[
-                  styles.bankItem,
-                  isAdded && styles.bankItemDisabled
-                ]}
-                onPress={() => {
-                  if (!isAdded) {
-                    addBank(item.id);
-                  } else {
-                    Alert.alert('Already Added', `${item.name} is already added.`);
-                  }
-                }}
-                disabled={isAdded}
-              >
-                <View style={[styles.bankIcon, { backgroundColor: item.color }]}>
-                  <Icon name={item.icon} size={24} color="#FFF" />
-                </View>
-                <View style={styles.bankInfo}>
-                  <Text style={styles.bankName}>{item.name}</Text>
-                  {isAdded && (
-                    <Text style={styles.bankAdded}>Already Added</Text>
+      <TouchableOpacity 
+        style={styles.modalOverlay}
+        activeOpacity={1}
+        onPress={() => setShowAddBankModal(false)}
+      >
+        <View style={styles.dropdownContainer}>
+          <View style={styles.dropdownHeader}>
+            <Text style={styles.dropdownTitle}>Select a Bank</Text>
+            <TouchableOpacity onPress={() => setShowAddBankModal(false)}>
+              <Icon name="close" size={24} color="#666" />
+            </TouchableOpacity>
+          </View>
+          
+          <ScrollView style={styles.banksList}>
+            {banks.map((bank) => {
+              // Check if bank is already added
+              const isAdded = userBanks.some(userBank => userBank.id === bank.id);
+              
+              return (
+                <TouchableOpacity
+                  key={bank.id}
+                  style={[
+                    styles.bankOption,
+                    isAdded && styles.bankOptionDisabled
+                  ]}
+                  onPress={() => !isAdded && addBank(bank.id)}
+                  disabled={isAdded}
+                >
+                  <View style={[styles.bankIcon, { backgroundColor: bank.color }]}>
+                    <Icon name={bank.icon} size={24} color="#FFF" />
+                  </View>
+                  <View style={styles.bankOptionInfo}>
+                    <Text style={styles.bankOptionName}>{bank.name}</Text>
+                    {isAdded && (
+                      <Text style={styles.bankAddedText}>Already added</Text>
+                    )}
+                  </View>
+                  {isAdded ? (
+                    <Icon name="check-circle" size={24} color={Colors.primary} />
+                  ) : (
+                    <Icon name="add-circle-outline" size={24} color="#666" />
                   )}
-                </View>
-                {!isAdded ? (
-                  <Icon name="add-circle-outline" size={24} color="#666" />
-                ) : (
-                  <Icon name="check-circle" size={24} color={Colors.primary} />
-                )}
-              </TouchableOpacity>
-            );
-          }}
-        />
-      </SafeAreaView>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+      </TouchableOpacity>
     </Modal>
   );
   
@@ -398,29 +285,7 @@ const BankTransactionScreen = () => {
   const bankColor = selectedBank ? selectedBank.color : Colors.primary;
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: bankColor }]}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Icon name="arrow-back" size={24} color="#FFF" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Bank Transactions</Text>
-        
-        {/* Account switcher button - similar to platforms */}
-        <TouchableOpacity
-          style={styles.accountButton}
-          onPress={() => setShowAccountModal(true)}
-        >
-          <Icon name="account-circle" size={18} color="#fff" />
-          <Text style={styles.accountButtonText}>
-            {currentAccount ? currentAccount.email.split('@')[0] : 'Account'}
-          </Text>
-          <Icon name="arrow-drop-down" size={18} color="#fff" />
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView style={styles.container}>      
       
       {/* Content */}
       {loading ? (
@@ -447,7 +312,7 @@ const BankTransactionScreen = () => {
           </TouchableOpacity>
         </View>
       ) : (
-        // Banks added - show bank selector dropdown and transactions
+        // Banks added - show bank selector dropdown and user banks list
         <View style={styles.contentContainer}>
           {/* Bank Selector */}
           <View style={styles.bankSelectorContainer}>
@@ -464,53 +329,88 @@ const BankTransactionScreen = () => {
                 <Text style={styles.selectedBankName}>{selectedBank ? selectedBank.name : 'Select Bank'}</Text>
                 <Icon name="keyboard-arrow-down" size={24} color="#666" />
               </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.loadButton, { backgroundColor: bankColor }]}
-                onPress={fetchTransactions}
-                disabled={fetchingTransactions}
-              >
-                {fetchingTransactions ? (
-                  <ActivityIndicator size="small" color="#FFF" />
-                ) : (
-                  <Text style={styles.loadButtonText}>Load Transactions</Text>
-                )}
-              </TouchableOpacity>
             </View>
           </View>
           
-          {/* Transactions List */}
+          {/* Your Banks List */}
+          <View style={styles.yourBanksContainer}>
+            <View style={styles.yourBanksHeader}>
+              <Text style={styles.yourBanksTitle}>Your Banks</Text>
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={() => setShowAddBankModal(true)}
+              >
+                <Icon name="add" size={20} color={Colors.primary} />
+                <Text style={styles.addButtonText}>Add</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <FlatList
+              data={userBanks}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <View style={styles.bankListItem}>
+                  <View style={styles.bankListItemLeft}>
+                    <View style={[styles.bankListItemIcon, { backgroundColor: item.color }]}>
+                      <Icon name={item.icon} size={20} color="#FFF" />
+                    </View>
+                    <Text style={styles.bankListItemName}>{item.name}</Text>
+                  </View>
+                  
+                  <View style={styles.bankListItemActions}>
+                    <TouchableOpacity
+                      style={[
+                        styles.selectBankButton,
+                        selectedBankId === item.id && { backgroundColor: item.color + '20' }
+                      ]}
+                      onPress={() => setSelectedBankId(item.id)}
+                    >
+                      <Text 
+                        style={[
+                          styles.selectBankButtonText,
+                          selectedBankId === item.id && { color: item.color }
+                        ]}
+                      >
+                        {selectedBankId === item.id ? 'Selected' : 'Select'}
+                      </Text>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity
+                      style={styles.removeBankButton}
+                      onPress={() => removeBank(item.id)}
+                    >
+                      <Icon name="delete-outline" size={20} color={Colors.accent} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+              ListEmptyComponent={
+                <View style={styles.noBanksContainer}>
+                  <Text style={styles.noBanksText}>No banks added yet</Text>
+                </View>
+              }
+            />
+          </View>
+          
+          {/* Transactions placeholder */}
           <View style={styles.transactionsContainer}>
             <View style={styles.transactionsHeader}>
               <Text style={styles.transactionsTitle}>Recent Transactions</Text>
-              {transactions.length > 0 && (
-                <Text style={styles.transactionsCount}>{transactions.length} items</Text>
-              )}
             </View>
             
-            {transactions.length > 0 ? (
-              <FlatList
-                data={transactions}
-                renderItem={renderTransaction}
-                keyExtractor={item => item.id}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.transactionsList}
-              />
-            ) : (
-              <View style={styles.noTransactionsContainer}>
-                <Icon name="receipt-long" size={60} color="#DDD" />
-                <Text style={styles.noTransactionsText}>No Transactions</Text>
-                <Text style={styles.noTransactionsSubtext}>
-                  Tap 'Load Transactions' to fetch your recent bank activity
-                </Text>
-              </View>
-            )}
+            <View style={styles.noTransactionsContainer}>
+              <Icon name="receipt-long" size={60} color="#DDD" />
+              <Text style={styles.noTransactionsText}>No Transactions</Text>
+              <Text style={styles.noTransactionsSubtext}>
+                Transactions will appear here in future updates
+              </Text>
+            </View>
           </View>
         </View>
       )}
       
-      {/* Add Bank Modal (Full screen) */}
-      {renderAddBankModal()}
+      {/* Add Bank Dropdown */}
+      {renderAddBankDropdown()}
       
       {/* Account Switcher Modal */}
       <AccountSwitcherModal
@@ -535,11 +435,12 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 16,
+    paddingTop: 50,
+    paddingBottom: 16,
     paddingHorizontal: 16,
   },
-  backButton: {
-    padding: 4,
+  drawerButton: {
+    padding: 8,
   },
   headerTitle: {
     flex: 1,
@@ -641,7 +542,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     borderRadius: 8,
     padding: 12,
-    marginRight: 8,
     elevation: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -662,20 +562,102 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#333',
   },
-  loadButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+  yourBanksContainer: {
+    flex: 1,
+    backgroundColor: '#FFF',
     borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+    padding: 16,
+    marginBottom: 16,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
-  loadButtonText: {
-    color: '#FFF',
+  yourBanksHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  yourBanksTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F7FA',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+  },
+  addButtonText: {
+    color: Colors.primary,
     fontWeight: 'bold',
     fontSize: 14,
+    marginLeft: 4,
+  },
+  bankListItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  bankListItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  bankListItemIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  bankListItemName: {
+    fontSize: 16,
+    color: '#333',
+    flex: 1,
+  },
+  bankListItemActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  selectBankButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    backgroundColor: '#F5F7FA',
+    marginRight: 8,
+  },
+  selectBankButtonText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#666',
+  },
+  removeBankButton: {
+    padding: 8,
+  },
+  noBanksContainer: {
+    padding: 16,
+    alignItems: 'center',
+  },
+  noBanksText: {
+    fontSize: 14,
+    color: '#888',
+    fontStyle: 'italic',
   },
   transactionsContainer: {
-    flex: 1,
+    flex: 2,
     backgroundColor: '#FFF',
     borderRadius: 8,
     padding: 16,
@@ -699,62 +681,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
   },
-  transactionsCount: {
-    fontSize: 14,
-    color: '#666',
-  },
-  transactionsList: {
-    paddingBottom: 16,
-  },
-  transactionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  transactionLeft: {
-    marginRight: 12,
-  },
-  categoryIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  creditIcon: {
-    backgroundColor: Colors.secondary,
-  },
-  debitIcon: {
-    backgroundColor: Colors.accent,
-  },
-  transactionMiddle: {
-    flex: 1,
-  },
-  transactionDescription: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
-    marginBottom: 4,
-  },
-  transactionDate: {
-    fontSize: 12,
-    color: '#888',
-  },
-  transactionRight: {
-    alignItems: 'flex-end',
-  },
-  transactionAmount: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  creditAmount: {
-    color: Colors.secondary,
-  },
-  debitAmount: {
-    color: Colors.accent,
-  },
   noTransactionsContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -776,68 +702,71 @@ const styles = StyleSheet.create({
   },
   
   // Modal styles
-  modalContainer: {
+  modalOverlay: {
     flex: 1,
-    backgroundColor: '#FFF',
-  },
-  modalHeader: {
-    flexDirection: 'row',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
+  },
+  dropdownContainer: {
+    width: '90%',
+    maxHeight: '80%',
+    backgroundColor: '#FFF',
+    borderRadius: 12,
+    overflow: 'hidden',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  dropdownHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },
-  modalTitle: {
-    flex: 1,
-    fontSize: 20,
+  dropdownTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
-    textAlign: 'center',
-  },
-  closeButton: {
-    padding: 4,
-  },
-  headerRight: {
-    width: 28,
   },
   banksList: {
-    padding: 16,
+    maxHeight: 400,
   },
-  bankItem: {
+  bankOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF',
     padding: 16,
-    borderRadius: 8,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#f0f0f0',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
-  bankItemDisabled: {
+  bankOptionDisabled: {
     opacity: 0.7,
   },
   bankIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: 12,
   },
-  bankInfo: {
+  bankOptionInfo: {
     flex: 1,
   },
-  bankName: {
+  bankOptionName: {
     fontSize: 16,
     fontWeight: '500',
     color: '#333',
   },
-  bankAdded: {
+  bankAddedText: {
     fontSize: 12,
-    color: '#999',
-    marginTop: 4,
-  },
+    color: '#888',
+    marginTop: 2,
+  }
 });
 
 export default BankTransactionScreen;
