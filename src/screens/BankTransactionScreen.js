@@ -18,6 +18,7 @@ import Colors from '../constants/colors';
 import banks from '../constants/banks';
 import * as AccountService from '../services/AccountService';
 import * as StorageService from '../services/StorageService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Import the account switcher component
 import AccountSwitcherModal from '../components/AccountSwitcherModal';
