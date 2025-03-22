@@ -7,113 +7,111 @@ import * as AccountService from './AccountService';
  * Fetch bank transactions for a specific bank, account, and time frame
  * @param {string} bankId - The bank identifier
  * @param {string} accountEmail - The email of the account
- * @param {string} timeFrame - Time frame option (e.g., 'thisMonth', 'last6Months', 'custom')
+ * @param {string} timeFrame - Time frame option (e.g., 'THIS_MONTH', 'LAST_MONTH', 'CUSTOM')
  * @param {Object} customRange - Optional { startDate, endDate } for custom time frame
  * @param {function} progressCallback - Optional callback for progress updates
  * @returns {Promise<Object>} - Object with success status and transactions
  */
 export const fetchBankTransactions = async (
-    bankId,
-    accountEmail,
-    timeFrame = 'thisMonth', // Default to this month for better UX
-    customRange = null,
-    progressCallback = () => {}
-  ) => {
-    try {
-      // Validate inputs
-      if (!bankId || !accountEmail) {
-        throw new Error('Missing required parameters');
-      }
-  
-      // Get bank info
-      const bankInfo = banks.find(bank => bank.id === bankId);
-      if (!bankInfo) {
-        throw new Error(`Bank information not found for ${bankId}`);
-      }
-  
-      // Build time-based query
-      let timeQuery = '';
-      const now = new Date();
-      const formatDate = (date) => {
-        return `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
-      };
-  
-      switch (timeFrame) {
-        case 'thisMonth':
-          const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-          timeQuery = `after:${formatDate(firstOfMonth)}`;
-          break;
-        case 'lastMonth':
-          const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-          const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
-          timeQuery = `${formatDate(lastMonthStart)} ${formatDate(lastMonthEnd)}`;
-          break;
-        case 'last6Months':
-          const sixMonthsAgo = new Date(now.setMonth(now.getMonth() - 6));
-          timeQuery = `after:${formatDate(sixMonthsAgo)}`;
-          break;
-        case 'thisYear':
-          const firstOfYear = new Date(now.getFullYear(), 0, 1);
-          timeQuery = `after:${formatDate(firstOfYear)}`;
-          break;
-        case 'allTime':
-          timeQuery = ''; // No date restriction
-          break;
-        case 'custom':
-          if (!customRange || !customRange.startDate || !customRange.endDate) {
-            throw new Error('Custom range requires startDate and endDate');
-          }
-          timeQuery = `${formatDate(customRange.startDate)} ${formatDate(customRange.endDate)}`;
-          break;
-        default:
-          throw new Error('Invalid time frame');
-      }
-  
-      const fullQuery = `${bankInfo.emailQuery} ${timeQuery}`.trim();
-  
-      // Fetch emails based on the query
-      const emails = await GmailService.fetchAllPlatformEmails(
-        `bank_${bankId}`,
-        accountEmail,
-        fullQuery,
-        (current, total, message, estimatedTimeRemaining) => {
-          progressCallback(
-            current,
-            total,
-            message || `Processing ${bankInfo.name} transactions (${current}/${total})...`,
-            estimatedTimeRemaining
-          );
-        }
-      );
-  
-      const transactions = emails.map(email => ({
-        id: email.id,
-        subject: email.subject,
-        date: email.date,
-        snippet: email.snippet,
-        from: email.from,
-        raw: email
-      }));
-  
-      // Save transactions with time frame metadata
-      await saveTransactions(bankId, accountEmail, transactions, timeFrame, customRange);
-  
-      return {
-        success: true,
-        transactions,
-        lastFetched: new Date(),
-        timeFrame
-      };
-    } catch (error) {
-      console.error(`Error fetching bank transactions for ${bankId}:`, error);
-      return {
-        success: false,
-        error: error.message || `Failed to fetch transactions for ${bankId}`
-      };
+  bankId,
+  accountEmail,
+  timeFrame = 'THIS_MONTH', // Default matches TIME_FRAMES.THIS_MONTH
+  customRange = null,
+  progressCallback = () => {}
+) => {
+  try {
+    // Validate inputs
+    if (!bankId || !accountEmail) {
+      throw new Error('Missing required parameters');
     }
-  };
-  
-  
+
+    // Get bank info
+    const bankInfo = banks.find(bank => bank.id === bankId);
+    if (!bankInfo) {
+      throw new Error(`Bank information not found for ${bankId}`);
+    }
+
+    // Build time-based query
+    let timeQuery = '';
+    const now = new Date();
+    const formatDate = (date) => {
+      return `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
+    };
+
+    switch (timeFrame) {
+      case 'THIS_MONTH':
+        const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        timeQuery = `after:${formatDate(firstOfMonth)}`;
+        break;
+      case 'LAST_MONTH':
+        const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+        timeQuery = `${formatDate(lastMonthStart)} ${formatDate(lastMonthEnd)}`;
+        break;
+      case 'LAST_3_MONTHS':
+        const threeMonthsAgo = new Date(now);
+        threeMonthsAgo.setMonth(now.getMonth() - 3);
+        timeQuery = `after:${formatDate(threeMonthsAgo)}`;
+        break;
+      case 'LAST_6_MONTHS':
+        const sixMonthsAgo = new Date(now);
+        sixMonthsAgo.setMonth(now.getMonth() - 6);
+        timeQuery = `after:${formatDate(sixMonthsAgo)}`;
+        break;
+      case 'CUSTOM':
+        if (!customRange || !customRange.startDate || !customRange.endDate) {
+          throw new Error('Custom range requires startDate and endDate');
+        }
+        timeQuery = `${formatDate(customRange.startDate)} ${formatDate(customRange.endDate)}`;
+        break;
+      default:
+        throw new Error('Invalid time frame');
+    }
+    console.log(timeQuery,"ll")
+
+    const fullQuery = `${bankInfo.emailQuery} ${timeQuery}`.trim();
+
+    // Fetch emails based on the query
+    const emails = await GmailService.fetchAllPlatformEmails(
+      `bank_${bankId}`,
+      accountEmail,
+      fullQuery,
+      (current, total, message, estimatedTimeRemaining) => {
+        progressCallback(
+          current,
+          total,
+          message || `Processing ${bankInfo.name} transactions (${current}/${total})...`,
+          estimatedTimeRemaining
+        );
+      }
+    );
+
+    const transactions = emails.map(email => ({
+      id: email.id,
+      subject: email.subject,
+      date: email.date,
+      snippet: email.snippet,
+      from: email.from,
+      raw: email
+    }));
+
+    // Save transactions with time frame metadata
+    await saveTransactions(bankId, accountEmail, transactions, timeFrame, customRange);
+
+    return {
+      success: true,
+      transactions,
+      lastFetched: new Date(),
+      timeFrame
+    };
+  } catch (error) {
+    console.error(`Error fetching bank transactions for ${bankId}:`, error);
+    return {
+      success: false,
+      error: error.message || `Failed to fetch transactions for ${bankId}`
+    };
+  }
+};
   
   /**
    * Get transaction metadata
