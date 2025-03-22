@@ -23,6 +23,7 @@ import * as StorageService from '../services/StorageService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import styles from '../styles/BankStyles';
 import AccountSwitcherModal from '../components/AccountSwitcherModal';
+import * as BankService from '../services/BankService';
 
 const { width } = Dimensions.get('window');
 
@@ -415,6 +416,203 @@ const BankTransactionScreen = () => {
       animateModal(false);
     }
   }, [showDatePickerModal]);
+  
+
+// Function to fetch bank transactions
+const fetchBankTransactions = async () => {
+  if (isLoading) return;
+  if (!selectedBankId) {
+    Alert.alert('Select Bank', 'Please select a bank to load transactions.');
+    return;
+  }
+  
+  if (selectedTimeFrame === TIME_FRAMES.CUSTOM && (!customDateRange.start || !customDateRange.end)) {
+    Alert.alert('Incomplete Date Range', 'Please select both start and end dates.');
+    return;
+  }
+  
+  try {
+    setIsLoading(true);
+    setShowProgress(true);
+    setProgress(0);
+    setProgressText('Preparing to fetch transactions...');
+    
+    // Determine time frame parameters
+    let timeFrameOption = selectedTimeFrame;
+    let customRangeOptions = null;
+    
+    if (selectedTimeFrame === TIME_FRAMES.CUSTOM && customDateRange.start && customDateRange.end) {
+      customRangeOptions = {
+        startDate: customDateRange.start,
+        endDate: customDateRange.end
+      };
+    }
+    
+    // Call BankService to fetch transactions
+    const result = await BankService.fetchBankTransactions(
+      selectedBankId,
+      currentAccount.email,
+      timeFrameOption,
+      customRangeOptions,
+      (current, total, message, estimatedTimeRemaining) => {
+        // Update progress display
+        const progressValue = total > 0 ? current / total : 0;
+        setProgress(Math.min(0.95, progressValue));
+        setProgressText(message || `Processing ${current} of ${total} transactions...`);
+        if (estimatedTimeRemaining) {
+          setTimeRemaining(estimatedTimeRemaining);
+        }
+      }
+    );
+    
+    // Set progress to 100% when done
+    setProgress(1);
+    setProgressText('Successfully loaded transactions!');
+    
+    // Process results
+    if (result.success) {
+      setTransactions(result.transactions || []);
+      // Update last updated timestamp in UI (not state)
+      const now = new Date();
+      
+      setTransactionsLoaded(true);
+      
+      // Show success message
+      setTimeout(() => {
+        Alert.alert('Success', `Loaded ${result.transactions.length} transactions for ${getTimeFrameText(selectedTimeFrame, customDateRange)}`);
+      }, 500);
+    } else {
+      Alert.alert('Error', result.error || 'Failed to load transactions');
+    }
+  } catch (error) {
+    console.error('Error fetching bank transactions:', error);
+    Alert.alert('Error', 'Failed to fetch transactions. Please try again.');
+  } finally {
+    // Hide loading indicators
+    setShowProgress(false);
+    setIsLoading(false);
+  }
+};
+
+// Function to fetch latest transactions
+const fetchLatestTransactions = async () => {
+  // Get the last updated timestamp from BankService
+  const lastUpdated = await BankService.getLastUpdatedTimestamp(selectedBankId, currentAccount.email);
+  
+  if (isLoading || !lastUpdated) {
+    Alert.alert('Error', 'No previous data to update. Please load all transactions first.');
+    return;
+  }
+  
+  try {
+    setIsLoading(true);
+    setShowProgress(true);
+    setProgress(0);
+    setProgressText('Preparing to fetch latest transactions...');
+    
+    // Call BankService to fetch latest transactions
+    const result = await BankService.fetchLatestBankTransactions(
+      selectedBankId,
+      currentAccount.email,
+      new Date(lastUpdated),
+      (current, total, message, estimatedTimeRemaining) => {
+        // Update progress display
+        const progressValue = total > 0 ? current / total : 0;
+        setProgress(Math.min(0.95, progressValue));
+        setProgressText(message || `Processing ${current} of ${total} latest transactions...`);
+        if (estimatedTimeRemaining) {
+          setTimeRemaining(estimatedTimeRemaining);
+        }
+      }
+    );
+    
+    // Set progress to 100% when done
+    setProgress(1);
+    setProgressText('Successfully loaded latest transactions!');
+    
+    // Process results
+    if (result.success) {
+      // Update transaction list
+      setTransactions(result.transactions || []);
+      
+      // Show success message
+      setTimeout(() => {
+        const newCount = result.transactions.length - transactions.length;
+        const message = newCount > 0 
+          ? `Found ${newCount} new transactions`
+          : 'No new transactions found';
+        Alert.alert('Success', message);
+      }, 500);
+    } else {
+      Alert.alert('Error', result.error || 'Failed to load latest transactions');
+    }
+  } catch (error) {
+    console.error('Error fetching latest transactions:', error);
+    Alert.alert('Error', 'Failed to fetch latest transactions. Please try again.');
+  } finally {
+    // Hide loading indicators
+    setShowProgress(false);
+    setIsLoading(false);
+  }
+};
+
+// Function to clear transaction data
+const clearTransactionData = async () => {
+  if (!selectedBankId || !currentAccount) return;
+  
+  Alert.alert(
+    'Clear Transactions',
+    `Are you sure you want to clear all transaction data for ${selectedBank?.name}?`,
+    [
+      { text: 'Cancel', style: 'cancel' },
+      { 
+        text: 'Clear', 
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            setIsLoading(true);
+            // Clear transactions from storage
+            await BankService.clearTransactions(selectedBankId, currentAccount.email);
+            // Reset state
+            setTransactions([]);
+            setTransactionsLoaded(false);
+            setIsLoading(false);
+            Alert.alert('Success', 'Transaction data cleared successfully');
+          } catch (error) {
+            console.error('Error clearing transaction data:', error);
+            Alert.alert('Error', 'Failed to clear transaction data');
+            setIsLoading(false);
+          }
+        }
+      }
+    ]
+  );
+};
+
+// Add this useEffect hook to load saved transactions when bank or account changes
+useEffect(() => {
+  const loadSavedTransactions = async () => {
+    if (!selectedBankId || !currentAccount) return;
+    
+    try {
+      setIsLoading(true);
+      
+      // Get transactions from storage
+      const savedTransactions = await BankService.getTransactions(selectedBankId, currentAccount.email);
+      setTransactions(savedTransactions || []);
+      
+      // Check if there are any saved transactions
+      setTransactionsLoaded(savedTransactions && savedTransactions.length > 0);
+      
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error loading saved transactions:', error);
+      setIsLoading(false);
+    }
+  };
+  
+  loadSavedTransactions();
+}, [selectedBankId, currentAccount]);
 
   const renderAddBankDropdown = () => (
     <Modal
@@ -806,12 +1004,12 @@ const BankTransactionScreen = () => {
               <Icon name="keyboard-arrow-down" size={24} color="#666" />
             </TouchableOpacity>
             <View style={styles.loadButtonsContainer}>
-              <TouchableOpacity
+              <TouchableOpacity 
                 style={[styles.loadTransactionsButton, { backgroundColor: bankColor }]}
-                onPress={simulateTransactionLoading}
-                disabled={isLoading}
+                onPress={fetchBankTransactions}
+                disabled={loading}
               >
-                {isLoading ? (
+                {loading ? (
                   <ActivityIndicator size="small" color="#FFF" />
                 ) : (
                   <>
@@ -820,19 +1018,12 @@ const BankTransactionScreen = () => {
                   </>
                 )}
               </TouchableOpacity>
+
               {transactionsLoaded && (
                 <TouchableOpacity
                   style={[styles.refreshTransactionsButton, { borderColor: bankColor }]}
-                  onPress={() => {
-                    Alert.alert(
-                      'Refresh Transactions',
-                      `This will reload the latest transactions for ${getTimeFrameText(selectedTimeFrame, customDateRange)}. Continue?`,
-                      [
-                        { text: 'Cancel', style: 'cancel' },
-                        { text: 'Refresh', onPress: () => simulateTransactionLoading() }
-                      ]
-                    );
-                  }}
+                  onPress={fetchLatestTransactions}
+                  disabled={loading || !transactionsLoaded}
                 >
                   <Icon name="refresh" size={20} color={bankColor} />
                   <Text style={[styles.refreshTransactionsButtonText, { color: bankColor }]}>Refresh</Text>
