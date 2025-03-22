@@ -31,14 +31,9 @@ export const parseOrderDetails = (emailBodyHtml, platform) => {
       return extractZomatoOrderDetails(emailBodyHtml);
     case 'swiggy':
       return extractSwiggyOrderDetails(emailBodyHtml);
-    case 'amazon':
-      // For now, return null for other platforms
-      return null;
-    case 'flipkart':
-      // For now, return null for other platforms
-      return null;
+      
     default:
-      // console.log(`No parser available for platform: ${platform}`);
+      console.log(`No parser available for platform: ${platform}`);
       return null;
   }
 };
