@@ -5,6 +5,42 @@ import * as AccountService from './AccountService';
 import * as AuthService from './AuthService';
 import { parseOrderDetails } from '../utils/EmailParser';
 
+// Operation control object to handle aborts
+const operationControl = {
+  // AbortController instance for cancelling fetch operations
+  controller: null,
+  // Flag to track if operations should be aborted
+  shouldAbort: false,
+  
+  // Create a new abort controller
+  createController: function() {
+    this.shouldAbort = false;
+    this.controller = new AbortController();
+    return this.controller.signal;
+  },
+  
+  // Abort current operations
+  abort: function() {
+    if (this.controller) {
+      console.log('Aborting current Gmail operations');
+      this.shouldAbort = true;
+      this.controller.abort();
+      this.controller = null;
+    }
+  },
+  
+  // Check if operations should be aborted
+  isAborted: function() {
+    return this.shouldAbort;
+  },
+  
+  // Reset abort state
+  reset: function() {
+    this.shouldAbort = false;
+    this.controller = null;
+  }
+};
+
 // In-memory token cache to prevent excessive validation
 // Fixed to be more secure and account-specific
 const tokenCache = {
@@ -41,8 +77,14 @@ const tokenCache = {
   }
 };
 
-// Export the tokenCache so it can be accessed by other components
+// Export the tokenCache and abort functionality so they can be accessed by other components
 export { tokenCache };
+
+// Function to abort any ongoing Gmail operations
+export const abortCurrentOperation = () => {
+  operationControl.abort();
+  console.log('Gmail fetch operation cancelled');
+};
 
 /**
  * Get a valid access token, using cache when possible to prevent validation overhead
@@ -87,6 +129,11 @@ const getAccessToken = async (accountEmail) => {
  */
 const callGmailApi = async (endpoint, accountEmail, options = {}, retryCount = 0) => {
   try {
+    // Check if operation should be aborted
+    if (operationControl.isAborted()) {
+      throw new Error('Operation cancelled by user');
+    }
+    
     if (!accountEmail) {
       throw new Error('Account email is required for Gmail API calls');
     }
@@ -96,14 +143,26 @@ const callGmailApi = async (endpoint, accountEmail, options = {}, retryCount = 0
     
     console.log(`Making Gmail API call to ${endpoint} with account ${accountEmail}`);
     
+    // Create abort signal if needed
+    let signal = options.signal;
+    if (!signal && operationControl.controller) {
+      signal = operationControl.controller.signal;
+    }
+    
     // Make the API call
     const response = await fetch(endpoint, {
       ...options,
+      signal,
       headers: {
         ...options.headers,
         Authorization: `Bearer ${accessToken}`
       }
     });
+    
+    // Check again if operation should be aborted
+    if (operationControl.isAborted()) {
+      throw new Error('Operation cancelled by user');
+    }
     
     // Handle 401 unauthorized - token might be invalid
     if (response.status === 401) {
@@ -135,6 +194,12 @@ const callGmailApi = async (endpoint, accountEmail, options = {}, retryCount = 0
     
     return response.json();
   } catch (error) {
+    // Don't log errors for cancelled operations
+    if (error.name === 'AbortError' || error.message.includes('cancelled')) {
+      console.log('Gmail API call was cancelled');
+      throw new Error('Operation cancelled by user');
+    }
+    
     console.error('Error calling Gmail API:', error);
     throw error;
   }
@@ -147,17 +212,30 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
       throw new Error('No account email provided');
     }
     
+    // Create a new abort controller for this operation
+    const signal = operationControl.createController();
+    
     progressCallback(0, 1, 'Preparing to fetch emails...');
     
     // Use the provided platform query or default
     const query = platformQuery || `from:${platform}.com`;
     const encodedQuery = encodeURIComponent(query);
     
+    // Check for early cancellation
+    if (operationControl.isAborted()) {
+      throw new Error('Operation cancelled by user');
+    }
+    
     // List emails matching the query
     progressCallback(0, 1, 'Finding matching emails...');
     const listUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodedQuery}&maxResults=100`;
-    const initialData = await callGmailApi(listUrl, accountEmail);
-    // console.log(initialData,"ss")
+    const initialData = await callGmailApi(listUrl, accountEmail, { signal });
+    
+    // Check for cancellation after initial request
+    if (operationControl.isAborted()) {
+      throw new Error('Operation cancelled by user');
+    }
+    
     if (!initialData.messages || initialData.messages.length === 0) {
       progressCallback(1, 1, 'No emails found.');
       return [];
@@ -173,8 +251,13 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
     
     // Get remaining message IDs if there are more pages
     while (nextPageToken) {
+      // Check for cancellation in the loop
+      if (operationControl.isAborted()) {
+        throw new Error('Operation cancelled by user');
+      }
+      
       const pageUrl = `${listUrl}&pageToken=${nextPageToken}`;
-      const pageData = await callGmailApi(pageUrl, accountEmail);
+      const pageData = await callGmailApi(pageUrl, accountEmail, { signal });
       
       if (pageData.messages && pageData.messages.length > 0) {
         allMessageIds = [...allMessageIds, ...pageData.messages.map(msg => msg.id)];
@@ -197,17 +280,28 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
     
     // Process each batch with a single token validation
     for (const batch of batches) {
+      // Check for cancellation before each batch
+      if (operationControl.isAborted()) {
+        throw new Error('Operation cancelled by user');
+      }
+      
       // Get access token once per batch
       const accessToken = await getAccessToken(accountEmail);
       
       // Process this batch in parallel
       const batchResults = await Promise.all(
         batch.map(async (messageId) => {
+          // Check for cancellation for each message
+          if (operationControl.isAborted()) {
+            return null;
+          }
+          
           try {
             const response = await fetch(
               `https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageId}?format=full`,
               {
-                headers: { Authorization: `Bearer ${accessToken}` }
+                headers: { Authorization: `Bearer ${accessToken}` },
+                signal
               }
             );
             
@@ -219,11 +313,20 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
             const messageData = await response.json();
             return extractEmailData(messageData, platform);
           } catch (error) {
+            // Don't log errors for cancelled operations
+            if (error.name === 'AbortError' || error.message.includes('cancelled')) {
+              return null;
+            }
             console.error(`Error processing message ${messageId}:`, error);
             return null;
           }
         })
       );
+      
+      // Check again after batch completion
+      if (operationControl.isAborted()) {
+        throw new Error('Operation cancelled by user');
+      }
       
       // Add valid results to our collection
       const validResults = batchResults.filter(result => result !== null);
@@ -238,6 +341,11 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
       );
     }
     
+    // Check again before saving
+    if (operationControl.isAborted()) {
+      throw new Error('Operation cancelled by user');
+    }
+    
     // Save results - IMPORTANT: We now use accountEmail in the storage key
     progressCallback(allMessageIds.length, allMessageIds.length, 'Saving emails...');
     const storageKey = `emails_${platform}_${accountEmail}`;
@@ -247,10 +355,22 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
     const now = Date.now();
     await AsyncStorage.setItem(`lastFetched_${platform}_${accountEmail}`, now.toString());
     
+    // Reset abort controller after successful completion
+    operationControl.reset();
+    
     return processedEmails;
   } catch (error) {
+    // Gracefully handle cancellation
+    if (error.name === 'AbortError' || error.message.includes('cancelled')) {
+      console.log(`Email fetch operation for ${platform} was cancelled by user`);
+      return [];
+    }
+    
     console.error(`Error fetching platform emails for ${accountEmail}:`, error);
     throw error;
+  } finally {
+    // Ensure abort controller is reset
+    operationControl.reset();
   }
 };
 
