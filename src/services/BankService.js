@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as GmailService from './GmailService';
 import banks from '../constants/banks';
 import * as AccountService from './AccountService';
+
 /**
  * Fetch bank transactions for a specific bank, account, and time frame
  * @param {string} bankId - The bank identifier
@@ -31,45 +32,56 @@ export const fetchBankTransactions = async (
       throw new Error(`Bank information not found for ${bankId}`);
     }
 
-    // Build time-based query
-    let timeQuery = '';
-    const now = new Date();
-    const formatDate = (date) => {
+    // Helper function to format dates for Gmail API queries
+    const formatGmailDate = (date) => {
       return `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
     };
+
+    // Build time-based query with proper Gmail syntax
+    let timeQuery = '';
+    const now = new Date();
 
     switch (timeFrame) {
       case 'THIS_MONTH':
         const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        timeQuery = `after:${formatDate(firstOfMonth)}`;
+        // After start of month, before is implied (current date)
+        timeQuery = `after:${formatGmailDate(firstOfMonth)}`;
         break;
+        
       case 'LAST_MONTH':
         const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
-        timeQuery = `${formatDate(lastMonthStart)} ${formatDate(lastMonthEnd)}`;
+        const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0); // Last day of previous month
+        // Use after: and before: syntax
+        timeQuery = `after:${formatGmailDate(lastMonthStart)} before:${formatGmailDate(lastMonthEnd)}`;
         break;
+        
       case 'LAST_3_MONTHS':
         const threeMonthsAgo = new Date(now);
         threeMonthsAgo.setMonth(now.getMonth() - 3);
-        timeQuery = `after:${formatDate(threeMonthsAgo)}`;
+        timeQuery = `after:${formatGmailDate(threeMonthsAgo)}`;
         break;
+        
       case 'LAST_6_MONTHS':
         const sixMonthsAgo = new Date(now);
         sixMonthsAgo.setMonth(now.getMonth() - 6);
-        timeQuery = `after:${formatDate(sixMonthsAgo)}`;
+        timeQuery = `after:${formatGmailDate(sixMonthsAgo)}`;
         break;
+        
       case 'CUSTOM':
         if (!customRange || !customRange.startDate || !customRange.endDate) {
           throw new Error('Custom range requires startDate and endDate');
         }
-        timeQuery = `${formatDate(customRange.startDate)} ${formatDate(customRange.endDate)}`;
+        // Use after: and before: syntax for custom range
+        timeQuery = `after:${formatGmailDate(customRange.startDate)} before:${formatGmailDate(customRange.endDate)}`;
         break;
+        
       default:
         throw new Error('Invalid time frame');
     }
-    console.log(timeQuery,"ll")
 
+    // Construct the full query
     const fullQuery = `${bankInfo.emailQuery} ${timeQuery}`.trim();
+    console.log(`Bank query: ${fullQuery}`);
 
     // Fetch emails based on the query
     const emails = await GmailService.fetchAllPlatformEmails(
@@ -113,19 +125,20 @@ export const fetchBankTransactions = async (
   }
 };
   
-  /**
-   * Get transaction metadata
-   */
-  export const getTransactionMetadata = async (bankId, accountEmail) => {
-    try {
-      const metadataKey = `bank_metadata_${bankId}_${accountEmail}`;
-      const data = await AsyncStorage.getItem(metadataKey);
-      return data ? JSON.parse(data) : null;
-    } catch (error) {
-      console.error(`Error getting metadata for ${bankId}:`, error);
-      return null;
-    }
-  };
+/**
+ * Get transaction metadata
+ */
+export const getTransactionMetadata = async (bankId, accountEmail) => {
+  try {
+    const metadataKey = `bank_metadata_${bankId}_${accountEmail}`;
+    const data = await AsyncStorage.getItem(metadataKey);
+    return data ? JSON.parse(data) : null;
+  } catch (error) {
+    console.error(`Error getting metadata for ${bankId}:`, error);
+    return null;
+  }
+};
+
 /**
  * Fetch latest bank transactions since the last update
  */
@@ -147,7 +160,7 @@ export const fetchLatestBankTransactions = async (bankId, accountEmail, lastFetc
       return `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
     };
     
-    // Create query with date filter
+    // Create query with date filter using proper after: syntax
     const dateQuery = `after:${formatDate(queryDate)}`;
     const fullQuery = `${bankInfo.emailQuery} ${dateQuery}`;
     
@@ -233,31 +246,31 @@ const mergeWithoutDuplicates = (existingTransactions, newTransactions) => {
 };
 
 /**
-   * Save transactions to storage with time frame info
-   */
+ * Save transactions to storage with time frame info
+ */
 export const saveTransactions = async (bankId, accountEmail, transactions, timeFrame, customRange) => {
-    try {
-      if (!bankId || !accountEmail) return false;
-  
-      const storageKey = `bank_transactions_${bankId}_${accountEmail}`;
-      const metadataKey = `bank_metadata_${bankId}_${accountEmail}`;
-  
-      await AsyncStorage.setItem(storageKey, JSON.stringify(transactions));
-      await AsyncStorage.setItem(
-        metadataKey,
-        JSON.stringify({
-          lastUpdated: Date.now(),
-          timeFrame,
-          customRange: customRange || null
-        })
-      );
-  
-      return true;
-    } catch (error) {
-      console.error(`Error saving transactions for ${bankId}:`, error);
-      return false;
-    }
-  };
+  try {
+    if (!bankId || !accountEmail) return false;
+
+    const storageKey = `bank_transactions_${bankId}_${accountEmail}`;
+    const metadataKey = `bank_metadata_${bankId}_${accountEmail}`;
+
+    await AsyncStorage.setItem(storageKey, JSON.stringify(transactions));
+    await AsyncStorage.setItem(
+      metadataKey,
+      JSON.stringify({
+        lastUpdated: Date.now(),
+        timeFrame,
+        customRange: customRange || null
+      })
+    );
+
+    return true;
+  } catch (error) {
+    console.error(`Error saving transactions for ${bankId}:`, error);
+    return false;
+  }
+};
 
 /**
  * Get transactions from storage
@@ -318,4 +331,3 @@ export const clearTransactions = async (bankId, accountEmail) => {
     return false;
   }
 };
-
