@@ -38,7 +38,7 @@ export const parseOrderDetails = (emailBodyHtml, platform) => {
       // For now, return null for other platforms
       return null;
     default:
-      console.log(`No parser available for platform: ${platform}`);
+      // console.log(`No parser available for platform: ${platform}`);
       return null;
   }
 };
