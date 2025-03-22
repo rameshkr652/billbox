@@ -11,8 +11,7 @@ import {
   ActivityIndicator,
   SafeAreaView,
   Animated,
-  Dimensions,
-  BackHandler
+  Dimensions
 } from 'react-native';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
