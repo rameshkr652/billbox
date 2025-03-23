@@ -574,7 +574,29 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
-  }
+  },
+  buttonGroup: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+
+  clearTransactionsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    backgroundColor: 'transparent',
+    marginLeft: 8,
+  },
+
+  clearTransactionsButtonText: {
+    fontWeight: 'bold',
+    fontSize: 14,
+    marginLeft: 8,
+  },
 });
 
 export default styles;

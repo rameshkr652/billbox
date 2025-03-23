@@ -566,7 +566,7 @@ const extractEmailData = (messageData, platform) => {
     }
     
     const orderDetails = parseOrderDetails(emailBodyHtml, parserPlatform);
-    console.log(orderDetails,"orderDetails")
+    // console.log(orderDetails,"orderDetails")
     // Return only essential data for bank transactions
     if (platform.startsWith('bank_')) {
       return {

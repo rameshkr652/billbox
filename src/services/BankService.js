@@ -4,19 +4,15 @@ import * as GmailService from './GmailService';
 import banks from '../constants/banks';
 import * as AccountService from './AccountService';
 
+// src/services/BankService.js - Enhanced with improved transaction storage
+
 /**
- * Fetch bank transactions for a specific bank, account, and time frame
- * @param {string} bankId - The bank identifier
- * @param {string} accountEmail - The email of the account
- * @param {string} timeFrame - Time frame option (e.g., 'THIS_MONTH', 'LAST_MONTH', 'CUSTOM')
- * @param {Object} customRange - Optional { startDate, endDate } for custom time frame
- * @param {function} progressCallback - Optional callback for progress updates
- * @returns {Promise<Object>} - Object with success status and transactions
+ * Fetch bank transactions with optimized storage
  */
 export const fetchBankTransactions = async (
   bankId,
   accountEmail,
-  timeFrame = 'THIS_MONTH', // Default matches TIME_FRAMES.THIS_MONTH
+  timeFrame = 'THIS_MONTH',
   customRange = null,
   progressCallback = () => {}
 ) => {
@@ -37,21 +33,19 @@ export const fetchBankTransactions = async (
       return `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
     };
 
-    // Build time-based query with proper Gmail syntax
+    // Build time-based query
     let timeQuery = '';
     const now = new Date();
 
     switch (timeFrame) {
       case 'THIS_MONTH':
         const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        // After start of month, before is implied (current date)
         timeQuery = `after:${formatGmailDate(firstOfMonth)}`;
         break;
         
       case 'LAST_MONTH':
         const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0); // Last day of previous month
-        // Use after: and before: syntax
+        const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
         timeQuery = `after:${formatGmailDate(lastMonthStart)} before:${formatGmailDate(lastMonthEnd)}`;
         break;
         
@@ -71,7 +65,6 @@ export const fetchBankTransactions = async (
         if (!customRange || !customRange.startDate || !customRange.endDate) {
           throw new Error('Custom range requires startDate and endDate');
         }
-        // Use after: and before: syntax for custom range
         timeQuery = `after:${formatGmailDate(customRange.startDate)} before:${formatGmailDate(customRange.endDate)}`;
         break;
         
@@ -83,13 +76,12 @@ export const fetchBankTransactions = async (
     const fullQuery = `${bankInfo.emailQuery} ${timeQuery}`.trim();
     console.log(`Bank query: ${fullQuery}`);
 
-    // Fetch emails based on the query
+    // Step 1: Fetch emails based on the query (with progress callback)
     const emails = await GmailService.fetchAllPlatformEmails(
       `bank_${bankId}`,
       accountEmail,
       fullQuery,
       (current, total, message, estimatedTimeRemaining) => {
-        // Pass through the COMPLETE_SIGNAL if present
         if (message === 'COMPLETE_SIGNAL') {
           progressCallback(current, total, message, estimatedTimeRemaining);
           return;
@@ -104,27 +96,32 @@ export const fetchBankTransactions = async (
       }
     );
 
-    // Parse transactions based on bank type with proper platform ID
+    // Step 2: Parse transactions 
+    progressCallback(emails.length, emails.length, 'Processing transaction data...');
+    
     const transactions = emails.map(email => {
-      // Extract core transaction data, ignore snippet, from, etc.
-      const parsedTransaction = {
+      return {
         id: email.id,
         date: email.date,
         bankId: bankId,
         rawEmailData: email,
-        bankName: bankInfo.name
+        bankName: bankInfo.name,
+        // Add parsed transaction details if available
+        ...(email.orderDetails || {})
       };
-      
-      // Add parsed transaction details if available
-      if (email.orderDetails) {
-        Object.assign(parsedTransaction, email.orderDetails);
-      }
-      
-      return parsedTransaction;
     });
 
-    // Save transactions with time frame metadata
-    await saveTransactions(bankId, accountEmail, transactions, timeFrame, customRange);
+    // Step 3: Save transactions with improved storage
+    progressCallback(emails.length, emails.length, 'Saving transactions...');
+    
+    // Implement enhanced storage with retry mechanism
+    await saveTransactionsWithRetry(bankId, accountEmail, transactions, timeFrame, customRange);
+
+    // Set last updated timestamp
+    await setLastUpdatedTimestamp(bankId, accountEmail);
+    
+    // Signal complete
+    progressCallback(emails.length, emails.length, 'COMPLETE_SIGNAL');
 
     return {
       success: true,
@@ -140,162 +137,92 @@ export const fetchBankTransactions = async (
     };
   }
 };
-  
-/**
- * Get transaction metadata
- */
-export const getTransactionMetadata = async (bankId, accountEmail) => {
-  try {
-    const metadataKey = `bank_metadata_${bankId}_${accountEmail}`;
-    const data = await AsyncStorage.getItem(metadataKey);
-    return data ? JSON.parse(data) : null;
-  } catch (error) {
-    console.error(`Error getting metadata for ${bankId}:`, error);
-    return null;
-  }
-};
 
 /**
- * Fetch latest bank transactions since the last update
+ * Improved transaction storage with retry mechanism
  */
-export const fetchLatestBankTransactions = async (bankId, accountEmail, lastFetchedDate, progressCallback = () => {}) => {
+export const saveTransactionsWithRetry = async (bankId, accountEmail, transactions, timeFrame, customRange) => {
+  if (!transactions || transactions.length === 0) {
+    return true;
+  }
+  
+  const MAX_CHUNK_SIZE = 25; // Smaller chunks for better reliability
+  const MAX_RETRIES = 3;
+  
   try {
-    if (!bankId || !accountEmail || !lastFetchedDate) {
-      throw new Error('Missing required parameters');
-    }
-    
-    // Get bank info
-    const bankInfo = banks.find(bank => bank.id === bankId);
-    if (!bankInfo) {
-      throw new Error(`Bank information not found for ${bankId}`);
-    }
-    
-    // Format date for Gmail query (subtract 12 hours to ensure overlap)
-    const queryDate = new Date(lastFetchedDate.getTime() - (12 * 60 * 60 * 1000));
-    const formatDate = (date) => {
-      return `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
+    // Prepare metadata
+    const metadataKey = `bank_metadata_${bankId}_${accountEmail}`;
+    const metadata = {
+      lastUpdated: Date.now(),
+      timeFrame,
+      customRange: customRange || null,
+      totalTransactions: transactions.length,
+      chunksCount: Math.ceil(transactions.length / MAX_CHUNK_SIZE)
     };
     
-    // Create query with date filter using proper after: syntax
-    const dateQuery = `after:${formatDate(queryDate)}`;
-    const fullQuery = `${bankInfo.emailQuery} ${dateQuery}`;
+    // Save metadata first
+    await AsyncStorage.setItem(metadataKey, JSON.stringify(metadata));
     
-    // Fetch latest emails
-    const newEmails = await GmailService.fetchAllPlatformEmails(
-      `bank_${bankId}`,
-      accountEmail,
-      fullQuery,
-      (current, total, message, estimatedTimeRemaining) => {
-        // Pass through the COMPLETE_SIGNAL if present
-        if (message === 'COMPLETE_SIGNAL') {
-          progressCallback(current, total, message, estimatedTimeRemaining);
-          return;
+    // Create chunks
+    const chunks = [];
+    for (let i = 0; i < transactions.length; i += MAX_CHUNK_SIZE) {
+      chunks.push(transactions.slice(i, i + MAX_CHUNK_SIZE));
+    }
+    
+    // Save chunks with retry
+    for (let i = 0; i < chunks.length; i++) {
+      let success = false;
+      let attempts = 0;
+      
+      // Retry loop for each chunk
+      while (!success && attempts < MAX_RETRIES) {
+        try {
+          const chunkKey = `bank_transactions_${bankId}_${accountEmail}_chunk_${i}`;
+          await AsyncStorage.setItem(chunkKey, JSON.stringify(chunks[i]));
+          success = true;
+        } catch (error) {
+          console.warn(`Error saving chunk ${i}, attempt ${attempts + 1}:`, error);
+          attempts++;
+          
+          // Small delay before retry
+          await new Promise(resolve => setTimeout(resolve, 200));
         }
-        
-        progressCallback(
-          current, 
-          total, 
-          message || `Fetching latest ${bankInfo.name} transactions (${current}/${total})...`,
-          estimatedTimeRemaining
-        );
       }
-    );
-    
-    // Process into simple transactions
-    const newTransactions = newEmails.map(email => ({
-      id: email.id,
-      subject: email.subject,
-      date: email.date,
-      snippet: email.snippet,
-      from: email.from,
-      raw: email
-    }));
-    
-    // Get existing transactions
-    const existingTransactions = await getTransactions(bankId, accountEmail);
-    
-    // Merge without duplicates
-    const mergedTransactions = mergeWithoutDuplicates(existingTransactions, newTransactions);
-    
-    // Save merged transactions
-    await saveTransactions(bankId, accountEmail, mergedTransactions);
-    
-    const now = new Date();
-    
-    return {
-      success: true,
-      transactions: mergedTransactions,
-      lastFetched: now
-    };
-  } catch (error) {
-    console.error(`Error fetching latest transactions for ${bankId}:`, error);
-    return {
-      success: false,
-      error: error.message || `Failed to fetch latest transactions for ${bankId}`
-    };
-  }
-};
-
-/**
- * Helper to merge transactions without duplicates
- */
-const mergeWithoutDuplicates = (existingTransactions, newTransactions) => {
-  if (!existingTransactions || existingTransactions.length === 0) {
-    return newTransactions || [];
-  }
-  
-  if (!newTransactions || newTransactions.length === 0) {
-    return existingTransactions;
-  }
-  
-  // Use a Map for O(1) lookups
-  const transactionMap = new Map();
-  
-  // Add existing transactions
-  existingTransactions.forEach(transaction => {
-    transactionMap.set(transaction.id, transaction);
-  });
-  
-  // Add new transactions if not duplicates
-  newTransactions.forEach(transaction => {
-    if (!transactionMap.has(transaction.id)) {
-      transactionMap.set(transaction.id, transaction);
+      
+      // If chunk saving failed after all retries
+      if (!success) {
+        console.error(`Failed to save chunk ${i} after ${MAX_RETRIES} attempts`);
+        // Continue with other chunks instead of failing everything
+      }
     }
-  });
-  
-  // Convert back to array
-  return Array.from(transactionMap.values());
-};
-
-/**
- * Save transactions to storage with time frame info
- */
-export const saveTransactions = async (bankId, accountEmail, transactions, timeFrame, customRange) => {
-  try {
-    if (!bankId || !accountEmail) return false;
-
-    const storageKey = `bank_transactions_${bankId}_${accountEmail}`;
-    const metadataKey = `bank_metadata_${bankId}_${accountEmail}`;
-
-    await AsyncStorage.setItem(storageKey, JSON.stringify(transactions));
-    await AsyncStorage.setItem(
-      metadataKey,
-      JSON.stringify({
-        lastUpdated: Date.now(),
-        timeFrame,
-        customRange: customRange || null
-      })
-    );
-
+    
+    // Save chunk index to know how many chunks we have
+    const indexKey = `bank_transactions_${bankId}_${accountEmail}_chunks`;
+    await AsyncStorage.setItem(indexKey, chunks.length.toString());
+    
     return true;
   } catch (error) {
     console.error(`Error saving transactions for ${bankId}:`, error);
     return false;
   }
-};
+}
 
 /**
- * Get transactions from storage
+ * Set last updated timestamp
+ */
+export const setLastUpdatedTimestamp = async (bankId, accountEmail) => {
+  try {
+    const timestampKey = `bank_last_updated_${bankId}_${accountEmail}`;
+    await AsyncStorage.setItem(timestampKey, Date.now().toString());
+    return true;
+  } catch (error) {
+    console.error(`Error setting last updated timestamp for ${bankId}:`, error);
+    return false;
+  }
+}
+
+/**
+ * Enhanced transaction retrieval from storage
  */
 export const getTransactions = async (bankId, accountEmail) => {
   try {
@@ -303,10 +230,47 @@ export const getTransactions = async (bankId, accountEmail) => {
       return [];
     }
     
-    const storageKey = `bank_transactions_${bankId}_${accountEmail}`;
-    const data = await AsyncStorage.getItem(storageKey);
+    // First, check if we have chunked data
+    const indexKey = `bank_transactions_${bankId}_${accountEmail}_chunks`;
+    const chunksCountStr = await AsyncStorage.getItem(indexKey);
     
-    return data ? JSON.parse(data) : [];
+    if (chunksCountStr) {
+      // We have chunked data
+      const chunksCount = parseInt(chunksCountStr, 10);
+      let allTransactions = [];
+      
+      // Load each chunk
+      for (let i = 0; i < chunksCount; i++) {
+        const chunkKey = `bank_transactions_${bankId}_${accountEmail}_chunk_${i}`;
+        const chunkData = await AsyncStorage.getItem(chunkKey);
+        
+        if (chunkData) {
+          try {
+            const chunkTransactions = JSON.parse(chunkData);
+            allTransactions = [...allTransactions, ...chunkTransactions];
+          } catch (parseError) {
+            console.error(`Error parsing chunk ${i}:`, parseError);
+          }
+        }
+      }
+      
+      return allTransactions;
+    } else {
+      // Check for legacy non-chunked data
+      const legacyKey = `bank_transactions_${bankId}_${accountEmail}`;
+      const legacyData = await AsyncStorage.getItem(legacyKey);
+      
+      if (legacyData) {
+        try {
+          return JSON.parse(legacyData);
+        } catch (parseError) {
+          console.error('Error parsing legacy data:', parseError);
+          return [];
+        }
+      }
+    }
+    
+    return [];
   } catch (error) {
     console.error(`Error getting transactions for ${bankId}:`, error);
     return [];
@@ -314,26 +278,7 @@ export const getTransactions = async (bankId, accountEmail) => {
 };
 
 /**
- * Get last updated timestamp for bank transactions
- */
-export const getLastUpdatedTimestamp = async (bankId, accountEmail) => {
-  try {
-    if (!bankId || !accountEmail) {
-      return null;
-    }
-    
-    const storageKey = `bank_last_updated_${bankId}_${accountEmail}`;
-    const timestamp = await AsyncStorage.getItem(storageKey);
-    
-    return timestamp ? parseInt(timestamp) : null;
-  } catch (error) {
-    console.error(`Error getting last updated timestamp for ${bankId}:`, error);
-    return null;
-  }
-};
-
-/**
- * Clear transactions for a specific bank and account
+ * Clear transactions with improved error handling
  */
 export const clearTransactions = async (bankId, accountEmail) => {
   try {
@@ -341,10 +286,32 @@ export const clearTransactions = async (bankId, accountEmail) => {
       return false;
     }
     
-    const transactionsKey = `bank_transactions_${bankId}_${accountEmail}`;
+    // Check for chunked data
+    const indexKey = `bank_transactions_${bankId}_${accountEmail}_chunks`;
+    const chunksCountStr = await AsyncStorage.getItem(indexKey);
+    
+    if (chunksCountStr) {
+      const chunksCount = parseInt(chunksCountStr, 10);
+      
+      // Remove each chunk
+      for (let i = 0; i < chunksCount; i++) {
+        const chunkKey = `bank_transactions_${bankId}_${accountEmail}_chunk_${i}`;
+        await AsyncStorage.removeItem(chunkKey);
+      }
+      
+      // Remove chunk index
+      await AsyncStorage.removeItem(indexKey);
+    }
+    
+    // Always check and remove legacy data
+    const legacyKey = `bank_transactions_${bankId}_${accountEmail}`;
+    await AsyncStorage.removeItem(legacyKey);
+    
+    // Remove metadata and timestamp
+    const metadataKey = `bank_metadata_${bankId}_${accountEmail}`;
     const timestampKey = `bank_last_updated_${bankId}_${accountEmail}`;
     
-    await AsyncStorage.removeItem(transactionsKey);
+    await AsyncStorage.removeItem(metadataKey);
     await AsyncStorage.removeItem(timestampKey);
     
     return true;

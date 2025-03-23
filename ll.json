@@ -1,0 +1,5886 @@
+[
+  {
+    "id": "195c2989224e3e43",
+    "date": "Sun, 23 Mar 2025 16:12:13 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195c2989224e3e43",
+      "date": "Sun, 23 Mar 2025 16:12:13 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 18,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 18,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195c21b3a14acd75",
+    "date": "Sun, 23 Mar 2025 13:55:18 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195c21b3a14acd75",
+      "date": "Sun, 23 Mar 2025 13:55:18 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 48,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 48,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195c1c4396ab9874",
+    "date": "Sun, 23 Mar 2025 06:50:15 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195c1c4396ab9874",
+      "date": "Sun, 23 Mar 2025 06:50:15 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 18,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 18,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195c1b6c5037112d",
+    "date": "Sun, 23 Mar 2025 12:05:34 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195c1b6c5037112d",
+      "date": "Sun, 23 Mar 2025 12:05:34 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 760,
+            "recipient": "HARIPRASADH SARAVANA"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 760,
+        "recipient": "HARIPRASADH SARAVANA"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195c187dfa9f5696",
+    "date": "Sun, 23 Mar 2025 11:14:21 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195c187dfa9f5696",
+      "date": "Sun, 23 Mar 2025 11:14:21 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 18,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 18,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195bef8946e7cecb",
+    "date": "Sat, 22 Mar 2025 17:48:35 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195bef8946e7cecb",
+      "date": "Sat, 22 Mar 2025 17:48:35 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 10,
+            "recipient": "SSHAKIRABANU"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 10,
+        "recipient": "SSHAKIRABANU"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195bee4d7c9ec02e",
+    "date": "Sat, 22 Mar 2025 17:27:01 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195bee4d7c9ec02e",
+      "date": "Sat, 22 Mar 2025 17:27:01 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 640,
+            "recipient": "MS PRIYA  PADMANABAN"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 640,
+        "recipient": "MS PRIYA  PADMANABAN"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195be9b94bedbaaa",
+    "date": "Sat, 22 Mar 2025 21:37:01 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195be9b94bedbaaa",
+      "date": "Sat, 22 Mar 2025 21:37:01 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 36,
+            "recipient": "MUHAMMED SHAFI"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 36,
+        "recipient": "MUHAMMED SHAFI"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195be8181ac73e47",
+    "date": "Sat, 22 Mar 2025 21:08:32 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195be8181ac73e47",
+      "date": "Sat, 22 Mar 2025 21:08:32 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 85,
+            "recipient": "Mr  MATHANKUMAR  SENTHILKUMAR"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 85,
+        "recipient": "Mr  MATHANKUMAR  SENTHILKUMAR"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195be49c7346af48",
+    "date": "Sat, 22 Mar 2025 20:07:40 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195be49c7346af48",
+      "date": "Sat, 22 Mar 2025 20:07:40 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 256,
+            "recipient": "SURESH S"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 256,
+        "recipient": "SURESH S"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195be2f1ff0f1daa",
+    "date": "Sat, 22 Mar 2025 19:38:33 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195be2f1ff0f1daa",
+      "date": "Sat, 22 Mar 2025 19:38:33 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 730,
+            "recipient": "R VETRIVENDAN"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 730,
+        "recipient": "R VETRIVENDAN"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195be2af0beca130",
+    "date": "Sat, 22 Mar 2025 19:33:59 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195be2af0beca130",
+      "date": "Sat, 22 Mar 2025 19:33:59 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 28,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 28,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195bda23c3f99304",
+    "date": "Sat, 22 Mar 2025 17:04:40 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195bda23c3f99304",
+      "date": "Sat, 22 Mar 2025 17:04:40 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 42,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 42,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195bd3e3282006f2",
+    "date": "Sat, 22 Mar 2025 15:15:24 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195bd3e3282006f2",
+      "date": "Sat, 22 Mar 2025 15:15:24 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 18,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 18,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195bd15ce90ebcec",
+    "date": "Sat, 22 Mar 2025 14:31:17 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195bd15ce90ebcec",
+      "date": "Sat, 22 Mar 2025 14:31:17 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 282.44,
+            "recipient": "ZOMATO"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 282.44,
+        "recipient": "ZOMATO"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195bcd38f4c58d7b",
+    "date": "Sat, 22 Mar 2025 07:48:55 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195bcd38f4c58d7b",
+      "date": "Sat, 22 Mar 2025 07:48:55 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 66,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 66,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195bc41859a17425",
+    "date": "Sat, 22 Mar 2025 10:39:24 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195bc41859a17425",
+      "date": "Sat, 22 Mar 2025 10:39:24 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 132.64,
+            "recipient": "ZOMATO"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 132.64,
+        "recipient": "ZOMATO"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195b9ea0d34e321c",
+    "date": "Fri, 21 Mar 2025 18:14:37 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195b9ea0d34e321c",
+      "date": "Fri, 21 Mar 2025 18:14:37 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 66,
+            "recipient": "SURESH SEERANGAN"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 66,
+        "recipient": "SURESH SEERANGAN"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195b9d481f1e778b",
+    "date": "Fri, 21 Mar 2025 23:21:06 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195b9d481f1e778b",
+      "date": "Fri, 21 Mar 2025 23:21:06 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 30,
+            "recipient": "SSHAKIRABANU"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 30,
+        "recipient": "SSHAKIRABANU"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195b9a727d946d68",
+    "date": "Fri, 21 Mar 2025 22:31:34 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195b9a727d946d68",
+      "date": "Fri, 21 Mar 2025 22:31:34 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 58,
+            "recipient": "K J MANIKANDAN"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 58,
+        "recipient": "K J MANIKANDAN"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195b9853be7008b9",
+    "date": "Fri, 21 Mar 2025 21:54:30 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195b9853be7008b9",
+      "date": "Fri, 21 Mar 2025 21:54:30 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 20,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 20,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195b8ec0b0916a7b",
+    "date": "Fri, 21 Mar 2025 13:37:10 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195b8ec0b0916a7b",
+      "date": "Fri, 21 Mar 2025 13:37:10 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 42,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 42,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195b8b1580eaab10",
+    "date": "Fri, 21 Mar 2025 18:03:05 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195b8b1580eaab10",
+      "date": "Fri, 21 Mar 2025 18:03:05 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 28,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 28,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195b82acdf5374f3",
+    "date": "Fri, 21 Mar 2025 15:36:07 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195b82acdf5374f3",
+      "date": "Fri, 21 Mar 2025 15:36:07 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 56,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 56,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195b7c04ca8f9f1e",
+    "date": "Fri, 21 Mar 2025 08:09:47 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195b7c04ca8f9f1e",
+      "date": "Fri, 21 Mar 2025 08:09:47 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 10,
+            "recipient": "B CHANDRASEKARAN"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 10,
+        "recipient": "B CHANDRASEKARAN"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195b7b6f519a1b30",
+    "date": "Fri, 21 Mar 2025 13:29:35 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195b7b6f519a1b30",
+      "date": "Fri, 21 Mar 2025 13:29:35 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 46,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 46,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195b719381da2bc5",
+    "date": "Fri, 21 Mar 2025 10:37:17 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195b719381da2bc5",
+      "date": "Fri, 21 Mar 2025 10:37:17 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 48,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 48,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195b6f725b3ad4f3",
+    "date": "Fri, 21 Mar 2025 10:00:04 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195b6f725b3ad4f3",
+      "date": "Fri, 21 Mar 2025 10:00:04 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 146.74,
+            "recipient": "ZOMATO LIMITED"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 146.74,
+        "recipient": "ZOMATO LIMITED"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195b4c3d42dbb689",
+    "date": "Thu, 20 Mar 2025 23:44:47 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195b4c3d42dbb689",
+      "date": "Thu, 20 Mar 2025 23:44:47 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 22,
+            "recipient": "Ss Suresh Coffee"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 22,
+        "recipient": "Ss Suresh Coffee"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195b480da69839ff",
+    "date": "Thu, 20 Mar 2025 22:31:38 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195b480da69839ff",
+      "date": "Thu, 20 Mar 2025 22:31:38 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 115,
+            "recipient": "K J MANIKANDAN"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 115,
+        "recipient": "K J MANIKANDAN"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195b3fdb4ed98410",
+    "date": "Thu, 20 Mar 2025 20:08:22 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195b3fdb4ed98410",
+      "date": "Thu, 20 Mar 2025 20:08:22 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 42,
+            "recipient": "Krishna Beeda Stall"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 42,
+        "recipient": "Krishna Beeda Stall"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195b3a5f460cf94a",
+    "date": "Thu, 20 Mar 2025 18:32:32 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195b3a5f460cf94a",
+      "date": "Thu, 20 Mar 2025 18:32:32 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 10570.46,
+            "recipient": "NORTHERN ARC CAPITAL LIMITED"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 10570.46,
+        "recipient": "NORTHERN ARC CAPITAL LIMITED"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195b3a57a26929ce",
+    "date": "Thu, 20 Mar 2025 13:02:00 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195b3a57a26929ce",
+      "date": "Thu, 20 Mar 2025 13:02:00 +0000",
+      "orderDetails": {
+        "debitTransactions": [],
+        "creditTransactions": [
+          {
+            "type": "credit",
+            "amount": 10000,
+            "sender": "M"
+          }
+        ]
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [],
+    "creditTransactions": [
+      {
+        "type": "credit",
+        "amount": 10000,
+        "sender": "M"
+      }
+    ]
+  },
+  {
+    "id": "195b335cfc6e066c",
+    "date": "Thu, 20 Mar 2025 11:00:02 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195b335cfc6e066c",
+      "date": "Thu, 20 Mar 2025 11:00:02 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 175,
+            "recipient": "PALANISAMY  KARUPPUANNAN"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 175,
+        "recipient": "PALANISAMY  KARUPPUANNAN"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195b2fa7b42919c7",
+    "date": "Thu, 20 Mar 2025 15:25:14 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195b2fa7b42919c7",
+      "date": "Thu, 20 Mar 2025 15:25:14 +0530",
+      "orderDetails": {
+        "debitTransactions": [],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [],
+    "creditTransactions": []
+  },
+  {
+    "id": "195b20f3c468e579",
+    "date": "Thu, 20 Mar 2025 11:08:17 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195b20f3c468e579",
+      "date": "Thu, 20 Mar 2025 11:08:17 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 36,
+            "recipient": "Ganapathy Jayaraman"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 36,
+        "recipient": "Ganapathy Jayaraman"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195af56c7dfd597d",
+    "date": "Wed, 19 Mar 2025 22:27:34 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195af56c7dfd597d",
+      "date": "Wed, 19 Mar 2025 22:27:34 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 37,
+            "recipient": "SARASVATHI S"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 37,
+        "recipient": "SARASVATHI S"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195af3016c2885d2",
+    "date": "Wed, 19 Mar 2025 21:45:18 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195af3016c2885d2",
+      "date": "Wed, 19 Mar 2025 21:45:18 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 56,
+            "recipient": "Mr SHIVAKUMAR  S P"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 56,
+        "recipient": "Mr SHIVAKUMAR  S P"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195aed48b5cb4391",
+    "date": "Wed, 19 Mar 2025 20:05:19 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195aed48b5cb4391",
+      "date": "Wed, 19 Mar 2025 20:05:19 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 45,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 45,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195aece478aefc2d",
+    "date": "Wed, 19 Mar 2025 19:58:28 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195aece478aefc2d",
+      "date": "Wed, 19 Mar 2025 19:58:28 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 260.39,
+            "recipient": "ZOMATO"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 260.39,
+        "recipient": "ZOMATO"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195ae6c17e500550",
+    "date": "Wed, 19 Mar 2025 18:11:13 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195ae6c17e500550",
+      "date": "Wed, 19 Mar 2025 18:11:13 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 1517,
+            "recipient": "Mr Manikandan Rajendiran"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 1517,
+        "recipient": "Mr Manikandan Rajendiran"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195ae6978ceee973",
+    "date": "Wed, 19 Mar 2025 18:08:21 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195ae6978ceee973",
+      "date": "Wed, 19 Mar 2025 18:08:21 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 104,
+            "recipient": "Swiggy"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 104,
+        "recipient": "Swiggy"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195ae21cb1aff249",
+    "date": "Wed, 19 Mar 2025 16:50:04 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195ae21cb1aff249",
+      "date": "Wed, 19 Mar 2025 16:50:04 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 48,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 48,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195adbf6cb88f14b",
+    "date": "Wed, 19 Mar 2025 09:32:37 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195adbf6cb88f14b",
+      "date": "Wed, 19 Mar 2025 09:32:37 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 30,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 30,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195adaea521c972d",
+    "date": "Wed, 19 Mar 2025 14:44:18 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195adaea521c972d",
+      "date": "Wed, 19 Mar 2025 14:44:18 +0530",
+      "orderDetails": {
+        "debitTransactions": [],
+        "creditTransactions": [
+          {
+            "type": "credit",
+            "amount": 2242,
+            "sender": "Y"
+          }
+        ]
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [],
+    "creditTransactions": [
+      {
+        "type": "credit",
+        "amount": 2242,
+        "sender": "Y"
+      }
+    ]
+  },
+  {
+    "id": "195ad1855aa54238",
+    "date": "Wed, 19 Mar 2025 12:00:07 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195ad1855aa54238",
+      "date": "Wed, 19 Mar 2025 12:00:07 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 20,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 20,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195ad0ce2b17ab44",
+    "date": "Wed, 19 Mar 2025 11:47:37 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195ad0ce2b17ab44",
+      "date": "Wed, 19 Mar 2025 11:47:37 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 540,
+            "recipient": "HARIPRASADH SARAVANA"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 540,
+        "recipient": "HARIPRASADH SARAVANA"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195aced16227c916",
+    "date": "Wed, 19 Mar 2025 11:12:53 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195aced16227c916",
+      "date": "Wed, 19 Mar 2025 11:12:53 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 144.19,
+            "recipient": "Zomato Online Order"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 144.19,
+        "recipient": "Zomato Online Order"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195a9e3e6814da55",
+    "date": "Tue, 18 Mar 2025 21:03:59 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195a9e3e6814da55",
+      "date": "Tue, 18 Mar 2025 21:03:59 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 56,
+            "recipient": "Ganapathi Rangapillai"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 56,
+        "recipient": "Ganapathi Rangapillai"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195a94cf2760da5a",
+    "date": "Tue, 18 Mar 2025 18:19:06 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195a94cf2760da5a",
+      "date": "Tue, 18 Mar 2025 18:19:06 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 18,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 18,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195a8f8078338396",
+    "date": "Tue, 18 Mar 2025 11:16:20 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195a8f8078338396",
+      "date": "Tue, 18 Mar 2025 11:16:20 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 30,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 30,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195a87c8c88fe41b",
+    "date": "Tue, 18 Mar 2025 14:31:29 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195a87c8c88fe41b",
+      "date": "Tue, 18 Mar 2025 14:31:29 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 116,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 116,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195a7d1485321748",
+    "date": "Tue, 18 Mar 2025 11:24:25 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195a7d1485321748",
+      "date": "Tue, 18 Mar 2025 11:24:25 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 36,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 36,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195a7a6d1808514b",
+    "date": "Tue, 18 Mar 2025 05:08:01 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195a7a6d1808514b",
+      "date": "Tue, 18 Mar 2025 05:08:01 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 173.84,
+            "recipient": "ZOMATO"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 173.84,
+        "recipient": "ZOMATO"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195a5655c17c127a",
+    "date": "Tue, 18 Mar 2025 00:07:18 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195a5655c17c127a",
+      "date": "Tue, 18 Mar 2025 00:07:18 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 62,
+            "recipient": "SURESH SEERANGAN"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 62,
+        "recipient": "SURESH SEERANGAN"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195a50ef3abbd4c0",
+    "date": "Mon, 17 Mar 2025 22:32:53 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195a50ef3abbd4c0",
+      "date": "Mon, 17 Mar 2025 22:32:53 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 20,
+            "recipient": "SSHAKIRABANU"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 20,
+        "recipient": "SSHAKIRABANU"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195a507ca79225ae",
+    "date": "Mon, 17 Mar 2025 16:55:05 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195a507ca79225ae",
+      "date": "Mon, 17 Mar 2025 16:55:05 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 141,
+            "recipient": "Balasubramaniyam S"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 141,
+        "recipient": "Balasubramaniyam S"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195a4fcd4de322ca",
+    "date": "Mon, 17 Mar 2025 22:13:07 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195a4fcd4de322ca",
+      "date": "Mon, 17 Mar 2025 22:13:07 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 110,
+            "recipient": "KARTHIGEYAN J"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 110,
+        "recipient": "KARTHIGEYAN J"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195a428575f2f50c",
+    "date": "Mon, 17 Mar 2025 12:51:00 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195a428575f2f50c",
+      "date": "Mon, 17 Mar 2025 12:51:00 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 40,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 40,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195a351dcffee5c8",
+    "date": "Mon, 17 Mar 2025 08:56:44 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195a351dcffee5c8",
+      "date": "Mon, 17 Mar 2025 08:56:44 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 48,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 48,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195a2dfe465dc4ab",
+    "date": "Mon, 17 Mar 2025 12:22:16 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195a2dfe465dc4ab",
+      "date": "Mon, 17 Mar 2025 12:22:16 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 910,
+            "recipient": "Mrs J SAMUNISSHA IBRAHIM"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 910,
+        "recipient": "Mrs J SAMUNISSHA IBRAHIM"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195a2b7aed56ac43",
+    "date": "Mon, 17 Mar 2025 11:38:21 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195a2b7aed56ac43",
+      "date": "Mon, 17 Mar 2025 11:38:21 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 113,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 113,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195a293d9e157a22",
+    "date": "Mon, 17 Mar 2025 05:29:11 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195a293d9e157a22",
+      "date": "Mon, 17 Mar 2025 05:29:11 +0000",
+      "orderDetails": {
+        "debitTransactions": [],
+        "creditTransactions": [
+          {
+            "type": "credit",
+            "amount": 1000,
+            "sender": "R"
+          }
+        ]
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [],
+    "creditTransactions": [
+      {
+        "type": "credit",
+        "amount": 1000,
+        "sender": "R"
+      }
+    ]
+  },
+  {
+    "id": "1959f4ef97c71101",
+    "date": "Sun, 16 Mar 2025 19:45:07 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1959f4ef97c71101",
+      "date": "Sun, 16 Mar 2025 19:45:07 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 360,
+            "recipient": "KARTHIGEYAN J"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 360,
+        "recipient": "KARTHIGEYAN J"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1959ea41de70cc5c",
+    "date": "Sun, 16 Mar 2025 16:38:29 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1959ea41de70cc5c",
+      "date": "Sun, 16 Mar 2025 16:38:29 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 70,
+            "recipient": "Mr SHIVAKUMAR  S P"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 70,
+        "recipient": "Mr SHIVAKUMAR  S P"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1959b5b03915d26e",
+    "date": "Sat, 15 Mar 2025 19:49:46 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1959b5b03915d26e",
+      "date": "Sat, 15 Mar 2025 19:49:46 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 15,
+            "recipient": "MAYURI SWEETS AND BAKERY"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 15,
+        "recipient": "MAYURI SWEETS AND BAKERY"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1959ab256acd3523",
+    "date": "Sat, 15 Mar 2025 16:45:33 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1959ab256acd3523",
+      "date": "Sat, 15 Mar 2025 16:45:33 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 20,
+            "recipient": "VIJAY P"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 20,
+        "recipient": "VIJAY P"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1959ab200478f540",
+    "date": "Sat, 15 Mar 2025 16:45:10 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1959ab200478f540",
+      "date": "Sat, 15 Mar 2025 16:45:10 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 93,
+            "recipient": "VIJAY P"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 93,
+        "recipient": "VIJAY P"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1959aad35306703a",
+    "date": "Sat, 15 Mar 2025 16:39:56 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1959aad35306703a",
+      "date": "Sat, 15 Mar 2025 16:39:56 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 30,
+            "recipient": "MOHAMMED ASIF M"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 30,
+        "recipient": "MOHAMMED ASIF M"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1959a8808def5c2a",
+    "date": "Sat, 15 Mar 2025 15:59:19 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1959a8808def5c2a",
+      "date": "Sat, 15 Mar 2025 15:59:19 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 245.69,
+            "recipient": "Zomato Online Order"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 245.69,
+        "recipient": "Zomato Online Order"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1959a2213f5df849",
+    "date": "Sat, 15 Mar 2025 19:37:58 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1959a2213f5df849",
+      "date": "Sat, 15 Mar 2025 19:37:58 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 82,
+            "recipient": "Ganapathi Rangapillai"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 82,
+        "recipient": "Ganapathi Rangapillai"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19599ef31fa418d7",
+    "date": "Sat, 15 Mar 2025 18:42:23 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19599ef31fa418d7",
+      "date": "Sat, 15 Mar 2025 18:42:23 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 62,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 62,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195992693e0d6414",
+    "date": "Sat, 15 Mar 2025 15:03:16 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195992693e0d6414",
+      "date": "Sat, 15 Mar 2025 15:03:16 +0530",
+      "orderDetails": {
+        "debitTransactions": [],
+        "creditTransactions": [
+          {
+            "type": "credit",
+            "amount": 10000,
+            "sender": "U"
+          }
+        ]
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [],
+    "creditTransactions": [
+      {
+        "type": "credit",
+        "amount": 10000,
+        "sender": "U"
+      }
+    ]
+  },
+  {
+    "id": "1959909d5a82a06e",
+    "date": "Sat, 15 Mar 2025 14:31:52 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1959909d5a82a06e",
+      "date": "Sat, 15 Mar 2025 14:31:52 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 46,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 46,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195986c75307b614",
+    "date": "Sat, 15 Mar 2025 11:39:58 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195986c75307b614",
+      "date": "Sat, 15 Mar 2025 11:39:58 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 18,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 18,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1959866074282fdd",
+    "date": "Sat, 15 Mar 2025 11:32:57 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1959866074282fdd",
+      "date": "Sat, 15 Mar 2025 11:32:57 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 200,
+            "recipient": "YASAR ARAFATH V L"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 200,
+        "recipient": "YASAR ARAFATH V L"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1959862fdddaa88e",
+    "date": "Sat, 15 Mar 2025 11:29:38 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1959862fdddaa88e",
+      "date": "Sat, 15 Mar 2025 11:29:38 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 20,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 20,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19595b38aa027f65",
+    "date": "Fri, 14 Mar 2025 22:58:45 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19595b38aa027f65",
+      "date": "Fri, 14 Mar 2025 22:58:45 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 102,
+            "recipient": "K J MANIKANDAN"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 102,
+        "recipient": "K J MANIKANDAN"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19595adf2c70bc0f",
+    "date": "Fri, 14 Mar 2025 22:52:39 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19595adf2c70bc0f",
+      "date": "Fri, 14 Mar 2025 22:52:39 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 225,
+            "recipient": "ANGAAMMAL SUBRAMANI"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 225,
+        "recipient": "ANGAAMMAL SUBRAMANI"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1959505640f633e9",
+    "date": "Fri, 14 Mar 2025 19:48:33 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1959505640f633e9",
+      "date": "Fri, 14 Mar 2025 19:48:33 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 20,
+            "recipient": "Mr SHIVAKUMAR  S P"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 20,
+        "recipient": "Mr SHIVAKUMAR  S P"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195950525ed19b53",
+    "date": "Fri, 14 Mar 2025 19:48:16 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195950525ed19b53",
+      "date": "Fri, 14 Mar 2025 19:48:16 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 46,
+            "recipient": "Mr SHIVAKUMAR  S P"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 46,
+        "recipient": "Mr SHIVAKUMAR  S P"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1959487e7aaeb0d5",
+    "date": "Fri, 14 Mar 2025 17:31:29 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1959487e7aaeb0d5",
+      "date": "Fri, 14 Mar 2025 17:31:29 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 48,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 48,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19593efcdd8f849c",
+    "date": "Fri, 14 Mar 2025 14:45:20 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19593efcdd8f849c",
+      "date": "Fri, 14 Mar 2025 14:45:20 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 229.94,
+            "recipient": "ZOMATO"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 229.94,
+        "recipient": "ZOMATO"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19593add49d4c3d5",
+    "date": "Fri, 14 Mar 2025 13:33:17 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19593add49d4c3d5",
+      "date": "Fri, 14 Mar 2025 13:33:17 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 84,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 84,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195932ea8bdba7a3",
+    "date": "Fri, 14 Mar 2025 11:14:23 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195932ea8bdba7a3",
+      "date": "Fri, 14 Mar 2025 11:14:23 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 20,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 20,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195932de9ef3e13d",
+    "date": "Fri, 14 Mar 2025 11:13:33 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195932de9ef3e13d",
+      "date": "Fri, 14 Mar 2025 11:13:33 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 8120,
+            "recipient": "CRED"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 8120,
+        "recipient": "CRED"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195932349e970661",
+    "date": "Fri, 14 Mar 2025 11:01:57 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195932349e970661",
+      "date": "Fri, 14 Mar 2025 11:01:57 +0530",
+      "orderDetails": {
+        "debitTransactions": [],
+        "creditTransactions": [
+          {
+            "type": "credit",
+            "amount": 10000,
+            "sender": "M"
+          }
+        ]
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [],
+    "creditTransactions": [
+      {
+        "type": "credit",
+        "amount": 10000,
+        "sender": "M"
+      }
+    ]
+  },
+  {
+    "id": "19592fd1e064a281",
+    "date": "Fri, 14 Mar 2025 10:20:16 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19592fd1e064a281",
+      "date": "Fri, 14 Mar 2025 10:20:16 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 121.24,
+            "recipient": "ZOMATO"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 121.24,
+        "recipient": "ZOMATO"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195908ef6d36b816",
+    "date": "Thu, 13 Mar 2025 23:00:42 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195908ef6d36b816",
+      "date": "Thu, 13 Mar 2025 23:00:42 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 355,
+            "recipient": "Mr  KUMAR  KRISHNAN"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 355,
+        "recipient": "Mr  KUMAR  KRISHNAN"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195900d35a9a3345",
+    "date": "Thu, 13 Mar 2025 20:38:58 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195900d35a9a3345",
+      "date": "Thu, 13 Mar 2025 20:38:58 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 58,
+            "recipient": "Balasubramaniyam S"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 58,
+        "recipient": "Balasubramaniyam S"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1958f9771cfd35d3",
+    "date": "Thu, 13 Mar 2025 18:30:21 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1958f9771cfd35d3",
+      "date": "Thu, 13 Mar 2025 18:30:21 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 18,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 18,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1958f6d2af15dcbd",
+    "date": "Thu, 13 Mar 2025 17:44:10 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1958f6d2af15dcbd",
+      "date": "Thu, 13 Mar 2025 17:44:10 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 1000,
+            "recipient": "RAJAN K K"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 1000,
+        "recipient": "RAJAN K K"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1958f51d98091d7a",
+    "date": "Thu, 13 Mar 2025 17:14:20 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1958f51d98091d7a",
+      "date": "Thu, 13 Mar 2025 17:14:20 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 2000,
+            "recipient": "RAJAN K K"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 2000,
+        "recipient": "RAJAN K K"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1958f3d660abd810",
+    "date": "Thu, 13 Mar 2025 16:52:00 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1958f3d660abd810",
+      "date": "Thu, 13 Mar 2025 16:52:00 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 35,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 35,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1958f35883b1f6dc",
+    "date": "Thu, 13 Mar 2025 11:13:23 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1958f35883b1f6dc",
+      "date": "Thu, 13 Mar 2025 11:13:23 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 950,
+            "recipient": "KAPIN RAJ"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 950,
+        "recipient": "KAPIN RAJ"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1958b4b49abb811c",
+    "date": "Wed, 12 Mar 2025 22:28:41 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1958b4b49abb811c",
+      "date": "Wed, 12 Mar 2025 22:28:41 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 240,
+            "recipient": "KARTHIGEYAN J"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 240,
+        "recipient": "KARTHIGEYAN J"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1958ad3a1871e027",
+    "date": "Wed, 12 Mar 2025 14:47:58 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1958ad3a1871e027",
+      "date": "Wed, 12 Mar 2025 14:47:58 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 18,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 18,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1958a54469afa905",
+    "date": "Wed, 12 Mar 2025 17:58:53 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1958a54469afa905",
+      "date": "Wed, 12 Mar 2025 17:58:53 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 30,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 30,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19589c6ec617663b",
+    "date": "Wed, 12 Mar 2025 15:24:29 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19589c6ec617663b",
+      "date": "Wed, 12 Mar 2025 15:24:29 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 18,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 18,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19589c18d31eed91",
+    "date": "Wed, 12 Mar 2025 15:18:37 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19589c18d31eed91",
+      "date": "Wed, 12 Mar 2025 15:18:37 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 204.94,
+            "recipient": "ZOMATO"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 204.94,
+        "recipient": "ZOMATO"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19589604ad880159",
+    "date": "Wed, 12 Mar 2025 13:32:23 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19589604ad880159",
+      "date": "Wed, 12 Mar 2025 13:32:23 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 48,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 48,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19588de90f5bd5c1",
+    "date": "Wed, 12 Mar 2025 05:40:41 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19588de90f5bd5c1",
+      "date": "Wed, 12 Mar 2025 05:40:41 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 38,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 38,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195860d4ad9509c9",
+    "date": "Tue, 11 Mar 2025 16:32:52 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195860d4ad9509c9",
+      "date": "Tue, 11 Mar 2025 16:32:52 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 36,
+            "recipient": "Balasubramaniyam S"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 36,
+        "recipient": "Balasubramaniyam S"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19585c08271ad8a5",
+    "date": "Tue, 11 Mar 2025 20:39:00 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19585c08271ad8a5",
+      "date": "Tue, 11 Mar 2025 20:39:00 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 66,
+            "recipient": "Balasubramaniyam S"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 66,
+        "recipient": "Balasubramaniyam S"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19585904e7f32083",
+    "date": "Tue, 11 Mar 2025 14:16:20 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19585904e7f32083",
+      "date": "Tue, 11 Mar 2025 14:16:20 +0000",
+      "orderDetails": {
+        "debitTransactions": [],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [],
+    "creditTransactions": []
+  },
+  {
+    "id": "195856e809bfd011",
+    "date": "Tue, 11 Mar 2025 13:39:25 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195856e809bfd011",
+      "date": "Tue, 11 Mar 2025 13:39:25 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 20,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 20,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195852d6df4ad705",
+    "date": "Tue, 11 Mar 2025 12:28:20 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195852d6df4ad705",
+      "date": "Tue, 11 Mar 2025 12:28:20 +0000",
+      "orderDetails": {
+        "debitTransactions": [],
+        "creditTransactions": [
+          {
+            "type": "credit",
+            "amount": 11200,
+            "sender": "A"
+          }
+        ]
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [],
+    "creditTransactions": [
+      {
+        "type": "credit",
+        "amount": 11200,
+        "sender": "A"
+      }
+    ]
+  },
+  {
+    "id": "1958528a0d557778",
+    "date": "Tue, 11 Mar 2025 12:23:05 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1958528a0d557778",
+      "date": "Tue, 11 Mar 2025 12:23:05 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 5988,
+            "recipient": "HOSTINGER PTE LTD"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 5988,
+        "recipient": "HOSTINGER PTE LTD"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19585257cff54857",
+    "date": "Tue, 11 Mar 2025 12:19:40 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19585257cff54857",
+      "date": "Tue, 11 Mar 2025 12:19:40 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 2187,
+            "recipient": "HOSTINGER PTE LTD"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 2187,
+        "recipient": "HOSTINGER PTE LTD"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195850d4cb343a2a",
+    "date": "Tue, 11 Mar 2025 11:53:15 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195850d4cb343a2a",
+      "date": "Tue, 11 Mar 2025 11:53:15 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 28,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 28,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19584575dffcc53e",
+    "date": "Tue, 11 Mar 2025 14:04:32 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19584575dffcc53e",
+      "date": "Tue, 11 Mar 2025 14:04:32 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 18,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 18,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19583fd1ee4526a5",
+    "date": "Tue, 11 Mar 2025 06:55:57 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19583fd1ee4526a5",
+      "date": "Tue, 11 Mar 2025 06:55:57 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 48,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 48,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19583ee1584a8c0a",
+    "date": "Tue, 11 Mar 2025 12:09:32 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19583ee1584a8c0a",
+      "date": "Tue, 11 Mar 2025 12:09:32 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 330,
+            "recipient": "HARIPRASADH SARAVANA"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 330,
+        "recipient": "HARIPRASADH SARAVANA"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19583edea8d201d7",
+    "date": "Tue, 11 Mar 2025 06:39:21 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19583edea8d201d7",
+      "date": "Tue, 11 Mar 2025 06:39:21 +0000",
+      "orderDetails": {
+        "debitTransactions": [],
+        "creditTransactions": [
+          {
+            "type": "credit",
+            "amount": 10000,
+            "sender": "M"
+          }
+        ]
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [],
+    "creditTransactions": [
+      {
+        "type": "credit",
+        "amount": 10000,
+        "sender": "M"
+      }
+    ]
+  },
+  {
+    "id": "195813b1a558f354",
+    "date": "Mon, 10 Mar 2025 23:34:48 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195813b1a558f354",
+      "date": "Mon, 10 Mar 2025 23:34:48 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 20,
+            "recipient": "SSHAKIRABANU"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 20,
+        "recipient": "SSHAKIRABANU"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195810f2b07e9bad",
+    "date": "Mon, 10 Mar 2025 17:16:48 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195810f2b07e9bad",
+      "date": "Mon, 10 Mar 2025 17:16:48 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 58,
+            "recipient": "K J MANIKANDAN"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 58,
+        "recipient": "K J MANIKANDAN"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195801a0b994085b",
+    "date": "Mon, 10 Mar 2025 12:49:04 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195801a0b994085b",
+      "date": "Mon, 10 Mar 2025 12:49:04 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 48,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 48,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1957f70fb5220deb",
+    "date": "Mon, 10 Mar 2025 15:14:25 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1957f70fb5220deb",
+      "date": "Mon, 10 Mar 2025 15:14:25 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 18,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 18,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1957f654f0884c1c",
+    "date": "Mon, 10 Mar 2025 15:01:40 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1957f654f0884c1c",
+      "date": "Mon, 10 Mar 2025 15:01:40 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 10000,
+            "recipient": "R R PRAVEEN KUMAR"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 10000,
+        "recipient": "R R PRAVEEN KUMAR"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1957f64e4b5c2448",
+    "date": "Mon, 10 Mar 2025 09:31:12 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1957f64e4b5c2448",
+      "date": "Mon, 10 Mar 2025 09:31:12 +0000",
+      "orderDetails": {
+        "debitTransactions": [],
+        "creditTransactions": [
+          {
+            "type": "credit",
+            "amount": 10000,
+            "sender": "O"
+          }
+        ]
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [],
+    "creditTransactions": [
+      {
+        "type": "credit",
+        "amount": 10000,
+        "sender": "O"
+      }
+    ]
+  },
+  {
+    "id": "1957f627ad2cae51",
+    "date": "Mon, 10 Mar 2025 09:28:34 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1957f627ad2cae51",
+      "date": "Mon, 10 Mar 2025 09:28:34 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 3000,
+            "recipient": "RAJAN K K"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 3000,
+        "recipient": "RAJAN K K"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1957f607957eaacc",
+    "date": "Mon, 10 Mar 2025 09:26:22 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1957f607957eaacc",
+      "date": "Mon, 10 Mar 2025 09:26:22 +0000",
+      "orderDetails": {
+        "debitTransactions": [],
+        "creditTransactions": [
+          {
+            "type": "credit",
+            "amount": 229.94,
+            "sender": "Z"
+          }
+        ]
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [],
+    "creditTransactions": [
+      {
+        "type": "credit",
+        "amount": 229.94,
+        "sender": "Z"
+      }
+    ]
+  },
+  {
+    "id": "1957f5e60c39b1d2",
+    "date": "Mon, 10 Mar 2025 09:24:05 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1957f5e60c39b1d2",
+      "date": "Mon, 10 Mar 2025 09:24:05 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 229.94,
+            "recipient": "Zomato Ltd"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 229.94,
+        "recipient": "Zomato Ltd"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1957f344364ee38a",
+    "date": "Mon, 10 Mar 2025 08:38:05 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1957f344364ee38a",
+      "date": "Mon, 10 Mar 2025 08:38:05 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 48,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 48,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1957f16600059f7a",
+    "date": "Mon, 10 Mar 2025 13:35:27 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1957f16600059f7a",
+      "date": "Mon, 10 Mar 2025 13:35:27 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 1000,
+            "recipient": "RAJAN K K"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 1000,
+        "recipient": "RAJAN K K"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1957eb5fe7ad1cb8",
+    "date": "Mon, 10 Mar 2025 11:50:11 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1957eb5fe7ad1cb8",
+      "date": "Mon, 10 Mar 2025 11:50:11 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 18,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 18,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1957ea8183679207",
+    "date": "Mon, 10 Mar 2025 06:04:59 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1957ea8183679207",
+      "date": "Mon, 10 Mar 2025 06:04:59 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 2000,
+            "recipient": "CRED"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 2000,
+        "recipient": "CRED"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1957ea7115ce3740",
+    "date": "Mon, 10 Mar 2025 11:33:52 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1957ea7115ce3740",
+      "date": "Mon, 10 Mar 2025 11:33:52 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 910,
+            "recipient": "Mrs J SAMUNISSHA IBRAHIM"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 910,
+        "recipient": "Mrs J SAMUNISSHA IBRAHIM"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1957e7a6fe8aa6c3",
+    "date": "Mon, 10 Mar 2025 10:45:07 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1957e7a6fe8aa6c3",
+      "date": "Mon, 10 Mar 2025 10:45:07 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 30,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 30,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1957bff6e706f6da",
+    "date": "Sun, 9 Mar 2025 17:41:30 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1957bff6e706f6da",
+      "date": "Sun, 9 Mar 2025 17:41:30 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 20,
+            "recipient": "MAYURI SWEETS AND BAKERY"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 20,
+        "recipient": "MAYURI SWEETS AND BAKERY"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1957bc34f1475852",
+    "date": "Sun, 9 Mar 2025 16:35:49 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1957bc34f1475852",
+      "date": "Sun, 9 Mar 2025 16:35:49 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 90,
+            "recipient": "Srinivasa Coffee Bar"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 90,
+        "recipient": "Srinivasa Coffee Bar"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1957b89157aa6439",
+    "date": "Sun, 9 Mar 2025 15:32:15 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1957b89157aa6439",
+      "date": "Sun, 9 Mar 2025 15:32:15 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 48,
+            "recipient": "Ganapathy Jayaraman"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 48,
+        "recipient": "Ganapathy Jayaraman"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19576f41e578ed19",
+    "date": "Sat, 8 Mar 2025 18:11:03 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19576f41e578ed19",
+      "date": "Sat, 8 Mar 2025 18:11:03 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 60,
+            "recipient": "SURESH SEERANGAN"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 60,
+        "recipient": "SURESH SEERANGAN"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195766225fb79692",
+    "date": "Sat, 8 Mar 2025 15:31:37 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195766225fb79692",
+      "date": "Sat, 8 Mar 2025 15:31:37 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 2000,
+            "recipient": "KAPIN RAJ"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 2000,
+        "recipient": "KAPIN RAJ"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1957658c388d7661",
+    "date": "Sat, 8 Mar 2025 15:21:22 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1957658c388d7661",
+      "date": "Sat, 8 Mar 2025 15:21:22 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 110,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 110,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19575ab1eba3935e",
+    "date": "Sat, 8 Mar 2025 12:11:42 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19575ab1eba3935e",
+      "date": "Sat, 8 Mar 2025 12:11:42 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 15000,
+            "recipient": "RAJAN K K"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 15000,
+        "recipient": "RAJAN K K"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19575042b63be66b",
+    "date": "Sat, 08 Mar 2025 14:39:22 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19575042b63be66b",
+      "date": "Sat, 08 Mar 2025 14:39:22 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 46,
+            "recipient": "Mr SHIVAKUMAR  S P"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 46,
+        "recipient": "Mr SHIVAKUMAR  S P"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19574c3a84305779",
+    "date": "Sat, 08 Mar 2025 13:28:54 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19574c3a84305779",
+      "date": "Sat, 08 Mar 2025 13:28:54 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 46,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 46,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195743e63dd59c88",
+    "date": "Sat, 8 Mar 2025 05:33:19 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195743e63dd59c88",
+      "date": "Sat, 8 Mar 2025 05:33:19 +0000",
+      "orderDetails": {
+        "debitTransactions": [],
+        "creditTransactions": [
+          {
+            "type": "credit",
+            "amount": 720,
+            "sender": "J"
+          }
+        ]
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [],
+    "creditTransactions": [
+      {
+        "type": "credit",
+        "amount": 720,
+        "sender": "J"
+      }
+    ]
+  },
+  {
+    "id": "19574393a8039f11",
+    "date": "Sat, 08 Mar 2025 10:57:42 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19574393a8039f11",
+      "date": "Sat, 08 Mar 2025 10:57:42 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 720,
+            "recipient": "SRIDEVI GOKULKRISHNAA"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 720,
+        "recipient": "SRIDEVI GOKULKRISHNAA"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195742d0400782f5",
+    "date": "Sat, 08 Mar 2025 10:44:21 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195742d0400782f5",
+      "date": "Sat, 08 Mar 2025 10:44:21 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 20000,
+            "recipient": "R R PRAVEEN KUMAR"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 20000,
+        "recipient": "R R PRAVEEN KUMAR"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195742c43e68d927",
+    "date": "Sat, 08 Mar 2025 10:43:32 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195742c43e68d927",
+      "date": "Sat, 08 Mar 2025 10:43:32 +0530",
+      "orderDetails": {
+        "debitTransactions": [],
+        "creditTransactions": [
+          {
+            "type": "credit",
+            "amount": 30000,
+            "sender": "O"
+          }
+        ]
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [],
+    "creditTransactions": [
+      {
+        "type": "credit",
+        "amount": 30000,
+        "sender": "O"
+      }
+    ]
+  },
+  {
+    "id": "19572459500de704",
+    "date": "Sat, 08 Mar 2025 01:51:57 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19572459500de704",
+      "date": "Sat, 08 Mar 2025 01:51:57 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 10,
+            "recipient": "Nila Fruits"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 10,
+        "recipient": "Nila Fruits"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19571a9b19db81aa",
+    "date": "Fri, 07 Mar 2025 23:01:40 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19571a9b19db81aa",
+      "date": "Fri, 07 Mar 2025 23:01:40 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 133,
+            "recipient": "SARASVATHI S"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 133,
+        "recipient": "SARASVATHI S"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195717b829d016c5",
+    "date": "Fri, 7 Mar 2025 16:41:13 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195717b829d016c5",
+      "date": "Fri, 7 Mar 2025 16:41:13 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 180,
+            "recipient": "KARTHIGEYAN J"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 180,
+        "recipient": "KARTHIGEYAN J"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1957122cb8138b94",
+    "date": "Fri, 07 Mar 2025 20:34:19 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1957122cb8138b94",
+      "date": "Fri, 07 Mar 2025 20:34:19 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 46,
+            "recipient": "Mr SHIVAKUMAR  S P"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 46,
+        "recipient": "Mr SHIVAKUMAR  S P"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1957077c035e9d8a",
+    "date": "Fri, 7 Mar 2025 11:57:30 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1957077c035e9d8a",
+      "date": "Fri, 7 Mar 2025 11:57:30 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 100,
+            "recipient": "CRED"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 100,
+        "recipient": "CRED"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19570746fcbfb0ed",
+    "date": "Fri, 7 Mar 2025 11:53:52 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19570746fcbfb0ed",
+      "date": "Fri, 7 Mar 2025 11:53:52 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 5285,
+            "recipient": "CRED Club"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 5285,
+        "recipient": "CRED Club"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195705ccc1a55939",
+    "date": "Fri, 07 Mar 2025 16:58:04 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195705ccc1a55939",
+      "date": "Fri, 07 Mar 2025 16:58:04 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 36,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 36,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1956fcb92bbb4ad7",
+    "date": "Fri, 7 Mar 2025 08:49:26 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1956fcb92bbb4ad7",
+      "date": "Fri, 7 Mar 2025 08:49:26 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 46,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 46,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1956f891d21a80a7",
+    "date": "Fri, 7 Mar 2025 07:36:50 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1956f891d21a80a7",
+      "date": "Fri, 7 Mar 2025 07:36:50 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 5508,
+            "recipient": "Google India Digital Services Pvt Ltd"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 5508,
+        "recipient": "Google India Digital Services Pvt Ltd"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1956f535f90f80a1",
+    "date": "Fri, 7 Mar 2025 06:38:08 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1956f535f90f80a1",
+      "date": "Fri, 7 Mar 2025 06:38:08 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 18,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 18,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1956f315217095a3",
+    "date": "Fri, 07 Mar 2025 11:30:57 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1956f315217095a3",
+      "date": "Fri, 07 Mar 2025 11:30:57 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 30,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 30,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1956c3a67783f7a6",
+    "date": "Thu, 6 Mar 2025 16:12:00 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1956c3a67783f7a6",
+      "date": "Thu, 6 Mar 2025 16:12:00 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 46,
+            "recipient": "Balasubramaniyam S"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 46,
+        "recipient": "Balasubramaniyam S"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1956c3188e52694d",
+    "date": "Thu, 06 Mar 2025 21:32:19 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1956c3188e52694d",
+      "date": "Thu, 06 Mar 2025 21:32:19 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 160,
+            "recipient": "KARTHIGEYAN J"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 160,
+        "recipient": "KARTHIGEYAN J"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1956be6baf5793b5",
+    "date": "Thu, 6 Mar 2025 14:40:37 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1956be6baf5793b5",
+      "date": "Thu, 6 Mar 2025 14:40:37 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 38,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 38,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1956b943802c67d7",
+    "date": "Thu, 6 Mar 2025 13:10:29 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1956b943802c67d7",
+      "date": "Thu, 6 Mar 2025 13:10:29 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 36,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 36,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1956ac8337b727f8",
+    "date": "Thu, 06 Mar 2025 14:57:39 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1956ac8337b727f8",
+      "date": "Thu, 06 Mar 2025 14:57:39 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 38,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 38,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1956a2da22dd8954",
+    "date": "Thu, 6 Mar 2025 06:38:49 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1956a2da22dd8954",
+      "date": "Thu, 6 Mar 2025 06:38:49 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 1500,
+            "recipient": "RAJAN K K"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 1500,
+        "recipient": "RAJAN K K"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1956a1e59e2dabd4",
+    "date": "Thu, 06 Mar 2025 11:52:07 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1956a1e59e2dabd4",
+      "date": "Thu, 06 Mar 2025 11:52:07 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 20,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 20,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195679456808f887",
+    "date": "Thu, 06 Mar 2025 00:02:09 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195679456808f887",
+      "date": "Thu, 06 Mar 2025 00:02:09 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 10000,
+            "recipient": "UBAKARASAMY S M"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 10000,
+        "recipient": "UBAKARASAMY S M"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1956761134eed3a3",
+    "date": "Wed, 05 Mar 2025 23:06:09 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1956761134eed3a3",
+      "date": "Wed, 05 Mar 2025 23:06:09 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 35,
+            "recipient": "SSHAKIRABANU"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 35,
+        "recipient": "SSHAKIRABANU"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1956751668248f14",
+    "date": "Wed, 05 Mar 2025 22:49:02 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1956751668248f14",
+      "date": "Wed, 05 Mar 2025 22:49:02 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 97,
+            "recipient": "SARASVATHI S"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 97,
+        "recipient": "SARASVATHI S"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19567475bf231215",
+    "date": "Wed, 5 Mar 2025 17:08:02 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19567475bf231215",
+      "date": "Wed, 5 Mar 2025 17:08:02 +0000",
+      "orderDetails": {
+        "debitTransactions": [],
+        "creditTransactions": [
+          {
+            "type": "credit",
+            "amount": 5000,
+            "sender": "Y"
+          }
+        ]
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [],
+    "creditTransactions": [
+      {
+        "type": "credit",
+        "amount": 5000,
+        "sender": "Y"
+      }
+    ]
+  },
+  {
+    "id": "195672c84be36717",
+    "date": "Wed, 5 Mar 2025 16:38:44 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195672c84be36717",
+      "date": "Wed, 5 Mar 2025 16:38:44 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 66,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 66,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1956711845e83b09",
+    "date": "Wed, 5 Mar 2025 16:09:14 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1956711845e83b09",
+      "date": "Wed, 5 Mar 2025 16:09:14 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 74,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 74,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195660a09793aca9",
+    "date": "Wed, 05 Mar 2025 16:51:28 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195660a09793aca9",
+      "date": "Wed, 05 Mar 2025 16:51:28 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 18,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 18,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19564deaf73a242c",
+    "date": "Wed, 05 Mar 2025 11:24:29 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19564deaf73a242c",
+      "date": "Wed, 05 Mar 2025 11:24:29 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 1500,
+            "recipient": "RAJAN K K"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 1500,
+        "recipient": "RAJAN K K"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19564c1e5655216a",
+    "date": "Wed, 05 Mar 2025 10:53:03 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19564c1e5655216a",
+      "date": "Wed, 05 Mar 2025 10:53:03 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 155.29,
+            "recipient": "ZOMATO"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 155.29,
+        "recipient": "ZOMATO"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19564850ab150bbf",
+    "date": "Wed, 05 Mar 2025 09:46:35 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19564850ab150bbf",
+      "date": "Wed, 05 Mar 2025 09:46:35 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 48,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 48,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19563c5ae296aa75",
+    "date": "Wed, 05 Mar 2025 06:17:34 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19563c5ae296aa75",
+      "date": "Wed, 05 Mar 2025 06:17:34 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 48,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 48,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19561d21749f8217",
+    "date": "Tue, 4 Mar 2025 15:41:52 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19561d21749f8217",
+      "date": "Tue, 4 Mar 2025 15:41:52 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 20,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 20,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195614fed1b23dfc",
+    "date": "Tue, 04 Mar 2025 18:49:42 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195614fed1b23dfc",
+      "date": "Tue, 04 Mar 2025 18:49:42 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 18,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 18,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19560c1c102f25eb",
+    "date": "Tue, 4 Mar 2025 10:44:24 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19560c1c102f25eb",
+      "date": "Tue, 4 Mar 2025 10:44:24 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 48,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 48,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1955fddfa1ac8562",
+    "date": "Tue, 4 Mar 2025 06:35:36 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1955fddfa1ac8562",
+      "date": "Tue, 4 Mar 2025 06:35:36 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 20,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 20,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1955f8244fda1a68",
+    "date": "Tue, 04 Mar 2025 10:25:27 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1955f8244fda1a68",
+      "date": "Tue, 04 Mar 2025 10:25:27 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 121.24,
+            "recipient": "ZOMATO"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 121.24,
+        "recipient": "ZOMATO"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1955cfa9372374ae",
+    "date": "Mon, 03 Mar 2025 22:37:59 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1955cfa9372374ae",
+      "date": "Mon, 03 Mar 2025 22:37:59 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 67,
+            "recipient": "K J MANIKANDAN"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 67,
+        "recipient": "K J MANIKANDAN"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1955cb5258bdd27f",
+    "date": "Mon, 03 Mar 2025 21:22:09 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1955cb5258bdd27f",
+      "date": "Mon, 03 Mar 2025 21:22:09 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 122.24,
+            "recipient": "Zomato Ltd"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 122.24,
+        "recipient": "Zomato Ltd"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1955cab7ac375641",
+    "date": "Mon, 03 Mar 2025 21:11:36 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1955cab7ac375641",
+      "date": "Mon, 03 Mar 2025 21:11:36 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 38,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 38,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1955bdebbda09a0f",
+    "date": "Mon, 3 Mar 2025 11:57:57 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1955bdebbda09a0f",
+      "date": "Mon, 3 Mar 2025 11:57:57 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 60,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 60,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1955b4dae966c25d",
+    "date": "Mon, 03 Mar 2025 14:49:32 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1955b4dae966c25d",
+      "date": "Mon, 03 Mar 2025 14:49:32 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 3800,
+            "recipient": "JAYA KUMAR K U"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 3800,
+        "recipient": "JAYA KUMAR K U"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1955b175003b2d4c",
+    "date": "Mon, 3 Mar 2025 08:20:08 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1955b175003b2d4c",
+      "date": "Mon, 3 Mar 2025 08:20:08 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 48,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 48,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1955ae24bd3b4403",
+    "date": "Mon, 3 Mar 2025 07:22:13 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1955ae24bd3b4403",
+      "date": "Mon, 3 Mar 2025 07:22:13 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 910,
+            "recipient": "Mrs J SAMUNISSHA IBRAHIM"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 910,
+        "recipient": "Mrs J SAMUNISSHA IBRAHIM"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195579347888023e",
+    "date": "Sun, 2 Mar 2025 15:57:03 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195579347888023e",
+      "date": "Sun, 2 Mar 2025 15:57:03 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 57,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 57,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195576e47ecc8873",
+    "date": "Sun, 2 Mar 2025 15:16:38 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195576e47ecc8873",
+      "date": "Sun, 2 Mar 2025 15:16:38 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 508.19,
+            "recipient": "ZOMATO LIMITED"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 508.19,
+        "recipient": "ZOMATO LIMITED"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1955707d9592632e",
+    "date": "Sun, 2 Mar 2025 13:24:45 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1955707d9592632e",
+      "date": "Sun, 2 Mar 2025 13:24:45 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 45,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 45,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19556c3accf6ac9a",
+    "date": "Sun, 02 Mar 2025 17:40:19 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19556c3accf6ac9a",
+      "date": "Sun, 02 Mar 2025 17:40:19 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 30,
+            "recipient": "Zomato Ltd"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 30,
+        "recipient": "Zomato Ltd"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19556a994e75cf73",
+    "date": "Sun, 02 Mar 2025 17:11:47 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19556a994e75cf73",
+      "date": "Sun, 02 Mar 2025 17:11:47 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 115.94,
+            "recipient": "ZOMATO LIMITED"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 115.94,
+        "recipient": "ZOMATO LIMITED"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19556a6574a36bfa",
+    "date": "Sun, 2 Mar 2025 11:38:14 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19556a6574a36bfa",
+      "date": "Sun, 2 Mar 2025 11:38:14 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 18,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 18,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19556976813caa00",
+    "date": "Sun, 2 Mar 2025 11:21:57 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19556976813caa00",
+      "date": "Sun, 2 Mar 2025 11:21:57 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 50,
+            "recipient": "KARTHIKEYAN K"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 50,
+        "recipient": "KARTHIKEYAN K"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19556384cc111ad9",
+    "date": "Sun, 2 Mar 2025 09:38:03 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19556384cc111ad9",
+      "date": "Sun, 2 Mar 2025 09:38:03 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 70,
+            "recipient": "Mr SHIVAKUMAR  S P"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 70,
+        "recipient": "Mr SHIVAKUMAR  S P"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19555f258b586c29",
+    "date": "Sun, 2 Mar 2025 08:21:39 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19555f258b586c29",
+      "date": "Sun, 2 Mar 2025 08:21:39 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 38,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 38,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195559529da1b8ad",
+    "date": "Sun, 02 Mar 2025 12:09:53 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195559529da1b8ad",
+      "date": "Sun, 02 Mar 2025 12:09:53 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 20,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 20,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1955579b4f3e73a5",
+    "date": "Sun, 02 Mar 2025 11:39:53 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1955579b4f3e73a5",
+      "date": "Sun, 02 Mar 2025 11:39:53 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 22220,
+            "recipient": "CRED"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 22220,
+        "recipient": "CRED"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195556136a56a4fe",
+    "date": "Sun, 02 Mar 2025 11:13:08 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195556136a56a4fe",
+      "date": "Sun, 02 Mar 2025 11:13:08 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 28,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 28,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1955263d6b3dac7e",
+    "date": "Sat, 01 Mar 2025 21:17:09 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1955263d6b3dac7e",
+      "date": "Sat, 01 Mar 2025 21:17:09 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 205.94,
+            "recipient": "Zomato Ltd"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 205.94,
+        "recipient": "Zomato Ltd"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1955236fe583a3ca",
+    "date": "Sat, 01 Mar 2025 20:28:10 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1955236fe583a3ca",
+      "date": "Sat, 01 Mar 2025 20:28:10 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 8000,
+            "recipient": "JAYANTHI R"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 8000,
+        "recipient": "JAYANTHI R"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19552368d52075f8",
+    "date": "Sat, 01 Mar 2025 20:27:41 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19552368d52075f8",
+      "date": "Sat, 01 Mar 2025 20:27:41 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 1410,
+            "recipient": "VINOTH P"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 1410,
+        "recipient": "VINOTH P"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195523613f87e1cf",
+    "date": "Sat, 01 Mar 2025 20:27:09 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195523613f87e1cf",
+      "date": "Sat, 01 Mar 2025 20:27:09 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 5000,
+            "recipient": "KAPIN RAJ"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 5000,
+        "recipient": "KAPIN RAJ"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1955235ca27b7ded",
+    "date": "Sat, 1 Mar 2025 14:56:50 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1955235ca27b7ded",
+      "date": "Sat, 1 Mar 2025 14:56:50 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 46,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 46,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1955226f55a2ab70",
+    "date": "Sat, 01 Mar 2025 20:10:39 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1955226f55a2ab70",
+      "date": "Sat, 01 Mar 2025 20:10:39 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 141,
+            "recipient": "SSHAKIRABANU"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 141,
+        "recipient": "SSHAKIRABANU"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19552153bdc625b1",
+    "date": "Sat, 01 Mar 2025 19:51:17 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19552153bdc625b1",
+      "date": "Sat, 01 Mar 2025 19:51:17 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 149,
+            "recipient": "Google"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 149,
+        "recipient": "Google"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195520b47b0b27ed",
+    "date": "Sat, 1 Mar 2025 14:10:24 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195520b47b0b27ed",
+      "date": "Sat, 1 Mar 2025 14:10:24 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 58,
+            "recipient": "HASMUK A"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 58,
+        "recipient": "HASMUK A"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19551fe45c3eec0f",
+    "date": "Sat, 1 Mar 2025 13:56:12 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19551fe45c3eec0f",
+      "date": "Sat, 1 Mar 2025 13:56:12 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 260,
+            "recipient": "KARTHIGEYAN J"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 260,
+        "recipient": "KARTHIGEYAN J"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19551740257023db",
+    "date": "Sat, 01 Mar 2025 16:55:11 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19551740257023db",
+      "date": "Sat, 01 Mar 2025 16:55:11 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 44,
+            "recipient": "Mr SHIVAKUMAR  S P"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 44,
+        "recipient": "Mr SHIVAKUMAR  S P"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "19550eb219b57f0f",
+    "date": "Sat, 1 Mar 2025 08:55:40 +0000",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "19550eb219b57f0f",
+      "date": "Sat, 1 Mar 2025 08:55:40 +0000",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 38,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 38,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "195506789614059e",
+    "date": "Sat, 01 Mar 2025 12:01:56 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195506789614059e",
+      "date": "Sat, 01 Mar 2025 12:01:56 +0530",
+      "orderDetails": {
+        "debitTransactions": [],
+        "creditTransactions": [
+          {
+            "type": "credit",
+            "amount": 121.24,
+            "sender": "Z"
+          }
+        ]
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [],
+    "creditTransactions": [
+      {
+        "type": "credit",
+        "amount": 121.24,
+        "sender": "Z"
+      }
+    ]
+  },
+  {
+    "id": "195503d9995ce840",
+    "date": "Sat, 01 Mar 2025 11:16:08 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "195503d9995ce840",
+      "date": "Sat, 01 Mar 2025 11:16:08 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 20,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 20,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1955015c78b8a83b",
+    "date": "Sat, 01 Mar 2025 10:32:39 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1955015c78b8a83b",
+      "date": "Sat, 01 Mar 2025 10:32:39 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 38,
+            "recipient": "THARUN PRASATH B"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 38,
+        "recipient": "THARUN PRASATH B"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1954feb91e3609d3",
+    "date": "Sat, 01 Mar 2025 09:46:32 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1954feb91e3609d3",
+      "date": "Sat, 01 Mar 2025 09:46:32 +0530",
+      "orderDetails": {
+        "debitTransactions": [
+          {
+            "type": "debit",
+            "amount": 121.24,
+            "recipient": "ZOMATO"
+          }
+        ],
+        "creditTransactions": []
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [
+      {
+        "type": "debit",
+        "amount": 121.24,
+        "recipient": "ZOMATO"
+      }
+    ],
+    "creditTransactions": []
+  },
+  {
+    "id": "1954f015a8f9a2e2",
+    "date": "Sat, 01 Mar 2025 05:30:43 +0530",
+    "bankId": "hdfc",
+    "rawEmailData": {
+      "id": "1954f015a8f9a2e2",
+      "date": "Sat, 01 Mar 2025 05:30:43 +0530",
+      "orderDetails": {
+        "debitTransactions": [],
+        "creditTransactions": [
+          {
+            "type": "credit",
+            "amount": 15000,
+            "sender": "R"
+          }
+        ]
+      }
+    },
+    "bankName": "HDFC Bank",
+    "debitTransactions": [],
+    "creditTransactions": [
+      {
+        "type": "credit",
+        "amount": 15000,
+        "sender": "R"
+      }
+    ]
+  }
+]
