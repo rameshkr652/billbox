@@ -1,6 +1,5 @@
-// src/screens/PlatformSelectionScreen.js
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Colors from '../constants/colors';
@@ -14,17 +13,19 @@ const PlatformSelectionScreen = () => {
   const [platformSelections, setPlatformSelections] = useState({});
   const [currentAccount, setCurrentAccount] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [selectedPlatforms, setSelectedPlatforms] = useState([]);
 
-const [selectedPlatforms, setSelectedPlatforms] = useState([]);
   useEffect(() => {
     loadAccountData();
   }, []);
-// Add this to see the selection state changes
-useEffect(() => {
+
+  // Add this to see the selection state changes
+  useEffect(() => {
     console.log('selectedPlatforms changed:', selectedPlatforms);
   }, [selectedPlatforms]);
-  // In loadAccountData, update to initialize selectedPlatforms:
-const loadAccountData = async () => {
+
+  // Modified loadAccountData to preselect all platforms
+  const loadAccountData = async () => {
     try {
       const account = await AccountService.getCurrentAccount();
       
@@ -35,21 +36,30 @@ const loadAccountData = async () => {
         const accountPlatforms = await StorageService.getPlatformsForAccount(account.email);
         setPlatformSelections(accountPlatforms || {});
         
-        // Set the selectedPlatforms array based on the loaded platform keys
-        if (accountPlatforms) {
+        // Check if we already have saved platforms
+        if (accountPlatforms && Object.keys(accountPlatforms).length > 0) {
+          // Use the saved platform selections
           const platformIds = Object.keys(accountPlatforms);
-          console.log('Initializing selection with platforms:', platformIds);
+          console.log('Using existing platform selection:', platformIds);
           setSelectedPlatforms(platformIds);
+        } else {
+          // Preselect all platforms if no previous selection exists
+          const allPlatformIds = platforms.map(platform => platform.id);
+          console.log('Preselecting all platforms:', allPlatformIds);
+          setSelectedPlatforms(allPlatformIds);
         }
       } else {
-        // Rest of your existing code...
+        // No account found, redirect to sign in
+        Alert.alert('No Account', 'Please sign in to continue');
+        navigation.replace('Intro');
       }
     } catch (error) {
       console.error('Error loading account data:', error);
+      Alert.alert('Error', 'Failed to load account data. Please try again.');
     }
   };
-// In PlatformSelectionScreen.js
-const togglePlatform = (platformId) => {
+
+  const togglePlatform = (platformId) => {
     setSelectedPlatforms(prevSelected => {
       const isAlreadySelected = prevSelected.includes(platformId);
       
@@ -143,24 +153,7 @@ const togglePlatform = (platformId) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Select Platforms</Text>
-        <Text style={styles.subtitle}>
-          Select which services you want to track
-        </Text>
       </View>
-
-      {currentAccount && (
-        <View style={styles.accountInfo}>
-          <Text style={styles.accountInfoText}>
-            Signed in as: <Text style={styles.accountEmail}>{currentAccount.email}</Text>
-          </Text>
-          <TouchableOpacity 
-            style={styles.changeAccountButton}
-            onPress={() => navigation.navigate('AccountSelection')}
-          >
-            <Text style={styles.changeAccountText}>Change Account</Text>
-          </TouchableOpacity>
-        </View>
-      )}
 
       <FlatList
         data={platforms}
@@ -170,17 +163,26 @@ const togglePlatform = (platformId) => {
       />
 
       <View style={styles.footer}>
-      <TouchableOpacity
-  style={[
-    styles.continueButton,
-    selectedPlatforms.length === 0 && styles.disabledButton
-  ]}
-  onPress={savePlatformsAndContinue}
-  disabled={selectedPlatforms.length === 0}
->
-  <Text style={styles.buttonText}>Continue</Text>
-  <Icon name="arrow-forward" size={20} color={Colors.white} />
-</TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.continueButton,
+            selectedPlatforms.length === 0 && styles.disabledButton
+          ]}
+          onPress={savePlatformsAndContinue}
+          disabled={selectedPlatforms.length === 0 || loading}
+        >
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator color="#FFFFFF" size="small" />
+              <Text style={[styles.buttonText, styles.loadingText]}>Saving...</Text>
+            </View>
+          ) : (
+            <>
+              <Text style={styles.buttonText}>Continue</Text>
+              <Icon name="arrow-forward" size={20} color={Colors.white} />
+            </>
+          )}
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -189,39 +191,64 @@ const togglePlatform = (platformId) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.white,
+    backgroundColor: '#F9FAFB',
   },
   header: {
     paddingTop: 60,
     paddingHorizontal: 20,
     paddingBottom: 20,
-    backgroundColor: Colors.primary,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: Colors.white,
-    marginBottom: 10,
+    color: Colors.darkGray,
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: Colors.white,
-    opacity: 0.9,
+    color: Colors.gray,
+  },
+  accountInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    padding: 12,
+    marginHorizontal: 20,
+    marginBottom: 20,
+    borderRadius: 8,
+  },
+  accountInfoText: {
+    fontSize: 14,
+    color: Colors.darkGray,
+  },
+  accountEmail: {
+    fontWeight: 'bold',
+  },
+  changeAccountButton: {
+    padding: 8,
+  },
+  changeAccountText: {
+    fontSize: 14,
+    color: Colors.primary,
+    fontWeight: '500',
   },
   platformList: {
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
   platformItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.lightGray,
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 15,
     marginBottom: 15,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   logoContainer: {
     width: 50,
@@ -233,111 +260,62 @@ const styles = StyleSheet.create({
   },
   platformName: {
     flex: 1,
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: 'bold',
     color: Colors.darkGray,
   },
   checkbox: {
     width: 30,
-    height: 30,
-    justifyContent: 'center',
     alignItems: 'center',
   },
   footer: {
     padding: 20,
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
   },
   continueButton: {
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: Colors.primary,
-    borderRadius: 10,
     paddingVertical: 15,
+    borderRadius: 10,
     marginBottom: 15,
-  },
-  disabledButton: {
-    backgroundColor: Colors.gray,
-    opacity: 0.7,
   },
   buttonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
     color: Colors.white,
+    fontSize: 16,
+    fontWeight: 'bold',
     marginRight: 10,
   },
-  hint: {
-    fontSize: 14,
-    color: Colors.gray,
-    textAlign: 'center',
+  disabledButton: {
+    opacity: 0.6,
   },
-  // Add to your existing PlatformSelectionScreen styles
-platformInfoContainer: {
-    flex: 1,
+  // New styles
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
     marginLeft: 10,
   },
-  accountInfo: {
-    backgroundColor: Colors.primary + '15',
-    borderRadius: 8,
-    padding: 10,
-    marginHorizontal: 15,
-    marginBottom: 15,
+  selectAllButton: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  accountInfoText: {
-    fontSize: 14,
-    color: Colors.darkGray,
-  },
-  accountEmail: {
-    fontSize: 14,
-    color: Colors.primary,
-    fontWeight: '500',
-  },
-  changeAccountButton: {
-    backgroundColor: Colors.primary,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 15,
-  },
-  changeAccountText: {
-    color: Colors.white,
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  platformInfoContainer: {
-    flex: 1,
-    marginLeft: 10,
-  },
-  accountInfo: {
-    backgroundColor: Colors.primary + '15',
-    borderRadius: 8,
+    justifyContent: 'center',
     padding: 10,
-    marginHorizontal: 15,
-    marginBottom: 15,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    borderRadius: 8,
+    backgroundColor: `${Colors.primary}10`,
   },
-  accountInfoText: {
-    fontSize: 14,
-    color: Colors.darkGray,
-  },
-  accountEmail: {
-    fontSize: 14,
+  selectAllText: {
     color: Colors.primary,
-    fontWeight: '500',
-  },
-  changeAccountButton: {
-    backgroundColor: Colors.primary,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 15,
-  },
-  changeAccountText: {
-    color: Colors.white,
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: 'bold',
+    marginLeft: 8,
   },
 });
 

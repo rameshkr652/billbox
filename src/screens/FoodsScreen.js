@@ -1,4 +1,3 @@
-// src/screens/FoodsScreen.js - Enhanced version
 import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView,
@@ -30,10 +29,15 @@ const FoodsScreen = () => {
   useEffect(() => {
     if (allEmails && allEmails.length > 0) {
       analyzeData();
+    } else if (foods && foods.length > 0) {
+      // If preprocessed foods data is passed, use it directly
+      setAllFoods(foods);
+      setFilteredFoods(foods);
+      setLoading(false);
     } else {
       setLoading(false);
     }
-  }, [allEmails]);
+  }, [allEmails, foods]);
   
   // Enhanced food search with partial matching and fuzzy search
   useEffect(() => {
@@ -59,7 +63,8 @@ const FoodsScreen = () => {
     const scoredItems = foodItems.map(item => {
       // Create a searchable string of all variants
       const searchableText = [
-        item.name.toLowerCase(),
+       
+        item.normalizedName?.toLowerCase() || '',
         ...(item.variants ? item.variants.map(variant => variant.toLowerCase()) : [])
       ].join(' ');
       
@@ -170,12 +175,10 @@ const FoodsScreen = () => {
         email.orderDetails.orderItems.forEach(item => {
           // Extract food name from format like "1 X Food Name"
           const match = item.match(/\d+\s*[Xx×]\s+(.*)/);
-          if (match && match[1]) {
-            const originalFoodName = match[1].trim();
+          let originalFoodName = item
             
             // Use advanced food normalization
-            const normalizedFoodName = advancedCombinedFoods(originalFoodName);
-            
+            const normalizedFoodName = advancedCombinedFoods(originalFoodName);          
             // Skip if empty after normalization
             if (!normalizedFoodName) return;
             
@@ -218,7 +221,6 @@ const FoodsScreen = () => {
                 foodItemsMap[normalizedFoodName].lastOrdered = orderDate;
               }
             }
-          }
         });
       });
       
@@ -259,6 +261,13 @@ const FoodsScreen = () => {
     switch(option) {
       case 'orderCount':
         sorted.sort((a, b) => b.count - a.count);
+        break;
+      case 'totalSpent':
+        sorted.sort((a, b) => {
+          const aTotal = Object.values(a.restaurants).reduce((sum, count) => sum + count, 0);
+          const bTotal = Object.values(b.restaurants).reduce((sum, count) => sum + count, 0);
+          return bTotal - aTotal;
+        });
         break;
       case 'name':
         sorted.sort((a, b) => a.name.localeCompare(b.name));
@@ -322,7 +331,9 @@ const FoodsScreen = () => {
       >
         <View style={styles.cardHeader}>
           <View style={[styles.foodIcon, { backgroundColor: `${foodColor}15` }]}>
-            <Icon name="fastfood" size={22} color={foodColor} />
+            <Text style={[styles.foodInitial, { color: foodColor }]}>
+              {item.name.charAt(0).toUpperCase()}
+            </Text>
           </View>
           
           <View style={styles.foodInfo}>
@@ -642,6 +653,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 12,
   },
+  foodInitial: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
   foodInfo: {
     flex: 1,
   },
@@ -686,7 +701,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginLeft: 8,
-    width: 100,
+    width: 85,
   },
   statValue: {
     fontSize: 14,
