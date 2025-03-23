@@ -266,13 +266,13 @@ export const extractHdfcBankTransactionDetails = (emailBodyHtml) => {
   }
 
   try {
-    // Fixed debit transaction pattern
-    const debitPattern = /Rs\.([\d,]+\.\d{2})\s+has\s+been\s+debited\s+from\s+account\s+\*\*(\d+)\s+to\s+(?:VPA\s+[^\s]+\s+)?(.+?)(?:\s+on\s+\d{2}-\d{2}-\d{2})/i;
+    // Debit transaction pattern
+    const debitPattern = /Rs\.([\d,]+\.\d{2})\s+has\s+been\s+debited\s+from\s+account\s+\*\*\d+\s+to\s+VPA\s+[^\s]+\s+([^<]+?)\s+on\s+\d{2}-\d{2}-\d{2}/i;
     const debitMatch = emailBodyHtml.match(debitPattern);
 
     if (debitMatch) {
       const amount = parseFloat(debitMatch[1].replace(/,/g, ''));
-      const recipientName = debitMatch[3].trim().replace(/Mrs\s+/i, ''); // Remove "Mrs" prefix if present
+      const recipientName = debitMatch[2].trim();
 
       result.debitTransactions.push({
         type: 'debit',
@@ -281,14 +281,14 @@ export const extractHdfcBankTransactionDetails = (emailBodyHtml) => {
       });
     }
 
-    // Check for credit transaction pattern
-    const creditPattern = /Rs\.([\d,]+\.\d{2})\s+has\s+been\s+credited\s+to\s+your\s+account\s+\*\*(\d+)\s+by\s+([^<]+)(?:\s+on\s+(\d{2}-\d{2}-\d{2}))?/i;
+    // Credit transaction pattern
+    const creditPattern = /Rs\.([\d,]+\.\d{2})\s+(?:has\s+been|is\s+successfully)\s+credited\s+to\s+your\s+account\s+\*\*\d+\s+by\s+(?:VPA\s+[^\s]+\s+)?([^<]+?)(?:\s+on\s+\d{2}-\d{2}-\d{2})?/i;
     const creditMatch = emailBodyHtml.match(creditPattern);
 
     if (creditMatch) {
       const amount = parseFloat(creditMatch[1].replace(/,/g, ''));
-      const senderName = creditMatch[3].trim();
-      
+      const senderName = creditMatch[2].trim();
+
       result.creditTransactions.push({
         type: 'credit',
         amount,

@@ -25,6 +25,7 @@ import styles from '../styles/BankStyles';
 import AccountSwitcherModal from '../components/AccountSwitcherModal';
 import * as BankService from '../services/BankService';
 import * as GmailService from '../services/GmailService';
+import BankTransactionsDisplay from '../components/BankTransactionsDisplay';
 
 const { width } = Dimensions.get('window');
 
@@ -359,145 +360,141 @@ const BankTransactionScreen = () => {
   }, [showDatePickerModal]);
   
 
-// Function to fetch bank transactions
-const fetchBankTransactions = async () => {
-  if (isLoading) return;
-  if (!selectedBankId) {
-    Alert.alert('Select Bank', 'Please select a bank to load transactions.');
-    return;
-  }
+  const fetchBankTransactions = async () => {
+    if (isLoading) return;
+    if (!selectedBankId) {
+      Alert.alert('Select Bank', 'Please select a bank to load transactions.');
+      return;
+    }
+    
+    if (selectedTimeFrame === TIME_FRAMES.CUSTOM && (!customDateRange.start || !customDateRange.end)) {
+      Alert.alert('Incomplete Date Range', 'Please select both start and end dates.');
+      return;
+    }
   
-  if (selectedTimeFrame === TIME_FRAMES.CUSTOM && (!customDateRange.start || !customDateRange.end)) {
-    Alert.alert('Incomplete Date Range', 'Please select both start and end dates.');
-    return;
-  }
-  
-  // Confirm with user before proceeding
-  Alert.alert(
-    'Load Transactions',
-    `This will fetch transactions for ${getTimeFrameText(selectedTimeFrame, customDateRange)} from ${selectedBank.name}. Continue?`,
-    [
-      { text: 'Cancel', style: 'cancel' },
-      { 
-        text: 'Load', 
-        style: 'default',
-        onPress: async () => {
-          try {
-            // Clear any previous operation
-            if (loadingOperationRef.current) {
-              clearInterval(loadingOperationRef.current);
-              loadingOperationRef.current = null;
-            }
-            
-            // Reset Gmail service abort state
-            GmailService.abortCurrentOperation();
-            
-            setIsLoading(true);
-            setShowProgress(true);
-            setProgress(0);
-            setProgressText('Preparing to fetch transactions...');
-            
-            // Determine time frame parameters
-            let timeFrameOption = selectedTimeFrame;
-            let customRangeOptions = null;
-            
-            if (selectedTimeFrame === TIME_FRAMES.CUSTOM && customDateRange.start && customDateRange.end) {
-              customRangeOptions = {
-                startDate: customDateRange.start,
-                endDate: customDateRange.end
-              };
-            }
-            
-            // Call BankService to fetch transactions
-            const result = await BankService.fetchBankTransactions(
-              selectedBankId,
-              currentAccount.email,
-              timeFrameOption,
-              customRangeOptions,
-              (current, total, message, estimatedTimeRemaining) => {
-                // Special case for completion signal
-                if (message === 'COMPLETE_SIGNAL') {
-                  // Force close the progress display
-                  setProgress(1);
-                  setProgressText('Successfully loaded transactions!');
+    // Confirm with user before proceeding
+    Alert.alert(
+      'Load Transactions',
+      `This will fetch transactions for ${getTimeFrameText(selectedTimeFrame, customDateRange)} from ${selectedBank.name}. Continue?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Load', 
+          style: 'default',
+          onPress: async () => {
+            try {
+              // Clear any previous operation
+              if (loadingOperationRef.current) {
+                clearInterval(loadingOperationRef.current);
+                loadingOperationRef.current = null;
+              }
+              
+              // Reset Gmail service abort state
+              GmailService.abortCurrentOperation();
+              
+              setIsLoading(true);
+              setShowProgress(true);
+              setProgress(0);
+              setProgressText('Preparing to fetch transactions...');
+              
+              // Determine time frame parameters
+              let timeFrameOption = selectedTimeFrame;
+              let customRangeOptions = null;
+              
+              if (selectedTimeFrame === TIME_FRAMES.CUSTOM && customDateRange.start && customDateRange.end) {
+                customRangeOptions = {
+                  startDate: customDateRange.start,
+                  endDate: customDateRange.end
+                };
+              }
+              
+              // Call BankService to fetch transactions with optimized storage
+              const result = await BankService.fetchBankTransactions(
+                selectedBankId,
+                currentAccount.email,
+                timeFrameOption,
+                customRangeOptions,
+                (current, total, message, estimatedTimeRemaining) => {
+                  // Special case for completion signal
+                  if (message === 'COMPLETE_SIGNAL') {
+                    // Force completion UI updates
+                    setProgress(1);
+                    setProgressText('Successfully loaded transactions!');
+                    
+                    // Close progress display with slight delay for visual feedback
+                    setTimeout(() => {
+                      setShowProgress(false);
+                      setIsLoading(false);
+                    }, 500);
+                    return;
+                  }
                   
-                  // Hide loading indicators
-                  setTimeout(() => {
-                    setShowProgress(false);
-                    setIsLoading(false);
-                    // Don't set transactions here, that's done by the result handler
-                  }, 500);
-                  return;
+                  // Regular progress update
+                  const progressValue = total > 0 ? current / total : 0;
+                  setProgress(Math.min(0.95, progressValue));
+                  setProgressText(message || `Processing ${current} of ${total} transactions...`);
+                  if (estimatedTimeRemaining) {
+                    setTimeRemaining(formatTimeRemaining(estimatedTimeRemaining));
+                  }
+                }
+              );
+              
+              // Check if operation was cancelled
+              if (GmailService.operationControl && GmailService.operationControl.isAborted()) {
+                console.log('Operation was cancelled, not processing results');
+                return;
+              }
+              
+              // Process results - important to handle this regardless of storage success
+              if (result.success) {
+                // Load the transactions back from storage to ensure consistency
+                const loadedTransactions = await BankService.getTransactions(selectedBankId, currentAccount.email);
+                
+                // Set transactions state with proper error handling
+                if (Array.isArray(loadedTransactions) && loadedTransactions.length > 0) {
+                  setTransactions(loadedTransactions);
+                  setTransactionsLoaded(true);
+                } else if (Array.isArray(result.transactions) && result.transactions.length > 0) {
+                  // Fallback to using the directly returned transactions if storage failed
+                  setTransactions(result.transactions);
+                  setTransactionsLoaded(true);
+                } else {
+                  // No transactions found
+                  setTransactions([]);
+                  setTransactionsLoaded(true);
                 }
                 
-                // Regular progress update
-                const progressValue = total > 0 ? current / total : 0;
-                setProgress(Math.min(0.95, progressValue));
-                setProgressText(message || `Processing ${current} of ${total} transactions...`);
-                if (estimatedTimeRemaining) {
-                  setTimeRemaining(estimatedTimeRemaining);
-                }
+                // Show success message
+                setTimeout(() => {
+                  const transactionCount = result.transactions ? result.transactions.length : 0;
+                  Alert.alert('Success', `Loaded ${transactionCount} transactions for ${getTimeFrameText(selectedTimeFrame, customDateRange)}`);
+                }, 500);
+              } else if (result.error === 'Operation cancelled by user') {
+                console.log('Transaction loading was cancelled by user');
+                // No alert needed as user initiated the cancellation
+              } else {
+                Alert.alert('Error', result.error || 'Failed to load transactions');
               }
-            );
-            
-            // Check if operation was cancelled
-            if (!isLoading) {
-              console.log('Operation was cancelled, not processing results');
-              return;
-            }
-            
-            // Set progress to 100% when done
-            setProgress(1);
-            setProgressText('Successfully loaded transactions!');
-            
-            // Process results
-            // Ensure progress bar is closed regardless of the result
-            setShowProgress(false);
-            setIsLoading(false);
-            
-            if (result.success) {
-              setTransactions(result.transactions || []);
-              // Update last updated timestamp in UI (not state)
-              const now = new Date();
-              
-              setTransactionsLoaded(true);
-              
-              // Show success message
-              setTimeout(() => {
-                Alert.alert('Success', `Loaded ${result.transactions.length} transactions for ${getTimeFrameText(selectedTimeFrame, customDateRange)}`);
-              }, 500);
-            } else if (result.error === 'Operation cancelled by user') {
-              console.log('Transaction loading was cancelled by user');
-              // No alert needed as user initiated the cancellation
-            } else {
-              Alert.alert('Error', result.error || 'Failed to load transactions');
-            }
-          } catch (error) {
-            // Always hide loading indicators in case of error
-            setShowProgress(false);
-            setIsLoading(false);
-            setProgress(0);
-            
-            // Check if operation was cancelled
-            if (error.message && error.message.includes('cancelled')) {
-              console.log('Transaction loading was cancelled by user');
-              // No alert needed as user initiated the cancellation
-            } else {
-              console.error('Error fetching bank transactions:', error);
-              Alert.alert('Error', 'Failed to fetch transactions. Please try again.');
-            }
-          } finally {
-            // Ensure loading indicators are definitely closed
-            setTimeout(() => {
+            } catch (error) {
+              // Always hide loading indicators in case of error
               setShowProgress(false);
               setIsLoading(false);
-            }, 300);
+              setProgress(0);
+              
+              // Check if operation was cancelled
+              if (error.message && error.message.includes('cancelled')) {
+                console.log('Transaction loading was cancelled by user');
+                // No alert needed as user initiated the cancellation
+              } else {
+                console.error('Error fetching bank transactions:', error);
+                Alert.alert('Error', 'Failed to fetch transactions. Please try again.');
+              }
+            }
           }
         }
-      }
-    ]
-  );
-};
+      ]
+    );
+  };
 
 // Function to fetch latest transactions
 const fetchLatestTransactions = async () => {
@@ -658,7 +655,6 @@ const clearTransactionData = async () => {
   );
 };
 
-// Add this useEffect hook to load saved transactions when bank or account changes
 useEffect(() => {
   const loadSavedTransactions = async () => {
     if (!selectedBankId || !currentAccount) return;
@@ -666,17 +662,24 @@ useEffect(() => {
     try {
       setIsLoading(true);
       
-      // Get transactions from storage
+      // Get transactions from storage with enhanced retrieval
       const savedTransactions = await BankService.getTransactions(selectedBankId, currentAccount.email);
-      setTransactions(savedTransactions || []);
       
-      // Check if there are any saved transactions
-      setTransactionsLoaded(savedTransactions && savedTransactions.length > 0);
+      if (Array.isArray(savedTransactions) && savedTransactions.length > 0) {
+        setTransactions(savedTransactions);
+        setTransactionsLoaded(true);
+        console.log(`Loaded ${savedTransactions.length} transactions successfully`);
+      } else {
+        setTransactions([]);
+        setTransactionsLoaded(false);
+        console.log('No saved transactions found');
+      }
       
       setIsLoading(false);
     } catch (error) {
-      console.error('Error loading saved transactions:', error);
+      console.error(`Error loading saved transactions for ${selectedBankId}:`, error);
       setIsLoading(false);
+      // Don't show an error alert here as this is on initial load
     }
   };
   
@@ -1089,26 +1092,27 @@ useEffect(() => {
               </TouchableOpacity>
 
               {transactionsLoaded && (
-                <TouchableOpacity
-                  style={[styles.refreshTransactionsButton, { borderColor: bankColor }]}
-                  onPress={fetchLatestTransactions}
-                  disabled={loading || !transactionsLoaded}
-                >
-                  <Icon name="refresh" size={20} color={bankColor} />
-                  <Text style={[styles.refreshTransactionsButtonText, { color: bankColor }]}>Refresh</Text>
-                </TouchableOpacity>
+                 <TouchableOpacity
+                 style={[styles.clearTransactionsButton, { borderColor: Colors.accent }]}
+                 onPress={clearTransactionData}
+                 disabled={loading || !transactionsLoaded}
+               >
+                 <Icon name="delete-outline" size={20} color={Colors.accent} />
+                 <Text style={[styles.clearTransactionsButtonText, { color: Colors.accent }]}>Clear</Text>
+               </TouchableOpacity>
               )}
             </View>
           </View>
           <View style={styles.transactionsContainer}>
             <View style={styles.transactionsHeader}>
-              <Text style={styles.transactionsTitle}>Recent Transactions</Text>
+              <Text style={styles.transactionsTitle}>Transactions</Text>
               {transactionsLoaded && (
                 <Text style={styles.transactionsPeriod}>
                   {getTimeFrameText(selectedTimeFrame, customDateRange)}
                 </Text>
               )}
             </View>
+            
             {!transactionsLoaded ? (
               <View style={styles.noTransactionsContainer}>
                 <Icon name="receipt-long" size={60} color="#DDD" />
@@ -1126,19 +1130,9 @@ useEffect(() => {
                 </Text>
               </View>
             ) : (
-              <FlatList
-                data={transactions}
-                keyExtractor={(item, index) => `transaction-${index}`}
-                renderItem={({ item }) => (
-                  <View style={styles.transactionItem}>
-                    <Text>Transaction data would appear here</Text>
-                  </View>
-                )}
-                ListEmptyComponent={
-                  <View style={styles.noTransactionsContainer}>
-                    <Text style={styles.noTransactionsText}>No transactions found</Text>
-                  </View>
-                }
+              <BankTransactionsDisplay
+                transactions={transactions}
+                bankColor={bankColor}
               />
             )}
           </View>
