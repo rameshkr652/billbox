@@ -14,7 +14,6 @@ import * as AccountService from '../services/AccountService';
 import * as StorageService from '../services/StorageService';
 import platforms from '../constants/platforms';
 import AccountSwitcherModal from '../components/AccountSwitcherModal';
-import BankTransactionScreen from './BankTransactionScreen';
 
 const Drawer = createDrawerNavigator();
 const Tab = createBottomTabNavigator();
@@ -479,10 +478,7 @@ const MainScreen = () => {
               })}
             >
               {(props) => 
-                // Check if the platform is 'banks' and render BankTransactionScreen instead
-                platform === 'banks' 
-                  ? <BankTransactionScreen {...props} /> 
-                  : <PlatformTab {...props} platform={platform} />
+                <PlatformTab {...props} platform={platform} />
               }
             </Drawer.Screen>
           );
