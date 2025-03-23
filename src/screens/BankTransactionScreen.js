@@ -24,6 +24,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import styles from '../styles/BankStyles';
 import AccountSwitcherModal from '../components/AccountSwitcherModal';
 import * as BankService from '../services/BankService';
+import * as GmailService from '../services/GmailService';
 
 const { width } = Dimensions.get('window');
 
@@ -275,70 +276,8 @@ const BankTransactionScreen = () => {
   };
 
   const simulateTransactionLoading = () => {
-    if (isLoading) return;
-    if (!selectedBankId) {
-      Alert.alert('Select Bank', 'Please select a bank to load transactions.');
-      return;
-    }
-    if (selectedTimeFrame === TIME_FRAMES.CUSTOM && (!customDateRange.start || !customDateRange.end)) {
-      Alert.alert('Incomplete Date Range', 'Please select both start and end dates.');
-      return;
-    }
-    Alert.alert(
-      'Load Transactions',
-      `This will fetch transactions for ${getTimeFrameText(selectedTimeFrame, customDateRange)} from ${selectedBank.name}. Continue?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Load', 
-          style: 'default',
-          onPress: () => startLoading()
-        }
-      ]
-    );
-  };
-
-  const startLoading = () => {
-    setIsLoading(true);
-    setShowProgress(true);
-    setProgress(0);
-    setProgressText('Preparing to fetch transactions...');
-    let currentProgress = 0;
-    const interval = 50;
-    const incrementAmount = 0.001;
-    const estimatedDuration = 30000;
-    const totalIncrements = estimatedDuration / interval;
-    let currentIncrement = 0;
-    setTimeout(() => {
-      setProgressText('Connecting to Google servers...');
-      const timer = setInterval(() => {
-        currentIncrement++;
-        const randomFactor = 1 + (Math.random() * 0.3 - 0.15);
-        const slowdownFactor = 1 - (currentProgress * 0.5);
-        currentProgress += incrementAmount * randomFactor * slowdownFactor;
-        const newProgress = Math.min(0.97, currentProgress);
-        setProgress(newProgress);
-        if (newProgress < 0.2) {
-          setProgressText('Searching for transaction emails...');
-        } else if (newProgress < 0.4) {
-          setProgressText('Reading transaction details...');
-        } else if (newProgress < 0.6) {
-          setProgressText(`Processing ${Math.floor(newProgress * 100)} of ${Math.floor(totalIncrements * incrementAmount * 100)} transactions...`);
-        } else if (newProgress < 0.8) {
-          setProgressText('Analyzing transaction data...');
-        } else {
-          setProgressText('Finalizing transactions...');
-        }
-        const remainingIncrements = totalIncrements - currentIncrement;
-        const remainingTimeSeconds = Math.ceil((remainingIncrements * interval) / 1000);
-        setTimeRemaining(formatTimeRemaining(remainingTimeSeconds));
-        loadingOperationRef.current = timer;
-        if (currentIncrement >= totalIncrements - 10) {
-          clearInterval(timer);
-          completeLoading();
-        }
-      }, interval);
-    }, 500);
+    // This function is no longer used - redirecting to real implementation
+    fetchBankTransactions();
   };
 
   const formatTimeRemaining = (seconds) => {
@@ -351,22 +290,6 @@ const BankTransactionScreen = () => {
     }
   };
 
-  const completeLoading = () => {
-    setProgress(1);
-    setProgressText('Successfully loaded transactions!');
-    setTimeout(() => {
-      setShowProgress(false);
-      setIsLoading(false);
-      setTransactionsLoaded(true);
-      Alert.alert(
-        'Transactions Loaded',
-        `Successfully loaded transactions for ${getTimeFrameText(selectedTimeFrame, customDateRange)}.`,
-        [{ text: 'OK' }]
-      );
-      setTransactions([]);
-    }, 1000);
-  };
-
   const handleCancelLoading = () => {
     Alert.alert(
       'Cancel Loading',
@@ -377,13 +300,31 @@ const BankTransactionScreen = () => {
           text: 'Cancel Loading', 
           style: 'destructive',
           onPress: () => {
+            console.log('User initiated cancel operation');
+            
+            // Clear any UI timer
             if (loadingOperationRef.current) {
               clearInterval(loadingOperationRef.current);
               loadingOperationRef.current = null;
             }
+            
+            // Send abort signal to Gmail service
+            GmailService.abortCurrentOperation();
+            
+            // Reset UI state - this has to happen BEFORE the abort signal completes
             setShowProgress(false);
             setIsLoading(false);
             setProgress(0);
+            setProgressText('Operation cancelled');
+            
+            // Show a confirmation message to the user
+            setTimeout(() => {
+              Alert.alert(
+                'Operation Cancelled',
+                'The transaction loading operation has been cancelled.',
+                [{ text: 'OK' }]
+              );
+            }, 500);
           }
         }
       ]
@@ -431,67 +372,131 @@ const fetchBankTransactions = async () => {
     return;
   }
   
-  try {
-    setIsLoading(true);
-    setShowProgress(true);
-    setProgress(0);
-    setProgressText('Preparing to fetch transactions...');
-    
-    // Determine time frame parameters
-    let timeFrameOption = selectedTimeFrame;
-    let customRangeOptions = null;
-    
-    if (selectedTimeFrame === TIME_FRAMES.CUSTOM && customDateRange.start && customDateRange.end) {
-      customRangeOptions = {
-        startDate: customDateRange.start,
-        endDate: customDateRange.end
-      };
-    }
-    
-    // Call BankService to fetch transactions
-    const result = await BankService.fetchBankTransactions(
-      selectedBankId,
-      currentAccount.email,
-      timeFrameOption,
-      customRangeOptions,
-      (current, total, message, estimatedTimeRemaining) => {
-        // Update progress display
-        const progressValue = total > 0 ? current / total : 0;
-        setProgress(Math.min(0.95, progressValue));
-        setProgressText(message || `Processing ${current} of ${total} transactions...`);
-        if (estimatedTimeRemaining) {
-          setTimeRemaining(estimatedTimeRemaining);
+  // Confirm with user before proceeding
+  Alert.alert(
+    'Load Transactions',
+    `This will fetch transactions for ${getTimeFrameText(selectedTimeFrame, customDateRange)} from ${selectedBank.name}. Continue?`,
+    [
+      { text: 'Cancel', style: 'cancel' },
+      { 
+        text: 'Load', 
+        style: 'default',
+        onPress: async () => {
+          try {
+            // Clear any previous operation
+            if (loadingOperationRef.current) {
+              clearInterval(loadingOperationRef.current);
+              loadingOperationRef.current = null;
+            }
+            
+            // Reset Gmail service abort state
+            GmailService.abortCurrentOperation();
+            
+            setIsLoading(true);
+            setShowProgress(true);
+            setProgress(0);
+            setProgressText('Preparing to fetch transactions...');
+            
+            // Determine time frame parameters
+            let timeFrameOption = selectedTimeFrame;
+            let customRangeOptions = null;
+            
+            if (selectedTimeFrame === TIME_FRAMES.CUSTOM && customDateRange.start && customDateRange.end) {
+              customRangeOptions = {
+                startDate: customDateRange.start,
+                endDate: customDateRange.end
+              };
+            }
+            
+            // Call BankService to fetch transactions
+            const result = await BankService.fetchBankTransactions(
+              selectedBankId,
+              currentAccount.email,
+              timeFrameOption,
+              customRangeOptions,
+              (current, total, message, estimatedTimeRemaining) => {
+                // Special case for completion signal
+                if (message === 'COMPLETE_SIGNAL') {
+                  // Force close the progress display
+                  setProgress(1);
+                  setProgressText('Successfully loaded transactions!');
+                  
+                  // Hide loading indicators
+                  setTimeout(() => {
+                    setShowProgress(false);
+                    setIsLoading(false);
+                    // Don't set transactions here, that's done by the result handler
+                  }, 500);
+                  return;
+                }
+                
+                // Regular progress update
+                const progressValue = total > 0 ? current / total : 0;
+                setProgress(Math.min(0.95, progressValue));
+                setProgressText(message || `Processing ${current} of ${total} transactions...`);
+                if (estimatedTimeRemaining) {
+                  setTimeRemaining(estimatedTimeRemaining);
+                }
+              }
+            );
+            
+            // Check if operation was cancelled
+            if (!isLoading) {
+              console.log('Operation was cancelled, not processing results');
+              return;
+            }
+            
+            // Set progress to 100% when done
+            setProgress(1);
+            setProgressText('Successfully loaded transactions!');
+            
+            // Process results
+            // Ensure progress bar is closed regardless of the result
+            setShowProgress(false);
+            setIsLoading(false);
+            
+            if (result.success) {
+              setTransactions(result.transactions || []);
+              // Update last updated timestamp in UI (not state)
+              const now = new Date();
+              
+              setTransactionsLoaded(true);
+              
+              // Show success message
+              setTimeout(() => {
+                Alert.alert('Success', `Loaded ${result.transactions.length} transactions for ${getTimeFrameText(selectedTimeFrame, customDateRange)}`);
+              }, 500);
+            } else if (result.error === 'Operation cancelled by user') {
+              console.log('Transaction loading was cancelled by user');
+              // No alert needed as user initiated the cancellation
+            } else {
+              Alert.alert('Error', result.error || 'Failed to load transactions');
+            }
+          } catch (error) {
+            // Always hide loading indicators in case of error
+            setShowProgress(false);
+            setIsLoading(false);
+            setProgress(0);
+            
+            // Check if operation was cancelled
+            if (error.message && error.message.includes('cancelled')) {
+              console.log('Transaction loading was cancelled by user');
+              // No alert needed as user initiated the cancellation
+            } else {
+              console.error('Error fetching bank transactions:', error);
+              Alert.alert('Error', 'Failed to fetch transactions. Please try again.');
+            }
+          } finally {
+            // Ensure loading indicators are definitely closed
+            setTimeout(() => {
+              setShowProgress(false);
+              setIsLoading(false);
+            }, 300);
+          }
         }
       }
-    );
-    
-    // Set progress to 100% when done
-    setProgress(1);
-    setProgressText('Successfully loaded transactions!');
-    
-    // Process results
-    if (result.success) {
-      setTransactions(result.transactions || []);
-      // Update last updated timestamp in UI (not state)
-      const now = new Date();
-      
-      setTransactionsLoaded(true);
-      
-      // Show success message
-      setTimeout(() => {
-        Alert.alert('Success', `Loaded ${result.transactions.length} transactions for ${getTimeFrameText(selectedTimeFrame, customDateRange)}`);
-      }, 500);
-    } else {
-      Alert.alert('Error', result.error || 'Failed to load transactions');
-    }
-  } catch (error) {
-    console.error('Error fetching bank transactions:', error);
-    Alert.alert('Error', 'Failed to fetch transactions. Please try again.');
-  } finally {
-    // Hide loading indicators
-    setShowProgress(false);
-    setIsLoading(false);
-  }
+    ]
+  );
 };
 
 // Function to fetch latest transactions
@@ -504,56 +509,120 @@ const fetchLatestTransactions = async () => {
     return;
   }
   
-  try {
-    setIsLoading(true);
-    setShowProgress(true);
-    setProgress(0);
-    setProgressText('Preparing to fetch latest transactions...');
-    
-    // Call BankService to fetch latest transactions
-    const result = await BankService.fetchLatestBankTransactions(
-      selectedBankId,
-      currentAccount.email,
-      new Date(lastUpdated),
-      (current, total, message, estimatedTimeRemaining) => {
-        // Update progress display
-        const progressValue = total > 0 ? current / total : 0;
-        setProgress(Math.min(0.95, progressValue));
-        setProgressText(message || `Processing ${current} of ${total} latest transactions...`);
-        if (estimatedTimeRemaining) {
-          setTimeRemaining(estimatedTimeRemaining);
+  // Confirm with user before proceeding
+  Alert.alert(
+    'Refresh Transactions',
+    `This will fetch the latest transactions for ${selectedBank.name} since the last update. Continue?`,
+    [
+      { text: 'Cancel', style: 'cancel' },
+      { 
+        text: 'Refresh', 
+        style: 'default',
+        onPress: async () => {
+          try {
+            // Clear any previous operation
+            if (loadingOperationRef.current) {
+              clearInterval(loadingOperationRef.current);
+              loadingOperationRef.current = null;
+            }
+            
+            // Reset Gmail service abort state
+            GmailService.abortCurrentOperation();
+            
+            setIsLoading(true);
+            setShowProgress(true);
+            setProgress(0);
+            setProgressText('Preparing to fetch latest transactions...');
+            
+            // Call BankService to fetch latest transactions
+            const result = await BankService.fetchLatestBankTransactions(
+              selectedBankId,
+              currentAccount.email,
+              new Date(lastUpdated),
+              (current, total, message, estimatedTimeRemaining) => {
+                // Special case for completion signal
+                if (message === 'COMPLETE_SIGNAL') {
+                  // Force close the progress display
+                  setProgress(1);
+                  setProgressText('Successfully loaded latest transactions!');
+                  
+                  // Hide loading indicators
+                  setTimeout(() => {
+                    setShowProgress(false);
+                    setIsLoading(false);
+                    // Don't set transactions here, that's done by the result handler
+                  }, 500);
+                  return;
+                }
+                
+                // Regular progress update
+                const progressValue = total > 0 ? current / total : 0;
+                setProgress(Math.min(0.95, progressValue));
+                setProgressText(message || `Processing ${current} of ${total} latest transactions...`);
+                if (estimatedTimeRemaining) {
+                  setTimeRemaining(estimatedTimeRemaining);
+                }
+              }
+            );
+            
+            // Check if operation was cancelled
+            if (!isLoading) {
+              console.log('Operation was cancelled, not processing results');
+              return;
+            }
+            
+            // Set progress to 100% when done
+            setProgress(1);
+            setProgressText('Successfully loaded latest transactions!');
+            
+            // Process results
+            // Ensure progress bar is closed regardless of the result
+            setShowProgress(false);
+            setIsLoading(false);
+            
+            if (result.success) {
+              // Update transaction list
+              setTransactions(result.transactions || []);
+              
+              // Show success message
+              setTimeout(() => {
+                const newCount = result.transactions.length - transactions.length;
+                const message = newCount > 0 
+                  ? `Found ${newCount} new transactions`
+                  : 'No new transactions found';
+                Alert.alert('Success', message);
+              }, 500);
+            } else if (result.error === 'Operation cancelled by user') {
+              console.log('Transaction refresh was cancelled by user');
+              // No alert needed as user initiated the cancellation
+            } else {
+              Alert.alert('Error', result.error || 'Failed to load latest transactions');
+            }
+          } catch (error) {
+            // Always hide loading indicators in case of error
+            setShowProgress(false);
+            setIsLoading(false);
+            setProgress(0);
+            
+            // Check if operation was cancelled
+            if (error.message && error.message.includes('cancelled')) {
+              console.log('Transaction refresh was cancelled by user');
+              // No alert needed as user initiated the cancellation
+            } else {
+              console.error('Error fetching latest transactions:', error);
+              Alert.alert('Error', 'Failed to fetch latest transactions. Please try again.');
+            }
+          } finally {
+            // Ensure loading indicators are definitely closed
+            setTimeout(() => {
+              setShowProgress(false);
+              setIsLoading(false);
+            }, 300);
+          }
         }
       }
-    );
-    
-    // Set progress to 100% when done
-    setProgress(1);
-    setProgressText('Successfully loaded latest transactions!');
-    
-    // Process results
-    if (result.success) {
-      // Update transaction list
-      setTransactions(result.transactions || []);
-      
-      // Show success message
-      setTimeout(() => {
-        const newCount = result.transactions.length - transactions.length;
-        const message = newCount > 0 
-          ? `Found ${newCount} new transactions`
-          : 'No new transactions found';
-        Alert.alert('Success', message);
-      }, 500);
-    } else {
-      Alert.alert('Error', result.error || 'Failed to load latest transactions');
-    }
-  } catch (error) {
-    console.error('Error fetching latest transactions:', error);
-    Alert.alert('Error', 'Failed to fetch latest transactions. Please try again.');
-  } finally {
-    // Hide loading indicators
-    setShowProgress(false);
-    setIsLoading(false);
-  }
+    ]
+  );
 };
 
 // Function to clear transaction data
