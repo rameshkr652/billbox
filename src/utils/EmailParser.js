@@ -31,6 +31,14 @@ export const parseOrderDetails = (emailBodyHtml, platform) => {
       return extractZomatoOrderDetails(emailBodyHtml);
     case 'swiggy':
       return extractSwiggyOrderDetails(emailBodyHtml);
+    case 'bank_hdfc':
+      return extractHdfcBankTransactionDetails(emailBodyHtml);
+    case 'bank_icici':
+      return extractIciciBankTransactionDetails(emailBodyHtml);
+    case 'bank_sbi':
+      return extractSbiBankTransactionDetails(emailBodyHtml);  
+    case 'bank_axis':
+      return extractAxisBankTransactionDetails(emailBodyHtml);
       
     default:
       console.log(`No parser available for platform: ${platform}`);
@@ -241,9 +249,213 @@ export const extractSwiggyOrderDetails = (emailBodyHtml) => {
   return cleanedOrderDetails;
 }
 
+/**
+ * Extract transaction details from HDFC Bank emails
+ * @param {string} emailBodyHtml - The HTML or text content of the email
+ * @returns {Object} Extracted transaction details
+ */
+export const extractHdfcBankTransactionDetails = async (emailBodyHtml) => {
+  await saveJsonToFile(emailBodyHtml)
+  if (!emailBodyHtml) return null;
+  
+  // Clean up the HTML
+  const cleanText = emailBodyHtml
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/Â/g, '') // Remove special character
+    .replace(/\s+/g, ' ')
+    .trim();
+    
+  // Object to store extracted data
+  const transactionDetails = {
+    transactionId: null,
+    accountNumber: null,
+    amount: null,
+    transactionType: null, // 'debit' or 'credit'
+    recipient: null,
+    date: null,
+    paymentMethod: null,
+    description: null
+  };
+  
+  // Extract details from HDFC "debited from account" pattern 
+  // Example: "Rs.10.00 has been debited from account **0834 to VPA Q187663706@ybl SSHAKIRABANU on 22-03-25."
+  const debitMatch = cleanText.match(/Rs\.([\d,]+\.\d+)\s+has\s+been\s+debited\s+from\s+account\s+\*\*(\d+)\s+to\s+([^\s]+)\s+([^\s]+(?:\s+[^\s]+)*)\s+on\s+(\d{2}-\d{2}-\d{2})/i);
+  
+  if (debitMatch) {
+    transactionDetails.amount = debitMatch[1];
+    transactionDetails.accountNumber = `**${debitMatch[2]}`;
+    transactionDetails.transactionType = 'debit';
+    transactionDetails.paymentMethod = debitMatch[3]; // e.g., "VPA"
+    transactionDetails.recipient = debitMatch[4];     // e.g., "Q187663706@ybl SSHAKIRABANU"
+    transactionDetails.date = debitMatch[5];          // e.g., "22-03-25"
+    
+    // Generate transaction ID if not found (using a combination of amount, date and recipient)
+    if (!transactionDetails.transactionId) {
+      const dateStr = transactionDetails.date.replace(/-/g, '');
+      transactionDetails.transactionId = `HDFCTxn${dateStr}${transactionDetails.amount.replace(/\D/g, '')}`;
+    }
+    
+    // Set description for this transaction
+    transactionDetails.description = `Payment to ${transactionDetails.recipient} via ${transactionDetails.paymentMethod}`;
+    
+    return transactionDetails;
+  }
+  
+  // Extract details from HDFC "credited to account" pattern with sender
+  const creditMatch = cleanText.match(/Rs\.([\d,]+\.\d+)\s+has\s+been\s+credited\s+to\s+your\s+account\s+\*\*(\d+)\s+(?:from|by)\s+([^\s]+)\s+([^\s]+(?:\s+[^\s]+)*)\s+on\s+(\d{2}-\d{2}-\d{2})/i);
+  
+  if (creditMatch) {
+    transactionDetails.amount = creditMatch[1];
+    transactionDetails.accountNumber = `**${creditMatch[2]}`;
+    transactionDetails.transactionType = 'credit';
+    transactionDetails.paymentMethod = creditMatch[3]; // e.g., "UPI"
+    transactionDetails.recipient = creditMatch[4];     // Sender in this case
+    transactionDetails.date = creditMatch[5];          // e.g., "22-03-25"
+    
+    // Generate transaction ID if not found
+    if (!transactionDetails.transactionId) {
+      const dateStr = transactionDetails.date.replace(/-/g, '');
+      transactionDetails.transactionId = `HDFCTxn${dateStr}${transactionDetails.amount.replace(/\D/g, '')}`;
+    }
+    
+    // Set description for this transaction
+    transactionDetails.description = `Payment received from ${transactionDetails.recipient} via ${transactionDetails.paymentMethod}`;
+    
+    return transactionDetails;
+  }
+  
+  // Extract details from simpler HDFC "credited to account" pattern (without sender details)
+  // Example: "Rs.15000.00 has been credited to your account **0834 on 01-03-25"
+  const simpleCreditMatch = cleanText.match(/Rs\.([\d,]+\.\d+)\s+has\s+been\s+credited\s+to\s+your\s+account\s+\*\*(\d+)\s+on\s+(\d{2}-\d{2}-\d{2})/i);
+  
+  if (simpleCreditMatch) {
+    transactionDetails.amount = simpleCreditMatch[1];
+    transactionDetails.accountNumber = `**${simpleCreditMatch[2]}`;
+    transactionDetails.transactionType = 'credit';
+    transactionDetails.date = simpleCreditMatch[3];
+    
+    // Generate transaction ID with date and amount
+    const dateStr = transactionDetails.date.replace(/-/g, '');
+    transactionDetails.transactionId = `HDFCTxn${dateStr}${transactionDetails.amount.replace(/\D/g, '')}`;
+    
+    // Set a better description
+    transactionDetails.description = `Amount Rs.${transactionDetails.amount} credited to account ${transactionDetails.accountNumber}`;
+    transactionDetails.paymentMethod = 'Bank Transfer';
+    
+    return transactionDetails;
+  }
+  
+  // Extract details from HDFC card transaction pattern
+  // This is a placeholder for credit/debit card transaction pattern - extend based on actual emails
+  const cardMatch = cleanText.match(/Rs\.([\d,]+\.\d+)\s+spent\s+on\s+your\s+(?:HDFC\s+)?Card\s+\*\*(\d+)\s+at\s+([^\s]+(?:\s+[^\s]+)*)\s+on\s+(\d{2}-\d{2}-\d{2})/i);
+  
+  if (cardMatch) {
+    transactionDetails.amount = cardMatch[1];
+    transactionDetails.accountNumber = `**${cardMatch[2]}`; // Actually card number in this case
+    transactionDetails.transactionType = 'debit';
+    transactionDetails.paymentMethod = 'Card';
+    transactionDetails.recipient = cardMatch[3];    // Merchant name
+    transactionDetails.date = cardMatch[4];         // e.g., "22-03-25"
+    
+    // Generate transaction ID if not found
+    if (!transactionDetails.transactionId) {
+      const dateStr = transactionDetails.date.replace(/-/g, '');
+      transactionDetails.transactionId = `HDFCCard${dateStr}${transactionDetails.amount.replace(/\D/g, '')}`;
+    }
+    
+    // Set description for this transaction
+    transactionDetails.description = `Card payment at ${transactionDetails.recipient}`;
+    
+    return transactionDetails;
+  }
+  
+  // If no match found, return null or generic extraction
+  // Try to extract any transaction info we can find if specific patterns don't match
+  const genericAmountMatch = cleanText.match(/Rs\.([\d,]+\.\d+)/i);
+  const genericAcctMatch = cleanText.match(/account\s+\*\*(\d+)/i);
+  const genericDateMatch = cleanText.match(/(\d{2}-\d{2}-\d{2})/);
+  
+  if (genericAmountMatch) {
+    transactionDetails.amount = genericAmountMatch[1];
+    
+    if (cleanText.includes('debited')) {
+      transactionDetails.transactionType = 'debit';
+    } else if (cleanText.includes('credited')) {
+      transactionDetails.transactionType = 'credit';
+    } else {
+      // Default to credit if unable to determine
+      transactionDetails.transactionType = 'credit';
+    }
+    
+    if (genericAcctMatch) {
+      transactionDetails.accountNumber = `**${genericAcctMatch[1]}`;
+    }
+    
+    if (genericDateMatch) {
+      transactionDetails.date = genericDateMatch[1];
+    }
+    
+    // Generate a generic transaction ID
+    if (transactionDetails.date) {
+      const dateStr = transactionDetails.date.replace(/-/g, '');
+      transactionDetails.transactionId = `HDFCTxn${dateStr}${transactionDetails.amount.replace(/\D/g, '')}`;
+    } else {
+      // Generate a random ID if no date
+      transactionDetails.transactionId = `HDFCTxn${Date.now()}${Math.floor(Math.random() * 1000)}`;
+    }
+    
+    // Set a better description with more context
+    const transactionType = transactionDetails.transactionType === 'credit' ? 'credited to' : 'debited from';
+    const accountInfo = transactionDetails.accountNumber ? ` ${transactionDetails.accountNumber}` : '';
+    transactionDetails.description = `Amount Rs.${transactionDetails.amount} ${transactionType} account${accountInfo}`;
+    
+    // Add a default payment method if none detected
+    if (!transactionDetails.paymentMethod) {
+      transactionDetails.paymentMethod = 'Bank Transfer';
+    }
+    
+    console.log(transactionDetails, "transactionDetails");
+    return transactionDetails;
+  }
+  
+  // Return null if we couldn't extract any useful information
+  return null;
+};
+
+/**
+ * Placeholder for ICICI Bank transaction parser
+ */
+export const extractIciciBankTransactionDetails = (emailBodyHtml) => {
+  // This is a placeholder - will be implemented in future
+  return null;
+};
+
+/**
+ * Placeholder for SBI Bank transaction parser
+ */
+export const extractSbiBankTransactionDetails = (emailBodyHtml) => {
+  // This is a placeholder - will be implemented in future
+  return null;
+};
+
+/**
+ * Placeholder for Axis Bank transaction parser
+ */
+export const extractAxisBankTransactionDetails = (emailBodyHtml) => {
+  // This is a placeholder - will be implemented in future
+  return null;
+};
+
 // Export the default object
 export default {
   parseOrderDetails,
   extractZomatoOrderDetails,
-  extractSwiggyOrderDetails
+  extractSwiggyOrderDetails,
+  extractHdfcBankTransactionDetails,
+  extractIciciBankTransactionDetails,
+  extractSbiBankTransactionDetails,
+  extractAxisBankTransactionDetails
 };

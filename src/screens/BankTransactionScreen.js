@@ -300,6 +300,8 @@ const BankTransactionScreen = () => {
           text: 'Cancel Loading', 
           style: 'destructive',
           onPress: () => {
+            console.log('User initiated cancel operation');
+            
             // Clear any UI timer
             if (loadingOperationRef.current) {
               clearInterval(loadingOperationRef.current);
@@ -309,11 +311,20 @@ const BankTransactionScreen = () => {
             // Send abort signal to Gmail service
             GmailService.abortCurrentOperation();
             
-            // Reset UI state
+            // Reset UI state - this has to happen BEFORE the abort signal completes
             setShowProgress(false);
             setIsLoading(false);
             setProgress(0);
             setProgressText('Operation cancelled');
+            
+            // Show a confirmation message to the user
+            setTimeout(() => {
+              Alert.alert(
+                'Operation Cancelled',
+                'The transaction loading operation has been cancelled.',
+                [{ text: 'OK' }]
+              );
+            }, 500);
           }
         }
       ]
@@ -404,7 +415,22 @@ const fetchBankTransactions = async () => {
               timeFrameOption,
               customRangeOptions,
               (current, total, message, estimatedTimeRemaining) => {
-                // Update progress display
+                // Special case for completion signal
+                if (message === 'COMPLETE_SIGNAL') {
+                  // Force close the progress display
+                  setProgress(1);
+                  setProgressText('Successfully loaded transactions!');
+                  
+                  // Hide loading indicators
+                  setTimeout(() => {
+                    setShowProgress(false);
+                    setIsLoading(false);
+                    // Don't set transactions here, that's done by the result handler
+                  }, 500);
+                  return;
+                }
+                
+                // Regular progress update
                 const progressValue = total > 0 ? current / total : 0;
                 setProgress(Math.min(0.95, progressValue));
                 setProgressText(message || `Processing ${current} of ${total} transactions...`);
@@ -425,6 +451,10 @@ const fetchBankTransactions = async () => {
             setProgressText('Successfully loaded transactions!');
             
             // Process results
+            // Ensure progress bar is closed regardless of the result
+            setShowProgress(false);
+            setIsLoading(false);
+            
             if (result.success) {
               setTransactions(result.transactions || []);
               // Update last updated timestamp in UI (not state)
@@ -443,6 +473,11 @@ const fetchBankTransactions = async () => {
               Alert.alert('Error', result.error || 'Failed to load transactions');
             }
           } catch (error) {
+            // Always hide loading indicators in case of error
+            setShowProgress(false);
+            setIsLoading(false);
+            setProgress(0);
+            
             // Check if operation was cancelled
             if (error.message && error.message.includes('cancelled')) {
               console.log('Transaction loading was cancelled by user');
@@ -452,11 +487,11 @@ const fetchBankTransactions = async () => {
               Alert.alert('Error', 'Failed to fetch transactions. Please try again.');
             }
           } finally {
-            // Hide loading indicators if still visible
-            if (isLoading) {
+            // Ensure loading indicators are definitely closed
+            setTimeout(() => {
               setShowProgress(false);
               setIsLoading(false);
-            }
+            }, 300);
           }
         }
       }
@@ -505,7 +540,22 @@ const fetchLatestTransactions = async () => {
               currentAccount.email,
               new Date(lastUpdated),
               (current, total, message, estimatedTimeRemaining) => {
-                // Update progress display
+                // Special case for completion signal
+                if (message === 'COMPLETE_SIGNAL') {
+                  // Force close the progress display
+                  setProgress(1);
+                  setProgressText('Successfully loaded latest transactions!');
+                  
+                  // Hide loading indicators
+                  setTimeout(() => {
+                    setShowProgress(false);
+                    setIsLoading(false);
+                    // Don't set transactions here, that's done by the result handler
+                  }, 500);
+                  return;
+                }
+                
+                // Regular progress update
                 const progressValue = total > 0 ? current / total : 0;
                 setProgress(Math.min(0.95, progressValue));
                 setProgressText(message || `Processing ${current} of ${total} latest transactions...`);
@@ -526,6 +576,10 @@ const fetchLatestTransactions = async () => {
             setProgressText('Successfully loaded latest transactions!');
             
             // Process results
+            // Ensure progress bar is closed regardless of the result
+            setShowProgress(false);
+            setIsLoading(false);
+            
             if (result.success) {
               // Update transaction list
               setTransactions(result.transactions || []);
@@ -545,6 +599,11 @@ const fetchLatestTransactions = async () => {
               Alert.alert('Error', result.error || 'Failed to load latest transactions');
             }
           } catch (error) {
+            // Always hide loading indicators in case of error
+            setShowProgress(false);
+            setIsLoading(false);
+            setProgress(0);
+            
             // Check if operation was cancelled
             if (error.message && error.message.includes('cancelled')) {
               console.log('Transaction refresh was cancelled by user');
@@ -554,11 +613,11 @@ const fetchLatestTransactions = async () => {
               Alert.alert('Error', 'Failed to fetch latest transactions. Please try again.');
             }
           } finally {
-            // Hide loading indicators if still visible
-            if (isLoading) {
+            // Ensure loading indicators are definitely closed
+            setTimeout(() => {
               setShowProgress(false);
               setIsLoading(false);
-            }
+            }, 300);
           }
         }
       }

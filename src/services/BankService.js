@@ -89,6 +89,12 @@ export const fetchBankTransactions = async (
       accountEmail,
       fullQuery,
       (current, total, message, estimatedTimeRemaining) => {
+        // Pass through the COMPLETE_SIGNAL if present
+        if (message === 'COMPLETE_SIGNAL') {
+          progressCallback(current, total, message, estimatedTimeRemaining);
+          return;
+        }
+        
         progressCallback(
           current,
           total,
@@ -98,14 +104,24 @@ export const fetchBankTransactions = async (
       }
     );
 
-    const transactions = emails.map(email => ({
-      id: email.id,
-      subject: email.subject,
-      date: email.date,
-      snippet: email.snippet,
-      from: email.from,
-      raw: email
-    }));
+    // Parse transactions based on bank type with proper platform ID
+    const transactions = emails.map(email => {
+      // Extract core transaction data, ignore snippet, from, etc.
+      const parsedTransaction = {
+        id: email.id,
+        date: email.date,
+        bankId: bankId,
+        rawEmailData: email,
+        bankName: bankInfo.name
+      };
+      
+      // Add parsed transaction details if available
+      if (email.orderDetails) {
+        Object.assign(parsedTransaction, email.orderDetails);
+      }
+      
+      return parsedTransaction;
+    });
 
     // Save transactions with time frame metadata
     await saveTransactions(bankId, accountEmail, transactions, timeFrame, customRange);
@@ -170,6 +186,12 @@ export const fetchLatestBankTransactions = async (bankId, accountEmail, lastFetc
       accountEmail,
       fullQuery,
       (current, total, message, estimatedTimeRemaining) => {
+        // Pass through the COMPLETE_SIGNAL if present
+        if (message === 'COMPLETE_SIGNAL') {
+          progressCallback(current, total, message, estimatedTimeRemaining);
+          return;
+        }
+        
         progressCallback(
           current, 
           total, 
