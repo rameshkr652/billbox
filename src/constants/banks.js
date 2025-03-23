@@ -1,0 +1,87 @@
+// src/constants/banks.js
+export default [
+    {
+      id: 'hdfc',
+      name: 'HDFC Bank',
+      color: '#ED232A',
+      icon: 'account-balance',
+      emailQuery: 'from:alerts@hdfcbank.net',
+    },
+    {
+      id: 'icici',
+      name: 'ICICI Bank',
+      color: '#F58220',
+      icon: 'account-balance',
+      emailQuery: 'from:alert@icicibank.com OR from:customer.care@icicibank.com',
+    },
+    {
+      id: 'sbi',
+      name: 'State Bank of India',
+      color: '#2F5597',
+      icon: 'account-balance',
+      emailQuery: 'from:noreply@sbi.co.in OR from:sbi.alerts@sbi.co.in',
+    },
+    {
+      id: 'axis',
+      name: 'Axis Bank',
+      color: '#97144D',
+      icon: 'account-balance',
+      emailQuery: 'from:alert@axisbank.com OR from:noreply@axisbank.com',
+    },
+    {
+      id: 'kotak',
+      name: 'Kotak Mahindra Bank',
+      color: '#EF1C25',
+      icon: 'account-balance',
+      emailQuery: 'from:noreply@kotak.com OR from:alerts@kotak.com',
+    },
+    {
+      id: 'idfc',
+      name: 'IDFC FIRST Bank',
+      color: '#6EA831',
+      icon: 'account-balance',
+      emailQuery: 'from:alerts@idfcfirstbank.com OR from:info@idfcfirstbank.com',
+    },
+    {
+      id: 'yes',
+      name: 'Yes Bank',
+      color: '#0060AF',
+      icon: 'account-balance',
+      emailQuery: 'from:noreply@yesbank.in OR from:alerts@yesbank.in',
+    },
+    {
+      id: 'pnb',
+      name: 'Punjab National Bank',
+      color: '#241F61',
+      icon: 'account-balance',
+      emailQuery: 'from:alert@pnb.co.in OR from:noreply@pnb.co.in',
+    },
+    {
+      id: 'bob',
+      name: 'Bank of Baroda',
+      color: '#FF5E14',
+      icon: 'account-balance',
+      emailQuery: 'from:alerts@bankofbaroda.com OR from:noreply@bankofbaroda.com',
+    },
+    {
+      id: 'indusind',
+      name: 'IndusInd Bank',
+      color: '#E23032',
+      icon: 'account-balance',
+      emailQuery: 'from:alerts@indusind.com OR from:noreply@indusind.com',
+    },
+    {
+      id: 'canara',
+      name: 'Canara Bank',
+      color: '#00AEEF',
+      icon: 'account-balance',
+      emailQuery: 'from:alerts@canarabank.com OR from:noreply@canarabank.com',
+    },
+    {
+      id: 'unionbank',
+      name: 'Union Bank of India',
+      color: '#05749C',
+      icon: 'account-balance',
+      emailQuery: 'from:alerts@unionbankofindia.com OR from:noreply@unionbankofindia.com',
+    }
+  ];
