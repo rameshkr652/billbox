@@ -249,91 +249,10 @@ export const extractSwiggyOrderDetails = (emailBodyHtml) => {
   return cleanedOrderDetails;
 }
 
-/**
- * Extract transaction details from HDFC Bank emails
- * @param {string} emailBodyHtml - The HTML or text content of the email
- * @returns {Object} Extracted transaction details
- */
-export const extractHdfcBankTransactionDetails = (emailBodyHtml) => {
-  // Initialize results object
-  const result = {
-    debitTransactions: [],
-    creditTransactions: []
-  };
-
-  if (!emailBodyHtml) {
-    return result;
-  }
-
-  try {
-    // Fixed debit transaction pattern
-    const debitPattern = /Rs\.([\d,]+\.\d{2})\s+has\s+been\s+debited\s+from\s+account\s+\*\*(\d+)\s+to\s+(?:VPA\s+[^\s]+\s+)?(.+?)(?:\s+on\s+\d{2}-\d{2}-\d{2})/i;
-    const debitMatch = emailBodyHtml.match(debitPattern);
-
-    if (debitMatch) {
-      const amount = parseFloat(debitMatch[1].replace(/,/g, ''));
-      const recipientName = debitMatch[3].trim().replace(/Mrs\s+/i, ''); // Remove "Mrs" prefix if present
-
-      result.debitTransactions.push({
-        type: 'debit',
-        amount,
-        recipient: recipientName
-      });
-    }
-
-    // Check for credit transaction pattern
-    const creditPattern = /Rs\.([\d,]+\.\d{2})\s+has\s+been\s+credited\s+to\s+your\s+account\s+\*\*(\d+)\s+by\s+([^<]+)(?:\s+on\s+(\d{2}-\d{2}-\d{2}))?/i;
-    const creditMatch = emailBodyHtml.match(creditPattern);
-
-    if (creditMatch) {
-      const amount = parseFloat(creditMatch[1].replace(/,/g, ''));
-      const senderName = creditMatch[3].trim();
-      
-      result.creditTransactions.push({
-        type: 'credit',
-        amount,
-        sender: senderName
-      });
-    }
-    
-    return result;
-  } catch (error) {
-    console.error('Error parsing HDFC Bank email:', error);
-    return result;
-  }
-}
-
-/**
- * Placeholder for ICICI Bank transaction parser
- */
-export const extractIciciBankTransactionDetails = (emailBodyHtml) => {
-  // This is a placeholder - will be implemented in future
-  return null;
-};
-
-/**
- * Placeholder for SBI Bank transaction parser
- */
-export const extractSbiBankTransactionDetails = (emailBodyHtml) => {
-  // This is a placeholder - will be implemented in future
-  return null;
-};
-
-/**
- * Placeholder for Axis Bank transaction parser
- */
-export const extractAxisBankTransactionDetails = (emailBodyHtml) => {
-  // This is a placeholder - will be implemented in future
-  return null;
-};
 
 // Export the default object
 export default {
   parseOrderDetails,
   extractZomatoOrderDetails,
-  extractSwiggyOrderDetails,
-  extractHdfcBankTransactionDetails,
-  extractIciciBankTransactionDetails,
-  extractSbiBankTransactionDetails,
-  extractAxisBankTransactionDetails
+  extractSwiggyOrderDetails
 };
