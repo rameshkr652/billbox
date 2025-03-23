@@ -14,12 +14,5 @@ export default [
     color: '#FC8019',
     icon: 'fastfood',
     emailQuery: 'from:noreply@swiggy.in',
-  },
-  {
-    id: 'banks',
-    name: 'Banks',
-    color: '#1E88E5',
-    icon: 'account-balance',
-    emailQuery: '',
   }
 ];

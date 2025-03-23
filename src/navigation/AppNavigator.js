@@ -16,8 +16,6 @@ import RestaurantsScreen from '../screens/RestaurantsScreen';
 import FoodsScreen from '../screens/FoodsScreen';
 import FoodDetailsScreen from '../screens/FoodDetailsScreen';
 import RestaurantDetailsScreen from '../screens/RestaurantDetailsScreen';
-import BankTransactionScreen from '../screens/BankTransactionScreen';
-import ManageBanksScreen from '../screens/ManageBanksScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -41,8 +39,6 @@ const AppNavigator = () => {
         <Stack.Screen name="FoodsScreen" component={FoodsScreen} />
         <Stack.Screen name="RestaurantDetails" component={RestaurantDetailsScreen} />
         <Stack.Screen name="FoodDetails" component={FoodDetailsScreen} />
-        <Stack.Screen name="BankTransactionScreen" component={BankTransactionScreen} />
-        <Stack.Screen name="ManageBanksScreen" component={ManageBanksScreen} />
 
       </Stack.Navigator>
     </NavigationContainer>
