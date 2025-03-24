@@ -152,7 +152,7 @@ const PlatformSelectionScreen = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Select Platforms</Text>
+        <Text style={styles.title}>Platforms</Text>
       </View>
 
       <FlatList

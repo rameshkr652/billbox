@@ -1,4 +1,4 @@
-// src/screens/SettingsScreen.js
+// Updated SettingsScreen.js with improved account management
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Switch, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -15,6 +15,7 @@ const SettingsScreen = () => {
   const navigation = useNavigation();
   const [selectedPlatforms, setSelectedPlatforms] = useState([]);
   const [userInfo, setUserInfo] = useState(null);
+  const [allAccounts, setAllAccounts] = useState([]);
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -31,104 +32,31 @@ const SettingsScreen = () => {
             setSelectedPlatforms(Object.keys(platformsConfig));
           }
         }
+        
+        // Load all accounts
+        const accounts = await AccountService.getAccounts();
+        setAllAccounts(accounts || []);
       } catch (error) {
         console.error('Error loading settings:', error);
       }
     };
     
     loadSettings();
-  }, []);
-
-  const togglePlatform = async (platformId) => {
-    try {
-      const account = await AccountService.getCurrentAccount();
-      if (!account) return;
-      
-      // Get current platform config
-      const platformsConfig = await StorageService.getPlatformsForAccount(account.email) || {};
-      
-      let updatedPlatforms = [...selectedPlatforms];
-      
-      if (selectedPlatforms.includes(platformId)) {
-        // Remove platform
-        updatedPlatforms = updatedPlatforms.filter(id => id !== platformId);
-        
-        // Remove from config
-        const newConfig = {...platformsConfig};
-        delete newConfig[platformId];
-        
-        // Confirm removal if there are saved emails
-        const emails = await GmailService.getPlatformEmails(platformId, account.email);
-        if (emails.length > 0) {
-          Alert.alert(
-            'Remove Platform',
-            `This will remove all saved ${platforms.find(p => p.id === platformId).name} order data. Continue?`,
-            [
-              { text: 'Cancel', style: 'cancel' },
-              { 
-                text: 'Remove', 
-                style: 'destructive',
-                onPress: async () => {
-                  // Clear platform data
-                  await GmailService.clearPlatformEmails(platformId, account.email);
-                  
-                  // Save updated config
-                  await StorageService.savePlatformsForAccount(account.email, newConfig);
-                  
-                  // Update state
-                  setSelectedPlatforms(updatedPlatforms);
-                }
-              }
-            ]
-          );
-          return;
-        }
-        
-        // No emails, just save config
-        await StorageService.savePlatformsForAccount(account.email, newConfig);
-      } else {
-        // Add platform
-        updatedPlatforms.push(platformId);
-        
-        // Add to config with current account
-        platformsConfig[platformId] = { accountEmail: account.email };
-        
-        // Save updated config
-        await StorageService.savePlatformsForAccount(account.email, platformsConfig);
+    
+    // Listen for account updates
+    const checkAccountUpdates = async () => {
+      const accountsUpdated = await AsyncStorage.getItem('accountsUpdated');
+      if (accountsUpdated) {
+        loadSettings();
       }
-      
-      // Update state
-      setSelectedPlatforms(updatedPlatforms);
-    } catch (error) {
-      console.error('Error toggling platform:', error);
-      Alert.alert('Error', 'Failed to update platform settings');
-    }
-  };
-
-  const handleSignOut = () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out? This will remove all your saved data.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Sign Out', 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await AuthService.signOut();
-              navigation.reset({
-                index: 0,
-                routes: [{ name: 'Intro' }],
-              });
-            } catch (error) {
-              console.error('Error signing out:', error);
-            }
-          }
-        }
-      ]
-    );
-  };
+    };
+    
+    // Set up check interval while screen is focused
+    const interval = setInterval(checkAccountUpdates, 1000);
+    
+    // Clean up
+    return () => clearInterval(interval);
+  }, []);
 
   const handleClearAllData = () => {
     Alert.alert(
@@ -141,10 +69,16 @@ const SettingsScreen = () => {
           style: 'destructive',
           onPress: async () => {
             try {
+              if (!userInfo) {
+                Alert.alert('Error', 'No account selected');
+                return;
+              }
+              
               // Clear all platform data but keep user info and platform selections
               for (const platform of platforms) {
-                await StorageService.clearPlatformData(platform.id);
+                await GmailService.clearPlatformEmails(platform.id, userInfo.email);
               }
+              
               Alert.alert('Success', 'All order data has been cleared.');
             } catch (error) {
               console.error('Error clearing all data:', error);
@@ -159,51 +93,21 @@ const SettingsScreen = () => {
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Settings</Text>
-      </View>
-      
-      {userInfo && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account</Text>
-          <View style={styles.card}>
-            <View style={styles.userInfo}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {userInfo.name ? userInfo.name.charAt(0).toUpperCase() : 'U'}
-                </Text>
-              </View>
-              <View style={styles.userDetails}>
-                <Text style={styles.userName}>{userInfo.name}</Text>
-                <Text style={styles.userEmail}>{userInfo.email}</Text>
-              </View>
-            </View>
-            <TouchableOpacity
-              style={styles.signOutButton}
-              onPress={handleSignOut}
-            >
-              <Icon name="logout" size={20} color={Colors.white} />
-              <Text style={styles.buttonText}>Sign Out</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
-      
+      </View>            
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Platforms</Text>
         <View style={styles.card}>
           {platforms.map((platform) => (
             <View key={platform.id} style={styles.platformItem}>
               <View style={styles.platformInfo}>
-                <View style={[styles.platformIcon, { backgroundColor: platform.color }]}>
+              <View style={[styles.platformIcon, { backgroundColor: platform.color }]}>
                   <Icon name={platform.icon} size={20} color={Colors.white} />
                 </View>
                 <Text style={styles.platformName}>{platform.name}</Text>
               </View>
-              <Switch
-                value={selectedPlatforms.includes(platform.id)}
-                onValueChange={() => togglePlatform(platform.id)}
-                trackColor={{ false: '#d0d0d0', true: platform.color + '80' }}
-                thumbColor={selectedPlatforms.includes(platform.id) ? platform.color : '#f4f3f4'}
-              />
+              <View style={styles.fixedBadge}>
+                <Text style={styles.fixedBadgeText}>Fixed</Text>
+              </View>
             </View>
           ))}
         </View>
@@ -237,13 +141,13 @@ const SettingsScreen = () => {
           </View>
           <View style={styles.aboutItem}>
             <Text style={styles.aboutLabel}>Build</Text>
-            <Text style={styles.aboutValue}>2025.03.09</Text>
+            <Text style={styles.aboutValue}>2025.03.24</Text>
           </View>
         </View>
       </View>
       
       <View style={styles.footer}>
-        <Text style={styles.footerText}>OrderTrack © 2025</Text>
+        <Text style={styles.footerText}>BillBox © 2025</Text>
         <Text style={styles.footerText}>All Rights Reserved</Text>
       </View>
     </ScrollView>
@@ -355,6 +259,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.darkGray,
   },
+  fixedBadge: {
+    backgroundColor: '#f0f0f0',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 4,
+  },
+  fixedBadgeText: {
+    fontSize: 12,
+    color: '#666',
+  },
   dataActionButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -398,6 +312,51 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.gray,
   },
+  // New styles for account management
+  accountItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  accountInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  smallAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  smallAvatarText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: Colors.white,
+  },
+  accountDetails: {
+    flex: 1,
+  },
+  accountName: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: Colors.darkGray,
+  },
+  accountEmail: {
+    fontSize: 12,
+    color: Colors.gray,
+  },
+  signOutSmallButton: {
+    padding: 8,
+    backgroundColor: '#f8f8f8',
+    borderRadius: 6,
+  }
 });
 
 export default SettingsScreen;
