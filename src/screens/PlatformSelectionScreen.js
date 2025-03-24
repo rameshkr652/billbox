@@ -14,9 +14,6 @@ const PlatformSelectionScreen = () => {
   const [currentAccount, setCurrentAccount] = useState(null);
   const [loading, setLoading] = useState(false);
   const [selectedPlatforms, setSelectedPlatforms] = useState([]);
-  
-  // New state to track if platforms have been initialized
-  const [platformsInitialized, setPlatformsInitialized] = useState(false);
 
   useEffect(() => {
     loadAccountData();
@@ -27,7 +24,7 @@ const PlatformSelectionScreen = () => {
     console.log('selectedPlatforms changed:', selectedPlatforms);
   }, [selectedPlatforms]);
 
-  // Modified loadAccountData to preselect all platforms and set them as fixed
+  // Modified loadAccountData to preselect all platforms
   const loadAccountData = async () => {
     try {
       const account = await AccountService.getCurrentAccount();
@@ -51,9 +48,6 @@ const PlatformSelectionScreen = () => {
           console.log('Preselecting all platforms:', allPlatformIds);
           setSelectedPlatforms(allPlatformIds);
         }
-        
-        // Mark platforms as initialized - they can no longer be changed
-        setPlatformsInitialized(true);
       } else {
         // No account found, redirect to sign in
         Alert.alert('No Account', 'Please sign in to continue');
@@ -65,14 +59,7 @@ const PlatformSelectionScreen = () => {
     }
   };
 
-  // This function will now be disabled once platforms are initialized
   const togglePlatform = (platformId) => {
-    // If platforms are initialized, don't allow changes
-    if (platformsInitialized) {
-      console.log('Platforms are fixed and cannot be changed');
-      return;
-    }
-    
     setSelectedPlatforms(prevSelected => {
       const isAlreadySelected = prevSelected.includes(platformId);
       
@@ -138,40 +125,34 @@ const PlatformSelectionScreen = () => {
     }
   };
 
-  const renderPlatformItem = ({ item }) => {
-    const isSelected = selectedPlatforms.includes(item.id);
-    
-    return (
-      <View
-        style={[
-          styles.platformItem,
-          isSelected && { 
-            borderColor: item.color, 
-            borderWidth: 2,
-            backgroundColor: `${item.color}10` // Light background for selected items
-          }
-        ]}
-      >
-        <View style={[styles.logoContainer, { backgroundColor: item.color }]}>
-          <Icon name={item.icon} size={30} color={Colors.white} />
-        </View>
-        <Text style={styles.platformName}>{item.name}</Text>
-        <View style={styles.checkbox}>
-          {isSelected && (
-            <Icon name="check-circle" size={24} color={item.color} />
-          )}
-        </View>
+  const renderPlatformItem = ({ item }) => (
+    <TouchableOpacity
+      style={[
+        styles.platformItem,
+        selectedPlatforms.includes(item.id) && { 
+          borderColor: item.color, 
+          borderWidth: 2,
+          backgroundColor: `${item.color}10` // Light background for selected items
+        }
+      ]}
+      onPress={() => togglePlatform(item.id)}
+    >
+      <View style={[styles.logoContainer, { backgroundColor: item.color }]}>
+        <Icon name={item.icon} size={30} color={Colors.white} />
       </View>
-    );
-  };
+      <Text style={styles.platformName}>{item.name}</Text>
+      <View style={styles.checkbox}>
+        {selectedPlatforms.includes(item.id) && (
+          <Icon name="check-circle" size={24} color={item.color} />
+        )}
+      </View>
+    </TouchableOpacity>
+  );
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Platforms</Text>
-        <Text style={styles.subtitle}>
-          These platforms are fixed and cannot be changed
-        </Text>
       </View>
 
       <FlatList
@@ -226,7 +207,6 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: Colors.gray,
-    marginBottom: 12,
   },
   accountInfo: {
     flexDirection: 'row',
