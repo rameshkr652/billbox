@@ -6,7 +6,6 @@ import * as AuthService from './AuthService';
 import { parseOrderDetails } from '../utils/EmailParser';
 
 // In-memory token cache to prevent excessive validation
-// Fixed to be more secure and account-specific
 const tokenCache = {
   tokens: {},
   expiryTimes: {},
@@ -41,7 +40,6 @@ const tokenCache = {
   }
 };
 
-// Export the tokenCache so it can be accessed by other components
 export { tokenCache };
 
 /**
@@ -58,7 +56,6 @@ const getAccessToken = async (accountEmail) => {
       return tokenCache.getToken(accountEmail);
     }
     
-    // Try getting a fresh token
     console.log(`Cache miss for ${accountEmail}, obtaining fresh token...`);
     
     // Try to refresh token first
@@ -83,7 +80,7 @@ const getAccessToken = async (accountEmail) => {
 };
 
 /**
- * Efficient gmail API caller that re-uses tokens when valid
+ * Efficient Gmail API caller that re-uses tokens when valid and forces re-login on persistent 401 errors
  */
 const callGmailApi = async (endpoint, accountEmail, options = {}, retryCount = 0) => {
   try {
@@ -92,7 +89,7 @@ const callGmailApi = async (endpoint, accountEmail, options = {}, retryCount = 0
     }
     
     // Get token from cache or refresh if needed
-    const accessToken = await getAccessToken(accountEmail);
+    let accessToken = await getAccessToken(accountEmail);
     
     console.log(`Making Gmail API call to ${endpoint} with account ${accountEmail}`);
     
@@ -108,16 +105,81 @@ const callGmailApi = async (endpoint, accountEmail, options = {}, retryCount = 0
     // Handle 401 unauthorized - token might be invalid
     if (response.status === 401) {
       if (retryCount >= 2) {
-        throw new Error('Authentication failed after multiple retries');
+        // After multiple retries, force a fresh login to get new tokens
+        console.log(`Persistent 401 error for ${accountEmail}, forcing re-login...`);
+        
+        // Clear existing token and session
+        tokenCache.clearToken(accountEmail);
+        await GoogleSignin.revokeAccess();
+        await GoogleSignin.signOut();
+
+        // Configure GoogleSignin for fresh login
+        GoogleSignin.configure({
+          scopes: ['https://www.googleapis.com/auth/gmail.readonly'],
+          webClientId: '533100730063-856k8l5r6uh2fe2fl7iovkf4t8tjdm69.apps.googleusercontent.com',
+          offlineAccess: true,
+          forceCodeForRefreshToken: true, // Ensure a new refresh token is issued
+        });
+
+        // Force user to re-authenticate
+        const userInfo = await GoogleSignin.signIn();
+        const tokens = await GoogleSignin.getTokens();
+
+        if (!userInfo?.data?.user || !tokens.accessToken) {
+          throw new Error('Failed to obtain new credentials after forced login');
+        }
+
+        const user = userInfo.data.user;
+        const newAccount = {
+          id: user.id || String(Date.now()),
+          email: user.email,
+          name: user.name || `${user.givenName || ''} ${user.familyName || ''}`.trim(),
+          photo: user.photo,
+          accessToken: tokens.accessToken,
+        };
+
+        // Save new refresh token and expiry
+        if (tokens.refreshToken) {
+          await AsyncStorage.setItem(`refresh_token_${accountEmail}`, tokens.refreshToken);
+          const expiryTime = Date.now() + (3600 * 1000); // 1 hour expiry
+          await AsyncStorage.setItem(`token_expiry_${accountEmail}`, expiryTime.toString());
+          tokenCache.setToken(accountEmail, tokens.accessToken, 3600);
+        }
+
+        // Update accounts list
+        const accounts = await AsyncStorage.getItem('accounts');
+        let accountsList = accounts ? JSON.parse(accounts) : [];
+        const existingIndex = accountsList.findIndex(a => a.email === accountEmail);
+        if (existingIndex >= 0) {
+          accountsList[existingIndex] = newAccount; // Replace old account data
+        } else {
+          accountsList.push(newAccount);
+        }
+        await AsyncStorage.setItem('accounts', JSON.stringify(accountsList));
+        await AsyncStorage.setItem('currentAccount', accountEmail);
+
+        // Retry the API call with the new token
+        accessToken = tokens.accessToken;
+        const retryResponse = await fetch(endpoint, {
+          ...options,
+          headers: {
+            ...options.headers,
+            Authorization: `Bearer ${accessToken}`
+          }
+        });
+
+        if (!retryResponse.ok) {
+          throw new Error(`Gmail API retry failed after re-login: ${retryResponse.status}`);
+        }
+
+        return retryResponse.json();
       }
       
-      // Clear the cached token
+      // Clear the cached token and attempt refresh
       tokenCache.clearToken(accountEmail);
-      
-      // Force token refresh
       await AuthService.refreshTokenIfNeeded(accountEmail);
       
-      // Retry the API call
+      // Retry the API call with refreshed token
       return callGmailApi(endpoint, accountEmail, options, retryCount + 1);
     }
     
@@ -140,7 +202,6 @@ const callGmailApi = async (endpoint, accountEmail, options = {}, retryCount = 0
   }
 };
 
-// src/services/GmailService.js (continued)
 export const fetchAllPlatformEmails = async (platform, accountEmail, platformQuery, progressCallback = () => {}) => {
   try {
     if (!accountEmail) {
@@ -149,29 +210,24 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
     
     progressCallback(0, 1, 'Preparing to fetch emails...');
     
-    // Use the provided platform query or default
     const query = platformQuery || `from:${platform}.com`;
     const encodedQuery = encodeURIComponent(query);
     
-    // List emails matching the query
     progressCallback(0, 1, 'Finding matching emails...');
     const listUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodedQuery}&maxResults=100`;
     const initialData = await callGmailApi(listUrl, accountEmail);
-    // console.log(initialData,"ss")
+    
     if (!initialData.messages || initialData.messages.length === 0) {
       progressCallback(1, 1, 'No emails found.');
       return [];
     }
     
-    // Get approximate total count
     const totalCount = initialData.resultSizeEstimate || initialData.messages.length;
     progressCallback(0, totalCount, `Found ${totalCount} emails. Processing...`);
     
-    // Collect all message IDs
     let allMessageIds = initialData.messages.map(msg => msg.id);
     let nextPageToken = initialData.nextPageToken;
     
-    // Get remaining message IDs if there are more pages
     while (nextPageToken) {
       const pageUrl = `${listUrl}&pageToken=${nextPageToken}`;
       const pageData = await callGmailApi(pageUrl, accountEmail);
@@ -184,8 +240,7 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
       progressCallback(allMessageIds.length, totalCount, `Collecting message IDs (${allMessageIds.length})...`);
     }
     
-    // Process emails in batches to improve performance
-    const BATCH_SIZE = 10; // Process 10 emails at a time
+    const BATCH_SIZE = 10;
     const batches = [];
     
     for (let i = 0; i < allMessageIds.length; i += BATCH_SIZE) {
@@ -195,12 +250,9 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
     const processedEmails = [];
     let processedCount = 0;
     
-    // Process each batch with a single token validation
     for (const batch of batches) {
-      // Get access token once per batch
       const accessToken = await getAccessToken(accountEmail);
       
-      // Process this batch in parallel
       const batchResults = await Promise.all(
         batch.map(async (messageId) => {
           try {
@@ -225,11 +277,9 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
         })
       );
       
-      // Add valid results to our collection
       const validResults = batchResults.filter(result => result !== null);
       processedEmails.push(...validResults);
       
-      // Update progress
       processedCount += batch.length;
       progressCallback(
         processedCount,
@@ -238,12 +288,10 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
       );
     }
     
-    // Save results - IMPORTANT: We now use accountEmail in the storage key
     progressCallback(allMessageIds.length, allMessageIds.length, 'Saving emails...');
     const storageKey = `emails_${platform}_${accountEmail}`;
     await AsyncStorage.setItem(storageKey, JSON.stringify(processedEmails));
     
-    // Save last fetched timestamp
     const now = Date.now();
     await AsyncStorage.setItem(`lastFetched_${platform}_${accountEmail}`, now.toString());
     
@@ -263,7 +311,6 @@ const extractEmailData = (messageData, platform) => {
       return null;
     }
     
-    // Extract headers
     const headers = {};
     if (messageData.payload.headers) {
       messageData.payload.headers.forEach(header => {
@@ -297,18 +344,15 @@ const extractEmailBody = (messageData) => {
       return '';
     }
     
-    // Try to find HTML content first, then plain text
     const findBodyContent = (part, preferredMimeType = null) => {
       if (!part) return null;
       
-      // Check if this part has the body content
       if (part.body && part.body.data) {
         if (!preferredMimeType || part.mimeType === preferredMimeType) {
           return part.body.data;
         }
       }
       
-      // Recursively check nested parts
       if (part.parts && part.parts.length > 0) {
         for (const childPart of part.parts) {
           const content = findBodyContent(childPart, preferredMimeType);
@@ -319,15 +363,12 @@ const extractEmailBody = (messageData) => {
       return null;
     };
     
-    // Try HTML first
     let bodyData = findBodyContent(messageData.payload, 'text/html');
     
-    // Fall back to plain text if no HTML
     if (!bodyData) {
       bodyData = findBodyContent(messageData.payload, 'text/plain');
     }
     
-    // Last resort: any content
     if (!bodyData && messageData.payload.body && messageData.payload.body.data) {
       bodyData = messageData.payload.body.data;
     }
@@ -350,20 +391,15 @@ const decodeBase64Url = (base64UrlString) => {
   try {
     if (!base64UrlString) return '';
     
-    // Convert Base64URL to Base64
     let base64 = base64UrlString.replace(/-/g, '+').replace(/_/g, '/');
     
-    // Add padding if needed
     while (base64.length % 4) {
       base64 += '=';
     }
     
-    // Decode
     if (typeof atob === 'function') {
-      // Browser environment
       return atob(base64);
     } else {
-      // React Native environment
       return Buffer.from(base64, 'base64').toString('utf8');
     }
   } catch (error) {
@@ -371,8 +407,9 @@ const decodeBase64Url = (base64UrlString) => {
     return '';
   }
 };
+
 /**
- * Utility methods for storage - IMPORTANT: These now use accountEmail in the keys
+ * Utility methods for storage
  */
 export const getPlatformEmails = async (platform, accountEmail) => {
   try {
@@ -421,7 +458,6 @@ export const clearPlatformEmails = async (platform, accountEmail) => {
     await AsyncStorage.removeItem(emailsKey);
     await AsyncStorage.removeItem(timestampKey);
     
-    // Also clear token cache for this account to force fresh token on next operation
     tokenCache.clearToken(accountEmail);
     
     return true;
@@ -439,32 +475,24 @@ export const fetchLatestEmails = async (platform, accountEmail, lastFetchedDate,
     
     console.log(`Fetching latest emails for ${platform} with account ${accountEmail}`);
     
-    // Format date for Gmail query (YYYY/MM/DD)
     const formatDate = (date) => {
       return `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
     };
     
-    // Create query with date filter, subtracting a buffer to ensure no emails are missed
-    const queryDate = new Date(lastFetchedDate.getTime() - (12 * 60 * 60 * 1000)); // 12-hour buffer
+    const queryDate = new Date(lastFetchedDate.getTime() - (12 * 60 * 60 * 1000));
     const dateQuery = `after:${formatDate(queryDate)}`;
     
-    // Find platform query or use default
     const platformQuery = `from:${platform}.com ${dateQuery}`;
     
-    // Get new emails
     const newEmails = await fetchAllPlatformEmails(platform, accountEmail, platformQuery, progressCallback);
     
-    // Get existing emails
     const existingEmails = await getPlatformEmails(platform, accountEmail);
     
-    // Merge without duplicates
     const mergedEmails = mergeWithoutDuplicates(existingEmails, newEmails);
     
-    // Save merged result using the correct account-specific key
     const storageKey = `emails_${platform}_${accountEmail}`;
     await AsyncStorage.setItem(storageKey, JSON.stringify(mergedEmails));
     
-    // Update timestamp
     const now = Date.now();
     await AsyncStorage.setItem(`lastFetched_${platform}_${accountEmail}`, now.toString());
     
@@ -487,16 +515,13 @@ const mergeWithoutDuplicates = (existingEmails, newEmails) => {
     return existingEmails;
   }
   
-  // Use a Map for O(1) lookups
   const emailMap = new Map();
   
-  // Add existing emails to map
   existingEmails.forEach(email => {
     const key = email.orderDetails?.orderId || email.id;
     emailMap.set(key, email);
   });
   
-  // Add new emails if not duplicates
   newEmails.forEach(email => {
     const key = email.orderDetails?.orderId || email.id;
     if (!emailMap.has(key)) {
@@ -504,18 +529,11 @@ const mergeWithoutDuplicates = (existingEmails, newEmails) => {
     }
   });
   
-  // Convert map back to array
   return Array.from(emailMap.values());
 };
 
-// Add this to GmailService.js
-
 /**
  * Save emails for a specific platform and account
- * @param {string} platform - The platform identifier
- * @param {string} accountEmail - The email of the account
- * @param {Array} emails - The array of emails to save
- * @returns {Promise<boolean>} - Whether the operation was successful
  */
 export const saveEmails = async (platform, accountEmail, emails) => {
   try {
@@ -524,20 +542,17 @@ export const saveEmails = async (platform, accountEmail, emails) => {
       return false;
     }
     
-    // Create the platform-specific, account-specific storage key
     const storageKey = `emails_${platform}_${accountEmail}`;
     
-    // Save the emails to storage
     await AsyncStorage.setItem(storageKey, JSON.stringify(emails));
     
-    // Update the last fetched timestamp
     const now = Date.now();
     await AsyncStorage.setItem(`lastFetched_${platform}_${accountEmail}`, now.toString());
     
     console.log(`Saved ${emails.length} emails for ${platform} with account ${accountEmail}`);
     return true;
   } catch (error) {
-    console.error(`Error saving emails for ${platform} with account ${accountEmail}:`, error);
+    console.error(`Error saving emails for ${platform} with ${accountEmail}:`, error);
     return false;
   }
 };
