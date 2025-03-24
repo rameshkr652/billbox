@@ -8,10 +8,11 @@ import {
   ActivityIndicator,
   FlatList,
   Dimensions,
-  SafeAreaView,
   StatusBar,
   Animated,
-  Easing
+  Easing,
+  Image,
+  ScrollView
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -23,8 +24,8 @@ const { width, height } = Dimensions.get('window');
 const IntroScreen = () => {
   const navigation = useNavigation();
   const [loading, setLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(0);
-  const flatListRef = useRef(null);
+  const [currentStep, setCurrentStep] = useState(0);
+  const scrollViewRef = useRef(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(50)).current;
 
@@ -61,11 +62,6 @@ const IntroScreen = () => {
         toValue: 1,
         duration: 100,
         useNativeDriver: true,
-      }),
-      Animated.timing(buttonOpacity, {
-        toValue: 0.7,
-        duration: 200,
-        useNativeDriver: true,
       })
     ]).start();
   };
@@ -82,187 +78,258 @@ const IntroScreen = () => {
     }
   };
 
-  const features = [
-    {
-      id: '1',
-      title: "Track All Your Orders",
-      description: "BillBox automatically organizes all your food and shopping orders from Gmail into one beautiful dashboard",
-      icon: "receipt-long",
-      secondaryIcon: "local-mall",
-      color: Colors.primary
-    },
-    {
-      id: '2',
-      title: "Monitor Expenses",
-      description: "See exactly how much you've spent across different platforms with detailed analytics and trends",
-      icon: "account-balance-wallet",
-      secondaryIcon: "trending-up",
-      color: Colors.accent
-    },
-    {
-      id: '3',
-      title: "Multiple Accounts",
-      description: "Connect different Gmail accounts and manage all your platforms separately for work and personal use",
-      icon: "people",
-      secondaryIcon: "account-circle",
-      color: Colors.flipkart
-    }
-  ];
-
-  const renderFeatureItem = ({ item, index }) => {
-    // Calculate if this item is the current one
-    const isCurrent = index === currentPage;
+  const goToNextStep = () => {
+    const nextStep = currentStep + 1;
+    setCurrentStep(nextStep);
     
+    // Scroll to the next step
+    scrollViewRef.current?.scrollTo({
+      x: nextStep * width,
+      animated: true
+    });
+  };
+
+  const goToPreviousStep = () => {
+    if (currentStep > 0) {
+      const prevStep = currentStep - 1;
+      setCurrentStep(prevStep);
+      
+      // Scroll to the previous step
+      scrollViewRef.current?.scrollTo({
+        x: prevStep * width,
+        animated: true
+      });
+    }
+  };
+
+  // Handle scroll end to update the current step
+  const handleScroll = (event) => {
+    const offsetX = event.nativeEvent.contentOffset.x;
+    const step = Math.round(offsetX / width);
+    if (step !== currentStep) {
+      setCurrentStep(step);
+    }
+  };
+
+  // Render step indicators
+  const renderStepIndicators = () => {
     return (
-      <View style={styles.featureItem}>
-        <View style={[styles.featureIconsContainer, { backgroundColor: `${item.color}15` }]}>
-          <View style={[styles.primaryIconContainer, { backgroundColor: item.color }]}>
-            <Icon name={item.icon} size={60} color="#FFFFFF" />
-          </View>
-          
-          {/* Secondary floating icons */}
-          <View style={[styles.secondaryIconContainer, { backgroundColor: item.color, top: 100, right: 80 }]}>
-            <Icon name={item.secondaryIcon} size={30} color="#FFFFFF" />
-          </View>
-          
-          <View style={[styles.secondaryIconContainer, { backgroundColor: `${item.color}90`, bottom: 90, left: 80 }]}>
-            <Icon name={index === 0 ? "fastfood" : (index === 1 ? "bar-chart" : "settings")} size={26} color="#FFFFFF" />
-          </View>
-          
-          {/* Decorative dots */}
-          <View style={[styles.decorativeDot, { top: 70, left: 60, backgroundColor: `${item.color}40` }]} />
-          <View style={[styles.decorativeDot, { bottom: 60, right: 70, backgroundColor: `${item.color}60` }]} />
-          <View style={[styles.decorativeDot, { top: 160, right: 50, backgroundColor: `${item.color}30` }]} />
-        </View>
-        
-        <Text style={styles.featureTitle}>{item.title}</Text>
-        <Text style={styles.featureDescription}>{item.description}</Text>
+      <View style={styles.stepsIndicator}>
+        {Array(4).fill(0).map((_, index) => (
+          <View
+            key={`step-${index}`}
+            style={[
+              styles.stepDot,
+              currentStep === index && { backgroundColor: Colors.primary, width: 20 }
+            ]}
+          />
+        ))}
       </View>
     );
   };
 
-  const handleScroll = (event) => {
-    const { contentOffset } = event.nativeEvent;
-    const viewSize = event.nativeEvent.layoutMeasurement;
-    const pageNum = Math.floor(contentOffset.x / viewSize.width);
-    setCurrentPage(pageNum);
-  };
-
-  const goToPage = (index) => {
-    flatListRef.current?.scrollToIndex({
-      index,
-      animated: true,
-    });
-  };
-
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       
-      {/* Header Logo */}
+      {/* App Logo */}
       <Animated.View 
         style={[
-          styles.header, 
+          styles.logoContainer, 
           { 
             opacity: fadeAnim,
             transform: [{ translateY: translateY }]
           }
         ]}
       >
-        <View style={styles.logoContainer}>
-          <View style={styles.logoBox}>
-            <Text style={styles.logoText}>BB</Text>
-          </View>
-          <View>
-            <Text style={styles.appTitle}>BillBox</Text>
-            <Text style={styles.appSubtitle}>Simplify your expense tracking</Text>
-          </View>
+        <View style={styles.logoBox}>
+          <Text style={styles.logoText}>BB</Text>
         </View>
+        <Text style={styles.appTitle}>BillBox</Text>
+        <Text style={styles.appSubtitle}>Track all your food orders in one place</Text>
       </Animated.View>
-
-      {/* Features Carousel */}
-      <Animated.View 
-        style={[
-          styles.featuresContainer,
-          { 
-            opacity: fadeAnim,
-            transform: [{ translateY: translateY }]
-          }
-        ]}
+      
+      {/* Step by Step Guide */}
+      <ScrollView
+        ref={scrollViewRef}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={handleScroll}
+        scrollEventThrottle={16}
+        style={styles.stepsContainer}
       >
-        <FlatList
-          ref={flatListRef}
-          data={features}
-          renderItem={renderFeatureItem}
-          keyExtractor={(item) => item.id}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          onMomentumScrollEnd={handleScroll}
-          style={styles.featuresList}
-        />
-        
-        {/* Pagination */}
-        <View style={styles.pagination}>
-          {features.map((_, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[
-                styles.paginationDot,
-                index === currentPage && [
-                  styles.paginationDotActive,
-                  { backgroundColor: features[currentPage].color }
-                ],
-              ]}
-              onPress={() => goToPage(index)}
-            />
-          ))}
-        </View>
-      </Animated.View>
-
-      {/* Sign-in Button */}
-      <Animated.View 
-        style={[
-          styles.signInSection,
-          { 
-            opacity: fadeAnim,
-            transform: [
-              { translateY: translateY },
-              { scale: buttonScale }
-            ] 
-          }
-        ]}
-      >
-        {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Colors.primary} />
-            <Text style={styles.loadingText}>Connecting to Google...</Text>
-          </View>
-        ) : (
-          <TouchableOpacity
-            style={[styles.signInButton, { backgroundColor: Colors.primary }]}
-            onPress={signIn}
-            activeOpacity={0.8}
-          >
-            <View style={styles.googleIconContainer}>
-              <Icon name="alternate-email" size={24} color="#FFFFFF" />
+        {/* Step 1: Welcome Screen */}
+        <View style={styles.stepScreen}>
+          <View style={styles.stepIconContainer}>
+            <View style={[styles.stepIcon, { backgroundColor: Colors.swiggy }]}>
+              <Icon name="fastfood" size={40} color="#FFFFFF" />
             </View>
-            <Text style={styles.signInButtonText}>
-              Continue with Google
+            <View style={[styles.stepIcon, { backgroundColor: Colors.zomato }]}>
+              <Icon name="restaurant" size={40} color="#FFFFFF" />
+            </View>
+          </View>
+          <Text style={styles.stepTitle}>Track Your Food Orders</Text>
+          <Text style={styles.stepDescription}>
+            BillBox finds and organizes all your Swiggy and Zomato orders from Gmail in one convenient dashboard
+          </Text>
+          <View style={styles.orderLogos}>
+            <View style={styles.platformLogo}>
+              <View style={[styles.logoCircle, { backgroundColor: Colors.swiggy }]}>
+                <Icon name="fastfood" size={24} color="#FFFFFF" />
+              </View>
+              <Text style={styles.platformName}>Swiggy</Text>
+            </View>
+            <View style={styles.platformLogo}>
+              <View style={[styles.logoCircle, { backgroundColor: Colors.zomato }]}>
+                <Icon name="restaurant" size={24} color="#FFFFFF" />
+              </View>
+              <Text style={styles.platformName}>Zomato</Text>
+            </View>
+          </View>
+        </View>
+        
+        {/* Step 2: Gmail Permission Required */}
+        <View style={styles.stepScreen}>
+          <View style={styles.stepIconContainer}>
+            <View style={[styles.importantIcon]}>
+              <Icon name="mark-email-read" size={60} color={Colors.primary} />
+            </View>
+          </View>
+          <Text style={styles.stepTitle}>Gmail Access Required</Text>
+          <Text style={styles.stepDescription}>
+            BillBox needs to access your Gmail to scan for food order emails.
+          </Text>
+          <View style={styles.importantNote}>
+            <Icon name="priority-high" size={20} color={Colors.accent} style={styles.noteIcon} />
+            <Text style={styles.noteText}>
+              In the next steps, make sure you check the "View your email messages and settings" permission when prompted by Google.
             </Text>
-            <Icon name="arrow-forward" size={20} color="#FFFFFF" />
+          </View>
+        </View>
+        
+        {/* Step 3: Permission Guide */}
+        <View style={styles.stepScreen}>
+          <View style={styles.permitStepContainer}>
+            <View style={[styles.permitStep, styles.activePermitStep]}>
+              <View style={styles.permitStepNumber}>
+                <Text style={styles.permitNumber}>1</Text>
+              </View>
+              <View style={styles.permitStepContent}>
+                <Text style={styles.permitStepTitle}>Select Your Google Account</Text>
+              </View>
+            </View>
+            
+            <View style={[styles.permitStep, styles.importantPermitStep]}>
+              <View style={[styles.permitStepNumber, styles.importantStepNumber]}>
+                <Text style={styles.permitNumber}>2</Text>
+              </View>
+              <View style={styles.permitStepContent}>
+                <Text style={styles.permitStepTitle}>Check The Email Permission</Text>
+                <View style={styles.permissionCheckbox}>
+                  <Icon name="check-box" size={20} color={Colors.primary} />
+                  <Text style={styles.permissionLabel}>View your email messages and settings</Text>
+                </View>
+                <Text style={styles.permissionHint}>This must be checked for BillBox to work</Text>
+              </View>
+            </View>
+            
+            <View style={styles.permitStep}>
+              <View style={styles.permitStepNumber}>
+                <Text style={styles.permitNumber}>3</Text>
+              </View>
+              <View style={styles.permitStepContent}>
+                <Text style={styles.permitStepTitle}>Tap "Continue" to proceed</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+        
+        {/* Step 4: Login Screen */}
+        <View style={styles.stepScreen}>
+          <View style={styles.finalStepContainer}>
+            <Icon name="check-circle" size={80} color={Colors.primary} />
+            <Text style={styles.stepTitle}>Ready To Go!</Text>
+            <Text style={styles.stepDescription}>
+              Sign in with your Google account to start organizing your food orders
+            </Text>
+            <View style={styles.rememberBox}>
+              <Icon name="info" size={20} color={Colors.primary} />
+              <Text style={styles.rememberText}>
+                Remember to check "View your email messages and settings" on the Google permissions screen
+              </Text>
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+      
+      {/* Step Indicators */}
+      {renderStepIndicators()}
+      
+      {/* Navigation Buttons */}
+      <View style={styles.navigationContainer}>
+        {currentStep > 0 ? (
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={goToPreviousStep}
+          >
+            <Icon name="arrow-back" size={24} color="#555" />
+            <Text style={styles.backText}>Back</Text>
           </TouchableOpacity>
+        ) : (
+          <View style={styles.backButton} />
         )}
         
-        <View style={styles.privacyContainer}>
-          <Text style={styles.privacyText}>
-            By continuing, you agree to our{' '}
-            <Text style={styles.privacyLink}>Terms of Service</Text> and{' '}
-            <Text style={styles.privacyLink}>Privacy Policy</Text>
-          </Text>
-        </View>
-      </Animated.View>
-    </SafeAreaView>
+        {currentStep < 3 ? (
+          <TouchableOpacity 
+            style={[styles.nextButton, { backgroundColor: Colors.primary }]}
+            onPress={goToNextStep}
+          >
+            <Text style={styles.nextText}>Next</Text>
+            <Icon name="arrow-forward" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+        ) : (
+          <Animated.View 
+            style={[
+              styles.signInSection,
+              { 
+                transform: [{ scale: buttonScale }] 
+              }
+            ]}
+          >
+            {loading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={Colors.primary} />
+                <Text style={styles.loadingText}>Connecting to Google...</Text>
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={[styles.signInButton, { backgroundColor: Colors.primary }]}
+                onPress={signIn}
+                activeOpacity={0.8}
+              >
+                <View style={styles.googleIconContainer}>
+                  <Icon name="alternate-email" size={24} color="#FFFFFF" />
+                </View>
+                <Text style={styles.signInButtonText}>
+                  Continue with Google
+                </Text>
+                <Icon name="arrow-forward" size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+            )}
+          </Animated.View>
+        )}
+      </View>
+      
+      {/* Privacy Policy Text */}
+      <View style={styles.privacyContainer}>
+        <Text style={styles.privacyText}>
+          By continuing, you agree to our{' '}
+          <Text style={styles.privacyLink}>Terms of Service</Text> and{' '}
+          <Text style={styles.privacyLink}>Privacy Policy</Text>
+        </Text>
+      </View>
+    </View>
   );
 };
 
@@ -271,22 +338,20 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
-  header: {
-    paddingTop: 30,
-    paddingHorizontal: 25,
-    paddingBottom: 15,
-  },
   logoContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 30,
+    paddingBottom: 10,
   },
   logoBox: {
-    width: 50,
-    height: 50,
-    borderRadius: 15,
+    width: 70,
+    height: 70,
+    borderRadius: 20,
     backgroundColor: Colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 15,
     shadowColor: Colors.primary,
     shadowOffset: {
       width: 0,
@@ -295,138 +360,306 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 6,
     elevation: 4,
-    marginRight: 15,
   },
   logoText: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
   appTitle: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#1a1a2e',
   },
   appSubtitle: {
     fontSize: 14,
     color: '#5d5d5d',
+    marginBottom: 20,
   },
-  featuresContainer: {
+  stepsContainer: {
     flex: 1,
-    marginTop: 10,
   },
-  featuresList: {
-    flexGrow: 0,
-  },
-  featureItem: {
+  stepScreen: {
     width: width,
     padding: 20,
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
   },
-  featureIconsContainer: {
-    width: width * 0.75,
-    height: width * 0.75,
-    borderRadius: 30,
+  stepIconContainer: {
+    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 30,
-    position: 'relative',
   },
-  primaryIconContainer: {
+  stepIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    margin: 10,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  importantIcon: {
     width: 120,
     height: 120,
     borderRadius: 60,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 6,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 7,
-  },
-  secondaryIconContainer: {
-    position: 'absolute',
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
+    backgroundColor: '#f0f4ff',
+    shadowColor: Colors.primary,
     shadowOffset: {
       width: 0,
       height: 4,
     },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.15,
     shadowRadius: 5,
-    elevation: 5,
+    elevation: 3,
   },
-  decorativeDot: {
-    position: 'absolute',
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-  },
-  featureTitle: {
+  stepTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#1a1a2e',
-    marginBottom: 12,
+    marginBottom: 16,
     textAlign: 'center',
   },
-  featureDescription: {
+  stepDescription: {
     fontSize: 16,
     color: '#5d5d5d',
     textAlign: 'center',
-    paddingHorizontal: 30,
+    marginBottom: 25,
     lineHeight: 24,
   },
-  pagination: {
+  orderLogos: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 30,
-    marginBottom: 20,
+    marginTop: 20,
   },
-  paginationDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#DDDDDD',
-    marginHorizontal: 6,
+  platformLogo: {
+    alignItems: 'center',
+    marginHorizontal: 20,
   },
-  paginationDotActive: {
-    width: 30,
+  logoCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
   },
-  signInSection: {
-    paddingHorizontal: 25,
-    paddingBottom: 40,
+  platformName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
   },
-  signInButton: {
+  importantNote: {
+    flexDirection: 'row',
+    backgroundColor: '#fff4f4',
+    borderRadius: 12,
+    padding: 15,
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: '#ffe0e0',
+  },
+  noteIcon: {
+    marginRight: 10,
+    marginTop: 2,
+  },
+  noteText: {
+    fontSize: 14,
+    color: '#d32f2f',
+    flex: 1,
+    lineHeight: 22,
+  },
+  permitStepContainer: {
     width: '100%',
-    height: 60,
-    borderRadius: 16,
+    marginTop: 20,
+  },
+  permitStep: {
+    flexDirection: 'row',
+    marginBottom: 20,
+    paddingVertical: 15,
+    paddingHorizontal: 15,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: '#ddd',
+  },
+  activePermitStep: {
+    backgroundColor: '#f0f7ff',
+    borderLeftColor: Colors.primary,
+  },
+  importantPermitStep: {
+    backgroundColor: '#fff8e1',
+    borderLeftColor: Colors.accent,
+    borderWidth: 1,
+    borderColor: '#ffe0b2',
+  },
+  permitStepNumber: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#ddd',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  importantStepNumber: {
+    backgroundColor: Colors.accent,
+  },
+  permitNumber: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  permitStepContent: {
+    flex: 1,
+  },
+  permitStepTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 6,
+  },
+  permissionCheckbox: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: 10,
+    borderRadius: 6,
+    marginVertical: 8,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+  },
+  permissionLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333',
+    marginLeft: 10,
+  },
+  permissionHint: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    color: '#d32f2f',
+  },
+  finalStepContainer: {
+    alignItems: 'center',
+    padding: 20,
+  },
+  rememberBox: {
+    flexDirection: 'row',
+    backgroundColor: '#e3f2fd',
+    padding: 15,
+    borderRadius: 12,
+    marginTop: 20,
+    alignItems: 'flex-start',
+  },
+  rememberText: {
+    fontSize: 14,
+    color: '#1565c0',
+    marginLeft: 10,
+    flex: 1,
+    lineHeight: 20,
+  },
+  stepsIndicator: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  stepDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#ddd',
+    marginHorizontal: 4,
+  },
+  navigationContainer: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 25,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    minWidth: 100,
+  },
+  backText: {
+    fontSize: 16,
+    color: '#555',
+    marginLeft: 8,
+  },
+  nextButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
     shadowColor: Colors.primary,
     shadowOffset: {
       width: 0,
-      height: 6,
+      height: 3,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 5,
-    marginBottom: 20,
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+    minWidth: 100,
+  },
+  nextText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginRight: 8,
+  },
+  signInSection: {
+    flex: 1,
+    paddingLeft: 20,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 50,
+    marginBottom: 10,
+  },
+  loadingText: {
+    marginTop: 10,
+    color: Colors.primary,
+    fontSize: 14,
+  },
+  signInButton: {
+    width: '100%',
+    height: 54,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    shadowColor: Colors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 3,
   },
   googleIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -434,24 +667,13 @@ const styles = StyleSheet.create({
   signInButtonText: {
     flex: 1,
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',
   },
-  loadingContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 60,
-    marginBottom: 20,
-  },
-  loadingText: {
-    marginTop: 10,
-    color: Colors.primary,
-    fontSize: 16,
-    fontWeight: '500',
-  },
   privacyContainer: {
     alignItems: 'center',
+    paddingBottom: 20,
   },
   privacyText: {
     fontSize: 12,

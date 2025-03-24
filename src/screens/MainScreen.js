@@ -1,146 +1,33 @@
-// src/screens/MainScreen.js (updated to show all platforms)
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Image, ScrollView } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import Icon from 'react-native-vector-icons/MaterialIcons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
-import Colors from '../constants/colors';
-import * as AuthService from '../services/AuthService';
-import PlatformTab from '../components/PlatformTab';
+// src/screens/MainScreen.js - Modified to include PermissionGate
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  Animated,
+  SafeAreaView,
+  StatusBar,
+  Modal,
+  Dimensions,
+  Platform as RNPlatform,
+  ScrollView,
+  Image
+} from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import * as AccountService from '../services/AccountService';
+import * as GmailService from '../services/GmailService';
 import * as StorageService from '../services/StorageService';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import Colors from '../constants/colors';
+import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
 import platforms from '../constants/platforms';
+import PlatformTab from '../components/PlatformTab';
+import PermissionGate from '../components/PermissionGate';
 import AccountSwitcherModal from '../components/AccountSwitcherModal';
 
 const Drawer = createDrawerNavigator();
-const Tab = createBottomTabNavigator();
-
-// Modified HeaderAccountButton in MainScreen.js
-const HeaderAccountButton = ({ platform, navigation }) => {
-  const [accountEmail, setAccountEmail] = useState('');
-  const [accounts, setAccounts] = useState([]);
-  const [showAccountModal, setShowAccountModal] = useState(false);
-  const [platformInfo, setPlatformInfo] = useState(null);
-  
-  useEffect(() => {
-    const getAccountInfo = async () => {
-      try {
-        // Find platform info
-        const platformObj = platforms.find(p => p.id === platform) || {
-          name: platform.charAt(0).toUpperCase() + platform.slice(1),
-          color: Colors.primary,
-          icon: 'inbox'
-        };
-        setPlatformInfo(platformObj);
-        
-        // Get accounts
-        const accountsList = await AccountService.getAccounts();
-        setAccounts(accountsList);
-        
-        // Get current account
-        const account = await AccountService.getCurrentAccount();
-        if (!account) return;
-        
-        // Get platform configurations
-        const platformsConfig = await StorageService.getPlatformsForAccount(account.email);
-        if (platformsConfig && platformsConfig[platform]) {
-          setAccountEmail(platformsConfig[platform].accountEmail || account.email);
-        } else {
-          setAccountEmail(account.email);
-        }
-      } catch (error) {
-        console.error('Error getting account info:', error);
-      }
-    };
-    
-    getAccountInfo();
-  }, [platform]);
-  
-  // Handle account selection directly here
-  const handleAccountSelect = async (account) => {
-    try {
-      await updatePlatformAccount(account.email);
-    } catch (error) {
-      console.error('Error updating account:', error);
-    }
-  };
-  
-  // Update platform account function with improved refresh mechanism
-  // FIXED to preserve data between account switches
-  const updatePlatformAccount = async (email) => {
-    try {
-      // Get current main account
-      const mainAccount = await AccountService.getCurrentAccount();
-      if (!mainAccount) {
-        Alert.alert('Error', 'No main account found');
-        return;
-      }
-      
-      // Get platform configurations
-      const platformsConfig = await StorageService.getPlatformsForAccount(mainAccount.email) || {};
-      
-      // Update account for this platform
-      platformsConfig[platform] = { accountEmail: email };
-      
-      // Save updated config
-      await StorageService.savePlatformsForAccount(mainAccount.email, platformsConfig);
-      
-      // Update UI
-      setAccountEmail(email);
-      
-      // Force PlatformTab to refresh by setting a unique refresh trigger
-      // This is the key part: we use a timestamp to ensure the value is always different
-      if (navigation.isFocused()) {
-        navigation.setParams({ refreshTrigger: Date.now() });
-      }
-    } catch (error) {
-      console.error('Error updating platform account:', error);
-      Alert.alert('Error', 'Failed to update account');
-    }
-  };
-  
-  const handleAddNewAccount = () => {
-    navigation.navigate('WebAuth');
-  };
-  
-  return (
-    <>
-      <TouchableOpacity
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          backgroundColor: 'rgba(255, 255, 255, 0.2)',
-          borderRadius: 20,
-          paddingVertical: 6,
-          paddingHorizontal: 12,
-          marginRight: 16,
-        }}
-        onPress={() => setShowAccountModal(true)}
-      >
-        <Icon name="account-circle" size={18} color="#fff" />
-        <Text style={{color: '#fff', marginLeft: 6, fontSize: 14, marginRight: 4}}>
-          {accountEmail ? accountEmail.split('@')[0] : 'Account'}
-        </Text>
-        <Icon name="arrow-drop-down" size={18} color="#fff" />
-      </TouchableOpacity>
-      
-      {/* Import and use the new AccountSwitcherModal component */}
-      <AccountSwitcherModal
-        visible={showAccountModal}
-        onClose={() => setShowAccountModal(false)}
-        accounts={accounts}
-        currentAccount={accountEmail}
-        onAccountSelect={handleAccountSelect}
-        platformName={platformInfo?.name || platform}
-        platformColor={platformInfo?.color || Colors.primary}
-        onAddNewAccount={handleAddNewAccount}
-      />
-    </>
-  );
-};
 
 // Custom drawer content component
 const CustomDrawerContent = (props) => {
@@ -414,26 +301,125 @@ const MainScreen = () => {
     }
   };
 
-  const handleSignOut = () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out? This will remove all your saved data.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Sign Out', 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await AuthService.signOut();
-              navigation.replace('Intro');
-            } catch (error) {
-              console.error('Error signing out:', error);
-              Alert.alert('Error', 'Failed to sign out. Please try again.');
-            }
+  // Modified HeaderAccountButton
+  const HeaderAccountButton = ({ platform, navigation }) => {
+    const [accountEmail, setAccountEmail] = useState('');
+    const [accounts, setAccounts] = useState([]);
+    const [showAccountModal, setShowAccountModal] = useState(false);
+    const [platformInfo, setPlatformInfo] = useState(null);
+    
+    useEffect(() => {
+      const getAccountInfo = async () => {
+        try {
+          // Find platform info
+          const platformObj = platforms.find(p => p.id === platform) || {
+            name: platform.charAt(0).toUpperCase() + platform.slice(1),
+            color: Colors.primary,
+            icon: 'inbox'
+          };
+          setPlatformInfo(platformObj);
+          
+          // Get accounts
+          const accountsList = await AccountService.getAccounts();
+          setAccounts(accountsList);
+          
+          // Get current account
+          const account = await AccountService.getCurrentAccount();
+          if (!account) return;
+          
+          // Get platform configurations
+          const platformsConfig = await StorageService.getPlatformsForAccount(account.email);
+          if (platformsConfig && platformsConfig[platform]) {
+            setAccountEmail(platformsConfig[platform].accountEmail || account.email);
+          } else {
+            setAccountEmail(account.email);
           }
+        } catch (error) {
+          console.error('Error getting account info:', error);
         }
-      ]
+      };
+      
+      getAccountInfo();
+    }, [platform]);
+    
+    // Handle account selection
+    const handleAccountSelect = async (account) => {
+      try {
+        await updatePlatformAccount(account.email);
+      } catch (error) {
+        console.error('Error updating account:', error);
+      }
+    };
+    
+    // Update platform account function with improved refresh mechanism
+    const updatePlatformAccount = async (email) => {
+      try {
+        // Get current main account
+        const mainAccount = await AccountService.getCurrentAccount();
+        if (!mainAccount) {
+          Alert.alert('Error', 'No main account found');
+          return;
+        }
+        
+        // Get platform configurations
+        const platformsConfig = await StorageService.getPlatformsForAccount(mainAccount.email) || {};
+        
+        // Update account for this platform
+        platformsConfig[platform] = { accountEmail: email };
+        
+        // Save updated config
+        await StorageService.savePlatformsForAccount(mainAccount.email, platformsConfig);
+        
+        // Update UI
+        setAccountEmail(email);
+        
+        // Force PlatformTab to refresh by setting a unique refresh trigger
+        if (navigation.isFocused()) {
+          navigation.setParams({ refreshTrigger: Date.now() });
+        }
+      } catch (error) {
+        console.error('Error updating platform account:', error);
+        Alert.alert('Error', 'Failed to update account');
+      }
+    };
+    
+    const handleAddNewAccount = () => {
+      navigation.navigate('WebAuth');
+    };
+    
+    return (
+      <>
+        <TouchableOpacity
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            borderRadius: 20,
+            paddingVertical: 6,
+            paddingHorizontal: 12,
+            marginRight: 16,
+          }}
+          onPress={() => setShowAccountModal(true)}
+        >
+          <Icon name="account-circle" size={18} color="#fff" />
+          <Text style={{color: '#fff', marginLeft: 6, fontSize: 14, marginRight: 4}}>
+            {accountEmail ? accountEmail.split('@')[0] : 'Account'}
+          </Text>
+          <Icon name="arrow-drop-down" size={18} color="#fff" />
+        </TouchableOpacity>
+        
+        {/* Import and use the AccountSwitcherModal component */}
+        <AccountSwitcherModal
+          visible={showAccountModal}
+          onClose={() => setShowAccountModal(false)}
+          accounts={accounts}
+          currentAccount={accountEmail}
+          onAccountSelect={handleAccountSelect}
+          platformName={platformInfo?.name || platform}
+          platformColor={platformInfo?.color || Colors.primary}
+          onAddNewAccount={handleAddNewAccount}
+        />
+      </>
     );
   };
 
@@ -477,9 +463,12 @@ const MainScreen = () => {
                 )
               })}
             >
-              {(props) => 
-                <PlatformTab {...props} platform={platform} />
-              }
+              {(props) => (
+                // Wrap PlatformTab in PermissionGate to check for Gmail permissions
+                <PermissionGate platformColor={platformInfo.color}>
+                  <PlatformTab {...props} platform={platform} />
+                </PermissionGate>
+              )}
             </Drawer.Screen>
           );
         })}
@@ -652,4 +641,4 @@ const styles = StyleSheet.create({
   }
 });
 
-export default MainScreen
+export default MainScreen;

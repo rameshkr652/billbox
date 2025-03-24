@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
   container: {
     marginHorizontal: 15,
     marginVertical: 10,
-    marginBottom: 20
+    marginBottom: 10
   },
   buttonContainer: {
     borderRadius: 12,
