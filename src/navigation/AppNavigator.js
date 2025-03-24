@@ -16,13 +16,14 @@ import RestaurantsScreen from '../screens/RestaurantsScreen';
 import FoodsScreen from '../screens/FoodsScreen';
 import FoodDetailsScreen from '../screens/FoodDetailsScreen';
 import RestaurantDetailsScreen from '../screens/RestaurantDetailsScreen';
+import OrderTimelineScreen from '../screens/OrderTimelineScreen'; // Correct import
 
 const Stack = createNativeStackNavigator();
 
 const AppNavigator = () => {
   return (
     <NavigationContainer>
-      <Stack.Navigator 
+      <Stack.Navigator
         initialRouteName="Splash"
         screenOptions={{ headerShown: false }}
       >
@@ -39,7 +40,7 @@ const AppNavigator = () => {
         <Stack.Screen name="FoodsScreen" component={FoodsScreen} />
         <Stack.Screen name="RestaurantDetails" component={RestaurantDetailsScreen} />
         <Stack.Screen name="FoodDetails" component={FoodDetailsScreen} />
-
+        <Stack.Screen name="OrderTimeline" component={OrderTimelineScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -27,6 +27,7 @@ import PlatformTabComponents from './PlatformTabComponents';
 import TopFavoritesSection from './TopFavoritesSection';
 import DietaryPreferencesSection from './DietaryPreferencesSection';
 import MealTimingAnalysis from './MealTimingAnalysis';
+import OrderTimeMachineButton from './OrderTimeMachineButton';
 
 const PlatformTab = ({ platform, route }) => {
   const navigation = useNavigation();
@@ -344,7 +345,6 @@ const fetchLatestEmails = async () => {
   return (
     <SafeAreaView style={PlatformTabStyles.container}>
       <StatusBar barStyle="light-content" backgroundColor={platformInfo.color} />
-      
       {/* Content */}
       {loading && emails.length === 0 && !showProgress ? (
         <PlatformTabComponents.LoadingIndicator 
@@ -389,15 +389,20 @@ const fetchLatestEmails = async () => {
             <ExpenseSummary 
               emails={emails} 
               platformColor={platformInfo.color}
-            />
+            />            
             <DietaryPreferencesSection 
               emails={emails} 
               platformColor={platformInfo.color}
+            />
+            <OrderTimeMachineButton 
+              platformColor={platformInfo.color}
+              emailCount={emails.length} 
             />
             <MealTimingAnalysis 
               emails={emails} 
               platformColor={platformInfo.color}
             />
+            
             <TopFavoritesSection 
               emails={emails} 
               platformColor={platformInfo.color}
