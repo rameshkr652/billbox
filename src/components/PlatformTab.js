@@ -374,7 +374,7 @@ const fetchLatestEmails = async () => {
         // Here we replace the FlatList with our ExpenseSummary component
         <View style={{ flex: 1 }}>
         
-          
+        {console.log(emails,"emails")}
           <PlatformTabComponents.ListHeader
             platformName={platformInfo.name}
             platformColor={platformInfo.color}
