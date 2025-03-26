@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import * as AccountService from './AccountService';
 import * as AuthService from './AuthService';
-import { parseOrderDetails } from '../utils/EmailParser';
+import { processAllEmailsWithAI } from '../utils/AIEmailParser';
 
 // In-memory token cache to prevent excessive validation
 const tokenCache = {
@@ -201,7 +201,7 @@ const callGmailApi = async (endpoint, accountEmail, options = {}, retryCount = 0
     throw error;
   }
 };
-
+// Modified function in src/services/GmailService.js
 export const fetchAllPlatformEmails = async (platform, accountEmail, platformQuery, progressCallback = () => {}) => {
   try {
     if (!accountEmail) {
@@ -214,7 +214,7 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
     const encodedQuery = encodeURIComponent(query);
     
     progressCallback(0, 1, 'Finding matching emails...');
-    const listUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodedQuery}&maxResults=100`;
+    const listUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodedQuery}&maxResults=10`;
     const initialData = await callGmailApi(listUrl, accountEmail);
     
     if (!initialData.messages || initialData.messages.length === 0) {
@@ -228,17 +228,17 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
     let allMessageIds = initialData.messages.map(msg => msg.id);
     let nextPageToken = initialData.nextPageToken;
     
-    while (nextPageToken) {
-      const pageUrl = `${listUrl}&pageToken=${nextPageToken}`;
-      const pageData = await callGmailApi(pageUrl, accountEmail);
+    // while (nextPageToken) {
+    //   const pageUrl = `${listUrl}&pageToken=${nextPageToken}`;
+    //   const pageData = await callGmailApi(pageUrl, accountEmail);
       
-      if (pageData.messages && pageData.messages.length > 0) {
-        allMessageIds = [...allMessageIds, ...pageData.messages.map(msg => msg.id)];
-      }
+    //   if (pageData.messages && pageData.messages.length > 0) {
+    //     allMessageIds = [...allMessageIds, ...pageData.messages.map(msg => msg.id)];
+    //   }
       
-      nextPageToken = pageData.nextPageToken;
-      progressCallback(allMessageIds.length, totalCount, `Collecting message IDs (${allMessageIds.length})...`);
-    }
+    //   nextPageToken = pageData.nextPageToken;
+    //   progressCallback(allMessageIds.length, totalCount, `Collecting message IDs (${allMessageIds.length})...`);
+    // }
     
     const BATCH_SIZE = 10;
     const batches = [];
@@ -247,9 +247,10 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
       batches.push(allMessageIds.slice(i, i + BATCH_SIZE));
     }
     
-    const processedEmails = [];
+    const rawEmailsWithBodyHtml = [];
     let processedCount = 0;
     
+    // Fetch email bodies
     for (const batch of batches) {
       const accessToken = await getAccessToken(accountEmail);
       
@@ -269,7 +270,27 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
             }
             
             const messageData = await response.json();
-            return extractEmailData(messageData, platform);
+            
+            // Extract basic email data
+            const headers = {};
+            if (messageData.payload?.headers) {
+              messageData.payload.headers.forEach(header => {
+                headers[header.name.toLowerCase()] = header.value;
+              });
+            }
+            
+            // Extract email body
+            const emailBodyHtml = extractEmailBody(messageData);
+            
+            // Create basic email object
+            return {
+              id: messageData.id,
+              subject: headers.subject || 'No Subject',
+              from: headers.from || 'Unknown Sender',
+              date: headers.date || 'Unknown Date',
+              snippet: messageData.snippet || '',
+              emailBodyHtml // Include full body HTML for AI processing
+            };
           } catch (error) {
             console.error(`Error processing message ${messageId}:`, error);
             return null;
@@ -278,7 +299,7 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
       );
       
       const validResults = batchResults.filter(result => result !== null);
-      processedEmails.push(...validResults);
+      rawEmailsWithBodyHtml.push(...validResults);
       
       processedCount += batch.length;
       progressCallback(
@@ -288,18 +309,79 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
       );
     }
     
-    progressCallback(allMessageIds.length, allMessageIds.length, 'Saving emails...');
+    // Now process all emails with AI to extract order details
+    progressCallback(0, rawEmailsWithBodyHtml.length, 'Starting AI processing...');
+    const processedEmails = await processAllEmailsWithAI(
+      rawEmailsWithBodyHtml, 
+      platform,
+      progressCallback
+    );
+    progressCallback(rawEmailsWithBodyHtml.length, rawEmailsWithBodyHtml.length, 'Saving emails...');
+    
+    // Save emails with extracted order details
     const storageKey = `emails_${platform}_${accountEmail}`;
-    await AsyncStorage.setItem(storageKey, JSON.stringify(processedEmails));
+    
+    // Clean up emailBodyHtml before saving to storage (to save space)
+    const emailsToSave = processedEmails.map(email => {
+      const { emailBodyHtml, ...rest } = email;
+      return rest; // Save everything except the full HTML body
+    });
+    
+    await AsyncStorage.setItem(storageKey, JSON.stringify(emailsToSave));
     
     const now = Date.now();
     await AsyncStorage.setItem(`lastFetched_${platform}_${accountEmail}`, now.toString());
     
-    return processedEmails;
+    return emailsToSave;
   } catch (error) {
     console.error(`Error fetching platform emails for ${accountEmail}:`, error);
     throw error;
   }
+};
+/**
+ * Simple function to clean text and remove unwanted words
+ * Retains order information without pattern matching
+ */
+const extractCleanText = (text) => {
+  // First clean any HTML content if present
+  let cleanText = text
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/Â/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  
+  // Remove unwanted phrases and disclaimers
+  cleanText = cleanText
+    .replace(/will NEVER ask you for your personal information.+?(email|Delhi-\d+)\.?/gi, '')
+    .replace(/©\d+ - .+?(reserved|Limited).+?(Delhi-\d+)\.?/gi, '')
+    .replace(/For your own safety.+?(email|details)\.?/gi, '')
+    .replace(/employees or representatives.+?(etc)\.?/gi, '');
+  
+  // Remove common stop words and company names
+  cleanText = cleanText
+    .replace(/\b(hi|hello|thank you for|ordering from|delivered|near|ordering|thank)\b/gi, '')
+    .replace(/\b(a|an|the|is|am|are|was|were|be|being|been|do|does|did|has|have|had|will|shall|should|would|may|might|must|can|could)\b/gi, '')
+    .replace(/\b(Greetings|India)\b/gi, '')
+
+    .replace(/\b(for|of|in|on|at|by|to|from|with|about|against|between|into|through|during|before|after|above|below|under|over)\b/gi, '')
+    .replace(/\b(and|but|or|so|yet|nor|if|then|else|when|where|why|how|because|as|since|while|although|though|whether|that|which|who|whom|whose|what|whatever|whoever|employees|representatives)\b/gi, '')
+    .replace(/\b(zomato|swiggy|\.com|http|https|www)\b/gi, '')
+    .replace(/\b(limited|private|formerly|known|all rights reserved)\b/gi, '')
+    .replace(/\b(zone|road|street|avenue|lane|place|salon|pudur|area|colony|nagar|path|highway|bypass|circle|chowk|square|market|complex|mall|plaza|tower|building|apartment|flat|floor|block|sector|phase|plot|site|house|villa|bungalow|office|shop|store|outlet)\b/gi, '')
+    .replace(/\b(north|south|east|west|central|old|new|greater|upper|lower|behind|beside|near|opposite|across|junction|crossing|signal|flyover|bridge|metro|station|terminal|airport|railway|bus stop|stand)\b/gi, '')
+    .replace(/\b(delhi|mumbai|bangalore|chennai|kolkata|hyderabad|ahmedabad|pune|surat|jaipur|lucknow|kanpur|nagpur|indore|thane|bhopal|visakhapatnam|patna|vadodara|ghaziabad|ludhiana|agra|nashik|faridabad|meerut|rajkot|varanasi|srinagar|aurangabad|dhanbad|amritsar|allahabad|ranchi|howrah|coimbatore|jabalpur|gwalior|vijayawada|jodhpur|madurai|raipur|kota|guwahati|chandigarh|solapur|hubli|dharwad|bareilly|moradabad|mysore|gurgaon|aligarh|jalandhar|tiruchirappalli|bhubaneswar|salem|warangal|mira|bhayander|thiruvananthapuram|bhiwandi|saharanpur|gorakhpur|guntur|bikaner|amravati|noida|jamshedpur|bhilai|cuttack|firozabad|kochi|nellore|bhavnagar|dehradun|durgapur|asansol|nanded|kolhapur|ajmer|akola|gulbarga|jamnagar|ujjain|loni|siliguri|jhansi|ulhasnagar|jammu|sangli|miraj|kupwad|belgaum|mangalore|ambattur|tirunelveli|malegaon|gaya|jalgaon|udaipur|maheshtala|davanagere|kozhikode|kurnool|rajpur|sonarpur|rajahmundry|bilaspur|kamarhati|shahjahanpur|bijapur|rampur|shivamogga|chandrapur|junagadh|thrissur|alwar|bardhaman|kulti|kakinada|nizamabad|parbhani|tumkur|khammam|ozhukarai|bihar|sharif|panipat|darbhanga|bally|delhi|noida|gurgaon|faridabad|ghaziabad|gurugram|ncr)\b/gi, '')    
+    .replace(/\s+/g, ' ')
+    .trim();
+  
+  return cleanText;
 };
 
 /**
@@ -318,16 +400,15 @@ const extractEmailData = (messageData, platform) => {
       });
     }
     
-    const emailBodyHtml = extractEmailBody(messageData);
-    const orderDetails = parseOrderDetails(emailBodyHtml, platform);
+    // const emailBodyHtml = extractEmailBody(messageData);
+    // const orderDetails = parseOrderDetails(emailBodyHtml, platform);
     
     return {
       id: messageData.id,
       subject: headers.subject || 'No Subject',
       from: headers.from || 'Unknown Sender',
       date: headers.date || 'Unknown Date',
-      snippet: messageData.snippet || '',
-      orderDetails: orderDetails
+      snippet: messageData.snippet || ''
     };
   } catch (error) {
     console.error('Error extracting email data:', error);
