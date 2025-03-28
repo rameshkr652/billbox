@@ -149,73 +149,79 @@ const PlatformTab = ({ platform, route }) => {
       setShowAccountDrawer(false);
     });
   };
+  // Modified fetchAllEmails function in PlatformTab.js
   
-  // Fetch all emails
-  const fetchAllEmails = async () => {
-    if (loading) return;
+// Fetch all emails with date range support
+const fetchAllEmails = async (dateRange = null) => {
+  if (loading) return;
+  
+  try {
+    setLoading(true);
+    setError(null);
+    setShowProgress(true);
+    setProgress(0);
+    setProgressText('Preparing to fetch emails...');
     
-    try {
-      setLoading(true);
-      setError(null);
-      setShowProgress(true);
-      setProgress(0);
-      setProgressText('Preparing to fetch emails...');
-      
-      // Ensure we have an account
-      if (!accountEmail) {
-        const account = await AccountService.getCurrentAccount();
-        if (!account) {
-          throw new Error('No account found. Please add an account first.');
-        }
-        setAccountEmail(account.email);
+    // Ensure we have an account
+    if (!accountEmail) {
+      const account = await AccountService.getCurrentAccount();
+      if (!account) {
+        throw new Error('No account found. Please add an account first.');
       }
-      
-      // Clear existing emails to avoid showing data from the wrong account
-      setEmails([]);
-      
-      // Fetch all emails with progress tracking
-      const result = await PlatformTabUtils.fetchAllEmails(
-        platform,
-        accountEmail, // Important: Use the current account email state
-        platformInfo,
-        (current, total, message, estimatedTimeRemaining) => {
-          const progressValue = total > 0 ? current / total : 0;
-          setProgress(0.1 + progressValue * 0.8); // Scale to 10-90% range
-          setProgressText(message || `Processing ${current} of ${total} emails...`);
-          
-          if (estimatedTimeRemaining) {
-            setTimeRemaining(PlatformTabUtils.formatTimeRemaining(estimatedTimeRemaining));
-          }
-        }
-      );
-      
-      if (result.success) {
-        setEmails(result.emails);
-        setLastFetched(result.lastFetched);
-        
-        if (result.emails.length === 0) {
-          Alert.alert('No Orders Found', `No ${platformInfo.name} orders found.`);
-        }
-      } else {
-        setError(result.error);
-        Alert.alert('Error', result.error);
-      }
-    } catch (error) {
-      console.error(`Error fetching emails for ${platform}:`, error);
-      setError(error.message || `Failed to fetch data for ${platform}`);
-      Alert.alert('Error', `Failed to fetch orders. ${error.message}`);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-      setShowProgress(false);
-      setTimeRemaining(null);
+      setAccountEmail(account.email);
     }
-  };
-  
-  // Fetch latest emails
-  // Fixed fetchLatestEmails function in PlatformTab.js
-const fetchLatestEmails = async () => {
-  if (loading || !lastFetched) return;
+    
+    // Clear existing emails to avoid showing data from the wrong account
+    setEmails([]);
+    
+    // Fetch all emails with progress tracking and date range
+    const result = await PlatformTabUtils.fetchAllEmails(
+      platform,
+      accountEmail, // Important: Use the current account email state
+      platformInfo,
+      (current, total, message, estimatedTimeRemaining) => {
+        const progressValue = total > 0 ? current / total : 0;
+        setProgress(0.1 + progressValue * 0.8); // Scale to 10-90% range
+        setProgressText(message || `Processing ${current} of ${total} emails...`);
+        
+        if (estimatedTimeRemaining) {
+          setTimeRemaining(PlatformTabUtils.formatTimeRemaining(estimatedTimeRemaining));
+        }
+      },
+      dateRange // Pass the date range parameter
+    );
+    
+    if (result.success) {
+      setEmails(result.emails);
+      setLastFetched(result.lastFetched);
+      
+      if (result.emails.length === 0) {
+        // Update message based on whether a date filter was applied
+        const timeframeMsg = dateRange && dateRange.start && dateRange.end 
+          ? ` for the selected time period (${dateRange.start.toLocaleDateString()} - ${dateRange.end.toLocaleDateString()})`
+          : '';
+          
+        Alert.alert('No Orders Found', `No ${platformInfo.name} orders found${timeframeMsg}.`);
+      }
+    } else {
+      setError(result.error);
+      Alert.alert('Error', result.error);
+    }
+  } catch (error) {
+    console.error(`Error fetching emails for ${platform}:`, error);
+    setError(error.message || `Failed to fetch data for ${platform}`);
+    Alert.alert('Error', `Failed to fetch orders. ${error.message}`);
+  } finally {
+    setLoading(false);
+    setRefreshing(false);
+    setShowProgress(false);
+    setTimeRemaining(null);
+  }
+};
+
+// Fetch latest emails with date range support
+const fetchLatestEmails = async (dateRange = null) => {
+  if (loading || (!lastFetched && !dateRange)) return;
   
   try {
     setLoading(true);
@@ -228,7 +234,7 @@ const fetchLatestEmails = async () => {
     const existingEmails = [...emails];
     console.log(`Existing emails before fetch: ${existingEmails.length}`);
     
-    // Fetch latest emails with progress tracking
+    // Fetch latest emails with progress tracking and optional date range
     const result = await PlatformTabUtils.fetchLatestEmails(
       platform,
       accountEmail,
@@ -242,7 +248,8 @@ const fetchLatestEmails = async () => {
         if (estimatedTimeRemaining) {
           setTimeRemaining(PlatformTabUtils.formatTimeRemaining(estimatedTimeRemaining));
         }
-      }
+      },
+      dateRange // Pass the date range parameter
     );
     
     if (result.success) {
@@ -282,11 +289,15 @@ const fetchLatestEmails = async () => {
       setEmails(combinedEmails);
       setLastFetched(result.lastFetched);
       
-      // Show appropriate notification
+      // Show appropriate notification with date range info if applicable
+      const timeframeMsg = dateRange && dateRange.start && dateRange.end 
+        ? ` for the period ${dateRange.start.toLocaleDateString()} - ${dateRange.end.toLocaleDateString()}`
+        : ` since your last update`;
+      
       if (newEmails.length === 0) {
-        Alert.alert('No New Orders', `No new ${platformInfo.name} orders found since your last update.`);
+        Alert.alert('No New Orders', `No new ${platformInfo.name} orders found${timeframeMsg}.`);
       } else {
-        Alert.alert('Success', `Found ${newEmails.length} new orders and updated your data.`);
+        Alert.alert('Success', `Found ${newEmails.length} new orders${timeframeMsg} and updated your data.`);
       }
     } else {
       setError(result.error);
