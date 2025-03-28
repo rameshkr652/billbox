@@ -82,18 +82,31 @@ export const loadPlatformData = async (platform, setPlatformData) => {
     };
   }
 };
-
 /**
- * Fetch all emails for the platform
+ * Fetch all emails for the platform with optional date filtering
  */
-export const fetchAllEmails = async (platform, accountEmail, platformInfo, progressCallback) => {
+export const fetchAllEmails = async (platform, accountEmail, platformInfo, progressCallback, dateRange = null) => {
   try {
     if (!accountEmail) {
       throw new Error('No account found. Please add an account first.');
     }
     
-    // Simple query for the platform - no date filters
-    const query = platformInfo.emailQuery || `from:${platform}.com`;
+    // Base query for the platform
+    let query = platformInfo.emailQuery || `from:${platform}.com`;
+    
+    // Add date range filtering if provided
+    if (dateRange && dateRange.start && dateRange.end) {
+      const formatDateForQuery = (date) => {
+        return `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
+      };
+      
+      const startDateStr = formatDateForQuery(dateRange.start);
+      const endDateStr = formatDateForQuery(dateRange.end);
+      
+      // Add date range to query
+      query = `${query} after:${startDateStr} before:${endDateStr}`;
+      console.log(`Applying date filter to email query: ${query}`);
+    }
     
     // Use the optimized function from GmailService
     const newEmails = await GmailService.fetchAllPlatformEmails(
@@ -118,34 +131,69 @@ export const fetchAllEmails = async (platform, accountEmail, platformInfo, progr
       error: error.message || `Failed to fetch data for ${platform}`
     };
   }
-};
-
+}
 /**
- * Fetch only latest emails since last fetch
+ * Fetch only latest emails since last fetch with optional date filtering
  */
-export const fetchLatestEmails = async (platform, accountEmail, lastFetched, platformInfo, progressCallback) => {
+export const fetchLatestEmails = async (platform, accountEmail, lastFetched, platformInfo, progressCallback, dateRange = null) => {
   try {
-    if (!accountEmail || !lastFetched) {
-      throw new Error('Missing account or last fetched timestamp');
+    if (!accountEmail) {
+      throw new Error('Missing account');
     }
     
-    // Use the optimized function from GmailService
-    const updatedEmails = await GmailService.fetchLatestEmails(
-      platform, 
-      accountEmail, 
-      lastFetched,
-      progressCallback
-    );
+    // Create a query based on lastFetched or dateRange
+    let query = platformInfo.emailQuery || `from:${platform}.com`;
     
-    // Update last fetched timestamp
-    const now = new Date();
-    
-    // Determine if any new emails were found
-    return {
-      success: true,
-      emails: updatedEmails,
-      lastFetched: now
+    // Format date for query
+    const formatDateForQuery = (date) => {
+      return `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
     };
+    
+    // If date range is provided, use it instead of lastFetched
+    if (dateRange && dateRange.start && dateRange.end) {
+      const startDateStr = formatDateForQuery(dateRange.start);
+      const endDateStr = formatDateForQuery(dateRange.end);
+      
+      // Add date range to query
+      query = `${query} after:${startDateStr} before:${endDateStr}`;
+      console.log(`Applying date filter to latest email query: ${query}`);
+      
+      // Use GmailService.fetchAllPlatformEmails with the custom query
+      const filteredEmails = await GmailService.fetchAllPlatformEmails(
+        platform, 
+        accountEmail, 
+        query,
+        progressCallback
+      );
+      
+      // Update last fetched timestamp
+      const now = new Date();
+      
+      return {
+        success: true,
+        emails: filteredEmails,
+        lastFetched: now
+      };
+    } else if (lastFetched) {
+      // Use the standard fetchLatestEmails function if no date range but we have lastFetched
+      const updatedEmails = await GmailService.fetchLatestEmails(
+        platform, 
+        accountEmail, 
+        lastFetched,
+        progressCallback
+      );
+      
+      // Update last fetched timestamp
+      const now = new Date();
+      
+      return {
+        success: true,
+        emails: updatedEmails,
+        lastFetched: now
+      };
+    } else {
+      throw new Error('Either date range or last fetched timestamp is required');
+    }
   } catch (error) {
     console.error(`Error fetching latest emails for ${platform}:`, error);
     return {
@@ -153,7 +201,7 @@ export const fetchLatestEmails = async (platform, accountEmail, lastFetched, pla
       error: error.message || `Failed to fetch latest data for ${platform}`
     };
   }
-};
+}
 
 /**
  * Clear all emails for a platform
