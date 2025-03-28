@@ -212,12 +212,10 @@ const PlatformTabStyles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
-  // Dual buttons
   buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     marginTop: 16,
     marginBottom: 16,
+    paddingHorizontal: 8, // Optional: adds padding to prevent edge collapse
   },
   loadLatestButton: {
     flexDirection: 'row',
@@ -225,13 +223,14 @@ const PlatformTabStyles = StyleSheet.create({
     justifyContent: 'center',
     padding: 12,
     borderRadius: 8,
-    flex: 1,
-    marginRight: 8,
+    flex: 1, // Equal flex value for equal width
+    marginRight: 4, // Consistent margin with loadAllButton
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
+    backgroundColor: '#F3F4F6', // Add a background color if missing
   },
   loadAllButton: {
     flexDirection: 'row',
@@ -239,8 +238,8 @@ const PlatformTabStyles = StyleSheet.create({
     justifyContent: 'center',
     padding: 12,
     borderRadius: 8,
-    flex: 1,
-    marginHorizontal: 4,
+    flex: 1, // Equal flex value for equal width
+    marginLeft: 4, // Consistent margin with loadLatestButton
     backgroundColor: '#F3F4F6',
     borderWidth: 1,
     borderColor: '#E5E7EB',

@@ -214,7 +214,7 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
     const encodedQuery = encodeURIComponent(query);
     
     progressCallback(0, 1, 'Finding matching emails...');
-    const listUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodedQuery}&maxResults=10`;
+    const listUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodedQuery}&maxResults=100`;
     const initialData = await callGmailApi(listUrl, accountEmail);
     
     if (!initialData.messages || initialData.messages.length === 0) {
@@ -228,19 +228,19 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
     let allMessageIds = initialData.messages.map(msg => msg.id);
     let nextPageToken = initialData.nextPageToken;
     
-    // while (nextPageToken) {
-    //   const pageUrl = `${listUrl}&pageToken=${nextPageToken}`;
-    //   const pageData = await callGmailApi(pageUrl, accountEmail);
+    while (nextPageToken) {
+      const pageUrl = `${listUrl}&pageToken=${nextPageToken}`;
+      const pageData = await callGmailApi(pageUrl, accountEmail);
       
-    //   if (pageData.messages && pageData.messages.length > 0) {
-    //     allMessageIds = [...allMessageIds, ...pageData.messages.map(msg => msg.id)];
-    //   }
+      if (pageData.messages && pageData.messages.length > 0) {
+        allMessageIds = [...allMessageIds, ...pageData.messages.map(msg => msg.id)];
+      }
       
-    //   nextPageToken = pageData.nextPageToken;
-    //   progressCallback(allMessageIds.length, totalCount, `Collecting message IDs (${allMessageIds.length})...`);
-    // }
+      nextPageToken = pageData.nextPageToken;
+      progressCallback(allMessageIds.length, totalCount, `Collecting message IDs (${allMessageIds.length})...`);
+    }
     
-    const BATCH_SIZE = 10;
+    const BATCH_SIZE = 50;
     const batches = [];
     
     for (let i = 0; i < allMessageIds.length; i += BATCH_SIZE) {
