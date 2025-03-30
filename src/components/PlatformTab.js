@@ -45,7 +45,21 @@ const PlatformTab = ({ platform, route }) => {
   // Drawer state
   const [showAccountDrawer, setShowAccountDrawer] = useState(false);
   const drawerAnimation = useRef(new Animated.Value(Dimensions.get('window').width)).current;
-  
+  const [showAiTerminal, setShowAiTerminal] = useState(false);
+  const [aiTerminalLines, setAiTerminalLines] = useState([]);
+  const [aiProgress, setAiProgress] = useState(0);
+
+  // Example food items for random display
+  const foodItems = [
+    "Butter Chicken", "Masala Dosa", "Chicken Biryani", "Paneer Tikka", 
+    "Vada Pav", "Chole Bhature", "Pav Bhaji", "Dal Makhani", 
+    "Tandoori Roti", "Palak Paneer", "Mutton Curry", "Fish Curry"
+  ];
+
+  // Function to add a line to the terminal
+  const addTerminalLine = (line) => {
+    setAiTerminalLines(prev => [...prev, line]);
+  };
   // Get platform info
   const platformInfo = platforms.find(p => p.id === platform) || {
     name: platform.charAt(0).toUpperCase() + platform.slice(1),
@@ -180,15 +194,28 @@ const PlatformTab = ({ platform, route }) => {
         platform,
         accountEmail, // Important: Use the current account email state
         platformInfo,
-        (current, total, message, estimatedTimeRemaining) => {
-          const progressValue = total > 0 ? current / total : 0;
-          setProgress(0.1 + progressValue * 0.8); // Scale to 10-90% range
-          setProgressText(message || `Processing ${current} of ${total} emails...`);
-          
-          if (estimatedTimeRemaining) {
-            setTimeRemaining(PlatformTabUtils.formatTimeRemaining(estimatedTimeRemaining));
+        (current, total, message, estimatedTimeRemaining, isAiProcessing) => {
+          if (isAiProcessing) {
+            // Add a random food item with "processing" message
+            const randomFood = foodItems[Math.floor(Math.random() * foodItems.length)];
+            addTerminalLine(`[AI] Processing: ${randomFood} from order #${Math.floor(1000 + Math.random() * 9000)}`);
+            
+            // Update progress for terminal display
+            setAiProgress(current / total);
+          } else {
+            // Regular progress updates
+            const progressValue = total > 0 ? current / total : 0;
+            setProgress(0.1 + progressValue * 0.8);
+            setProgressText(message || `Processing ${current} of ${total} latest emails...`);
+            
+            if (estimatedTimeRemaining) {
+              setTimeRemaining(PlatformTabUtils.formatTimeRemaining(estimatedTimeRemaining));
+            }
           }
-        }
+        },
+
+      setShowAiTerminal,
+      setShowProgress
       );
       
       if (result.success) {
@@ -344,6 +371,75 @@ const fetchLatestEmails = async () => {
     />
   );
   
+  const renderAiTerminalModal = () => (
+    <Modal
+      visible={showAiTerminal}
+      transparent={true}
+      animationType="fade"
+    >
+      <View style={terminalStyles.container}>
+        <View style={terminalStyles.terminal}>
+          <View style={terminalStyles.terminalHeader}>
+            <View style={terminalStyles.trafficLights}>
+              <View style={[terminalStyles.light, terminalStyles.redLight]} />
+              <View style={[terminalStyles.light, terminalStyles.yellowLight]} />
+              <View style={[terminalStyles.light, terminalStyles.greenLight]} />
+            </View>
+            <Text style={terminalStyles.terminalTitle}>AI Engine - Restaurant Analysis</Text>
+          </View>
+          
+          <View style={terminalStyles.terminalBody}>
+            <Text style={terminalStyles.welcome}>
+              > BillBox AI Engine v3.7.2 - Restaurant Order Analyzer
+              {'\n'}> Starting neural extraction module...
+              {'\n'}> Loading natural language processors...
+              {'\n'}> Initializing metadata analysis systems...
+              {'\n'}> Ready. Processing email archive for extraction.
+            </Text>
+            
+            <ScrollView>
+              {aiTerminalLines.map((line, index) => (
+                <Text key={index} style={terminalStyles.line}>
+                  {line}
+                </Text>
+              ))}
+              
+              <View style={terminalStyles.progressLine}>
+                <Text style={terminalStyles.progressText}>
+                  [{Array(Math.floor(aiProgress * 20)).fill('=').join('')}
+                  {'>'}
+                  {Array(Math.floor(20 - aiProgress * 20)).fill(' ').join('')}] {' '}
+                  {Math.floor(aiProgress * 100)}%
+                </Text>
+              </View>
+              
+              <BlinkingCursor />
+            </ScrollView>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+  
+  // Blinking cursor component
+  const BlinkingCursor = () => {
+    const [visible, setVisible] = useState(true);
+    
+    useEffect(() => {
+      const interval = setInterval(() => {
+        setVisible(v => !v);
+      }, 530);
+      
+      return () => clearInterval(interval);
+    }, []);
+    
+    return (
+      <Text style={terminalStyles.cursor}>
+        {visible ? '█' : ' '}
+      </Text>
+    );
+  };
+
   return (
     <SafeAreaView style={PlatformTabStyles.container}>
       <StatusBar barStyle="light-content" />
@@ -420,7 +516,8 @@ const fetchLatestEmails = async () => {
       
       {/* Progress Modal */}
       {renderProgressModal()}      
-      
+      {renderAiTerminalModal()}
+
       {showConfirmClear && (
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -535,5 +632,86 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-
+const terminalStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  terminal: {
+    width: '95%',
+    maxHeight: '80%',
+    backgroundColor: '#000',
+    borderRadius: 6,
+    overflow: 'hidden',
+    shadowColor: '#0f0',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  terminalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#333',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+  },
+  trafficLights: {
+    flexDirection: 'row',
+    marginRight: 15,
+  },
+  light: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 6,
+  },
+  redLight: {
+    backgroundColor: '#FF5F56',
+  },
+  yellowLight: {
+    backgroundColor: '#FFBD2E',
+  },
+  greenLight: {
+    backgroundColor: '#27C93F',
+  },
+  terminalTitle: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  terminalBody: {
+    padding: 12,
+    minHeight: 300,
+  },
+  welcome: {
+    color: '#0f8',
+    fontFamily: 'Courier',
+    fontSize: 12,
+    marginBottom: 10,
+  },
+  line: {
+    color: '#fff',
+    fontFamily: 'Courier',
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  progressLine: {
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  progressText: {
+    color: '#0f8',
+    fontFamily: 'Courier',
+    fontSize: 12,
+  },
+  cursor: {
+    color: '#0f8',
+    fontFamily: 'Courier',
+    fontSize: 12,
+  }
+});
 export default PlatformTab;
