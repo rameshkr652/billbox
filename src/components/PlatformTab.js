@@ -341,6 +341,7 @@ const fetchLatestEmails = async () => {
       progressText={progressText}
       progress={progress}
       timeRemaining={timeRemaining}
+      emails={emails} // Pass the emails array from your component's state
     />
   );
   

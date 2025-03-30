@@ -5,7 +5,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import Colors from '../constants/colors';
 import PlatformTabStyles from '../styles/PlatformTabStyles';
 import { formatDate } from '../utils/PlatformTabUtils';
-
+import AnimatedProgressModal from './AnimatedProgressModal';
 // Safely handle progress bar based on platform
 const ProgressBar = ({ progress, color }) => {
   if (Platform.OS === 'android') {
@@ -144,48 +144,26 @@ export const ListHeader = ({
   </View>
 );
 
-/**
- * Progress modal component
- */
 export const ProgressModal = ({ 
   visible, 
   platformName, 
   platformColor, 
   progressText, 
   progress, 
-  timeRemaining = null 
+  timeRemaining = null,
+  emails = [] // Add emails parameter with default empty array
 }) => (
-  <Modal
+  <AnimatedProgressModal
     visible={visible}
-    transparent={true}
-    animationType="fade"
-  >
-    <View style={PlatformTabStyles.progressModalOverlay}>
-      <View style={PlatformTabStyles.progressModalContent}>
-        <Text style={PlatformTabStyles.progressModalTitle}>Fetching Orders</Text>
-        <Text style={PlatformTabStyles.progressModalSubtitle}>
-          Please wait while we fetch your {platformName} orders.
-        </Text>
-        <Text style={PlatformTabStyles.progressModalText}>{progressText}</Text>
-        
-        {timeRemaining !== null && (
-          <Text style={PlatformTabStyles.progressModalTimeRemaining}>
-            Estimated time remaining: {timeRemaining}
-          </Text>
-        )}
-        
-        <ProgressBar
-          progress={progress}
-          color={platformColor}
-        />
-        
-        <Text style={PlatformTabStyles.progressModalNote}>
-          This may take a while depending on the number of orders.
-        </Text>
-      </View>
-    </View>
-  </Modal>
+    platformName={platformName}
+    platformColor={platformColor}
+    progressText={progressText}
+    progress={progress}
+    timeRemaining={timeRemaining}
+    emails={emails}
+  />
 );
+
 
 export default {
   EmptyState,
