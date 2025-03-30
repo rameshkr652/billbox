@@ -52,6 +52,7 @@ const PlatformTab = ({ platform, route }) => {
     color: '#4285F4',
     icon: 'inbox'
   };
+
   useEffect(() => {
     // Check if we have a refresh trigger from account switching
     if (route.params?.refreshTrigger) {
@@ -61,12 +62,13 @@ const PlatformTab = ({ platform, route }) => {
       // This ensures data persistence between account switches
       loadPlatformData();
     }
-  }, [route.params?.refreshTrigger]);
+  }, [route.params?.refreshTrigger,]);
   
   // Also reload when the screen gains focus
   useFocusEffect(
     useCallback(() => {
-      console.log(`PlatformTab (${platform}): Screen focused`);
+      StatusBar.setBarStyle('light-content');
+      StatusBar.setBackgroundColor(platformInfo.color);
       loadPlatformData();
     }, [])
   );
@@ -344,7 +346,7 @@ const fetchLatestEmails = async () => {
   
   return (
     <SafeAreaView style={PlatformTabStyles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={platformInfo.color} />
+      <StatusBar barStyle="light-content" />
       {/* Content */}
       {loading && emails.length === 0 && !showProgress ? (
         <PlatformTabComponents.LoadingIndicator 

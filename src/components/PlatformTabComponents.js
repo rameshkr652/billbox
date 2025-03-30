@@ -179,7 +179,7 @@ export const ProgressModal = ({
           color={platformColor}
         />
         
-        <Text style={PlatformTabStyles.progressModalNote}>>
+        <Text style={PlatformTabStyles.progressModalNote}>
           This may take a while depending on the number of orders.
         </Text>
       </View>

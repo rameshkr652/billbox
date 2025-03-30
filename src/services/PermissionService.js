@@ -2,6 +2,7 @@
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { tokenCache } from './GmailService';
+import { GOOGLE_WEB_CLIENT_ID } from '../config/env';
 
 // The Gmail scope we require for the app
 const REQUIRED_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
@@ -70,7 +71,7 @@ export const hasRequiredGmailPermissions = async () => {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
           body: new URLSearchParams({
-            client_id: '533100730063-856k8l5r6uh2fe2fl7iovkf4t8tjdm69.apps.googleusercontent.com',
+            client_id: GOOGLE_WEB_CLIENT_ID,
             refresh_token: await AsyncStorage.getItem(`refresh_token_${userEmail}`),
             grant_type: 'refresh_token',
           }).toString(),
@@ -172,7 +173,7 @@ export const reAuthenticateWithGmailScope = async () => {
     // Configure with required scopes
     GoogleSignin.configure({
       scopes: [REQUIRED_SCOPE],
-      webClientId: '533100730063-856k8l5r6uh2fe2fl7iovkf4t8tjdm69.apps.googleusercontent.com',
+      webClientId: GOOGLE_WEB_CLIENT_ID,
       offlineAccess: true,
       forceCodeForRefreshToken: true,
     });

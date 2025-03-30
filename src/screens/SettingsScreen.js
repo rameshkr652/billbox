@@ -113,24 +113,6 @@ const SettingsScreen = () => {
         </View>
       </View>
       
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Data Management</Text>
-        <View style={styles.card}>
-          <TouchableOpacity
-            style={styles.dataActionButton}
-            onPress={handleClearAllData}
-          >
-            <Icon name="delete-forever" size={24} color={Colors.accent} />
-            <View style={styles.dataActionText}>
-              <Text style={styles.dataActionTitle}>Clear All Data</Text>
-              <Text style={styles.dataActionDescription}>
-                Delete all saved order information
-              </Text>
-            </View>
-            <Icon name="chevron-right" size={20} color={Colors.gray} />
-          </TouchableOpacity>
-        </View>
-      </View>
       
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>About</Text>
@@ -160,7 +142,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.lightGray,
   },
   header: {
-    paddingTop: 60,
+    paddingTop: 20,
     paddingHorizontal: 20,
     paddingBottom: 20,
     backgroundColor: Colors.primary,

@@ -11,10 +11,14 @@ const saveJsonToFile = async (messageData) => {
   }
 };
 
-// src/utils/EmailParser.js
-/**
- * Email parser utility for extracting structured data from platform-specific emails
- */
+const refundKeywords = [
+  "refund", "refunded", "cancellation", "cancelled", "payment reversal", "money returned"
+];
+
+const containsRefundKeyword = (text) => {
+  return refundKeywords.some(keyword => text.toLowerCase().includes(keyword));
+};
+
 
 /**
  * Main function to extract order details based on platform
@@ -81,7 +85,11 @@ export const extractZomatoOrderDetails = (emailBodyHtml) => {
     .replace(/Â/g, '') // Remove special character
     .replace(/\s+/g, ' ')
     .trim();
-    
+     // Check if the email mentions a refund or cancellation
+  if (containsRefundKeyword(cleanText)) {
+    console.log("This email is related to a refund or cancellation. Skipping order extraction.");
+    return null;
+  }
   // Object to store our extracted data
   const orderDetails = {
     restaurantName: null,

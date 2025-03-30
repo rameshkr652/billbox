@@ -4,7 +4,21 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import * as AccountService from './AccountService';
 import * as AuthService from './AuthService';
 import { parseOrderDetails } from '../utils/EmailParser';
+import RNFS from 'react-native-fs';
+import { extractCleanText } from '../utils/AIEmailParser';
+import AIEmailParser from '../utils/AIEmailParser';
+import { GOOGLE_WEB_CLIENT_ID } from '../config/env';
 
+const saveJsonToFile = async (messageData) => {
+  const filePath = `${RNFS.DocumentDirectoryPath}/saveJsonToFile.json`;
+
+  try {
+    await RNFS.writeFile(filePath, JSON.stringify(messageData, null, 2), 'utf8');
+    console.log('Data saved successfully at:', filePath);
+  } catch (error) {
+    console.error('Error saving JSON file:', error);
+  }
+};
 // In-memory token cache to prevent excessive validation
 const tokenCache = {
   tokens: {},
@@ -42,40 +56,81 @@ const tokenCache = {
 
 export { tokenCache };
 
-/**
- * Get a valid access token, using cache when possible to prevent validation overhead
- */
 const getAccessToken = async (accountEmail) => {
   try {
     if (!accountEmail) {
       throw new Error('Account email is required to get an access token');
     }
     
-    // Check memory cache first
-    if (tokenCache.isValidToken(accountEmail)) {
-      return tokenCache.getToken(accountEmail);
+    console.log(`Getting access token for ${accountEmail}`);
+    
+    // Clear token cache for this account
+    tokenCache.clearToken(accountEmail);
+    
+    // Try to get a fresh token from GoogleSignin
+    try {
+      console.log(`Attempting to get fresh token for ${accountEmail}`);
+      
+      // Get current user and their token
+      const currentSignedInUser = await GoogleSignin.getCurrentUser();
+      const currentTokens = currentSignedInUser ? await GoogleSignin.getTokens() : null;
+      
+      // If there's a current token, clear it explicitly
+      if (currentTokens?.accessToken) {
+        await GoogleSignin.clearCachedAccessToken(currentTokens.accessToken);
+      }
+      
+      // Check if the current signed-in user matches the requested account
+      if (!currentSignedInUser || currentSignedInUser.user.email !== accountEmail) {
+        console.log("Signed in user doesn't match requested account, signing out");
+        await GoogleSignin.signOut();
+        
+        // Configure GoogleSignin for the specific account
+        GoogleSignin.configure({
+          scopes: ['https://www.googleapis.com/auth/gmail.readonly'],
+          webClientId: GOOGLE_WEB_CLIENT_ID,
+          offlineAccess: true,
+          accountName: accountEmail, // Hint to preselect this account
+        });
+        
+        await GoogleSignin.hasPlayServices();
+        await GoogleSignin.signIn(); // This prompts account selection if needed
+      }
+      
+      // Fetch fresh tokens
+      const tokens = await GoogleSignin.getTokens();
+      console.log(`Got fresh token for ${accountEmail}`);
+      
+      if (tokens && tokens.accessToken) {
+        tokenCache.setToken(accountEmail, tokens.accessToken, 3000);
+        return tokens.accessToken;
+      } else {
+        throw new Error('No access token received from GoogleSignin');
+      }
+    } catch (googleError) {
+      console.error(`Error getting token from GoogleSignin: ${googleError}`);
+      throw googleError; // Let the fallback handle it
     }
-    
-    console.log(`Cache miss for ${accountEmail}, obtaining fresh token...`);
-    
-    // Try to refresh token first
-    const refreshResult = await AuthService.refreshTokenIfNeeded(accountEmail);
-    
-    // Get account with refreshed token
-    const accounts = await AccountService.getAccounts();
-    const account = accounts.find(acc => acc.email === accountEmail);
-    
-    if (!account || !account.accessToken) {
-      throw new Error(`Account not found or missing access token for ${accountEmail}`);
-    }
-    
-    // Store in cache with expiry time (50 minutes to be safe)
-    tokenCache.setToken(accountEmail, account.accessToken, 3000);
-    
-    return account.accessToken;
   } catch (error) {
-    console.error(`Error getting access token for ${accountEmail}:`, error);
-    throw error;
+    // Fallback to refresh token if GoogleSignin fails
+    try {
+      const refreshResult = await AuthService.refreshTokenIfNeeded(accountEmail);
+      console.log(`Token refresh result: ${refreshResult}`);
+      
+      const accounts = await AccountService.getAccounts();
+      const account = accounts.find(acc => acc.email === accountEmail);
+      
+      if (!account || !account.accessToken) {
+        throw new Error(`Account not found or missing access token for ${accountEmail}`);
+      }
+      
+      tokenCache.setToken(accountEmail, account.accessToken, 3000);
+      console.log(`Using refreshed token for ${accountEmail}`);
+      return account.accessToken;
+    } catch (refreshError) {
+      console.error(`Error refreshing token: ${refreshError}`);
+      throw refreshError;
+    }
   }
 };
 
@@ -116,7 +171,7 @@ const callGmailApi = async (endpoint, accountEmail, options = {}, retryCount = 0
         // Configure GoogleSignin for fresh login
         GoogleSignin.configure({
           scopes: ['https://www.googleapis.com/auth/gmail.readonly'],
-          webClientId: '533100730063-856k8l5r6uh2fe2fl7iovkf4t8tjdm69.apps.googleusercontent.com',
+          webClientId: GOOGLE_WEB_CLIENT_ID,
           offlineAccess: true,
           forceCodeForRefreshToken: true, // Ensure a new refresh token is issued
         });
@@ -201,7 +256,7 @@ const callGmailApi = async (endpoint, accountEmail, options = {}, retryCount = 0
     throw error;
   }
 };
-
+// fetchAllPlatformEmails with AI fallback integration
 export const fetchAllPlatformEmails = async (platform, accountEmail, platformQuery, progressCallback = () => {}) => {
   try {
     if (!accountEmail) {
@@ -248,6 +303,7 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
     }
     
     const processedEmails = [];
+    const failedEmails = []; // Collect emails where regex parsing fails
     let processedCount = 0;
     
     for (const batch of batches) {
@@ -269,7 +325,25 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
             }
             
             const messageData = await response.json();
-            return extractEmailData(messageData, platform);
+            const processedEmail = extractEmailData(messageData, platform);
+            
+            // Check if processing failed (missing restaurant or items)
+            if (processedEmail && processedEmail.orderDetails) {
+              const { restaurantName, orderItems } = processedEmail.orderDetails;
+              if (!restaurantName || !orderItems || orderItems.length === 0) {
+                // Mark for AI processing
+                const emailHtmlAi = extractEmailBody(messageData);
+                const textToAi = extractCleanText(emailHtmlAi);
+                failedEmails.push({
+                  ...processedEmail,
+                  emailBodyHtml: textToAi, // Save full HTML for AI processing
+                  messageId
+                });
+                return null; // Skip this for now, we'll process it with AI
+              }
+            }
+            
+            return processedEmail;
           } catch (error) {
             console.error(`Error processing message ${messageId}:`, error);
             return null;
@@ -288,6 +362,19 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
       );
     }
     
+    // If we have failed emails that need AI processing
+    if (failedEmails.length > 0) {
+      progressCallback(
+        processedCount,
+        allMessageIds.length,
+        `Processing ${failedEmails.length} complex emails with AI...`
+      );      
+      const aiProcessedEmails = await AIEmailParser.processEmailBatch(failedEmails, platform);
+      
+      // Add the AI-processed emails to our results
+      processedEmails.push(...aiProcessedEmails);
+    }
+    await saveJsonToFile(processedEmails);
     progressCallback(allMessageIds.length, allMessageIds.length, 'Saving emails...');
     const storageKey = `emails_${platform}_${accountEmail}`;
     await AsyncStorage.setItem(storageKey, JSON.stringify(processedEmails));
@@ -326,7 +413,6 @@ const extractEmailData = (messageData, platform) => {
       subject: headers.subject || 'No Subject',
       from: headers.from || 'Unknown Sender',
       date: headers.date || 'Unknown Date',
-      snippet: messageData.snippet || '',
       orderDetails: orderDetails
     };
   } catch (error) {
