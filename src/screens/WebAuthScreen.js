@@ -5,6 +5,7 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Colors from '../constants/colors';
+import { GOOGLE_WEB_CLIENT_ID } from '../config/env';
 
 const WebAuthScreen = () => {
   const navigation = useNavigation();
@@ -21,7 +22,7 @@ const WebAuthScreen = () => {
       // Configure Google Sign-In
       GoogleSignin.configure({
         scopes: ['https://www.googleapis.com/auth/gmail.readonly'],
-        webClientId: '533100730063-856k8l5r6uh2fe2fl7iovkf4t8tjdm69.apps.googleusercontent.com',
+        webClientId: GOOGLE_WEB_CLIENT_ID,
         offlineAccess: true,
       });
       

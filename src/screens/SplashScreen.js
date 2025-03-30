@@ -1,4 +1,4 @@
-// src/screens/SplashScreen.js
+import { GOOGLE_WEB_CLIENT_ID } from '../config/env';
 import React, { useEffect, useRef } from 'react';
 import {
   View,
@@ -17,7 +17,6 @@ import Colors from '../constants/colors';
 import * as AccountService from '../services/AccountService';
 import * as StorageService from '../services/StorageService';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-
 const { width, height } = Dimensions.get('window');
 
 const SplashScreen = () => {
@@ -102,7 +101,7 @@ const SplashScreen = () => {
         // Configure Google Sign-In
         GoogleSignin.configure({
           scopes: ['https://www.googleapis.com/auth/gmail.readonly'],
-          webClientId: '533100730063-856k8l5r6uh2fe2fl7iovkf4t8tjdm69.apps.googleusercontent.com',
+          webClientId: GOOGLE_WEB_CLIENT_ID,
           offlineAccess: true,
         });
         

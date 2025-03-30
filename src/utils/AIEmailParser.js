@@ -1,337 +1,208 @@
-// src/utils/AIEmailParser.js
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { parseOrderDetails } from './EmailParser'; // Fallback parser
 
-// Replicate API token
-const REPLICATE_API_TOKEN = 'REDACTED_REPLICATE_TOKEN';
-const MODEL_ID = 'meta/meta-llama-3-8b-instruct'; // Using a smaller, faster model
-const BATCH_SIZE = 50;
-
-/**
- * Extract clean text from HTML email body
- * @param {string} emailBodyHtml - HTML content of the email
- * @returns {string} Cleaned text version of the email
- */
-const extractCleanText = (emailBodyHtml) => {
+// Extract clean text from HTML email body
+export const extractCleanText = (emailBodyHtml) => {
   if (!emailBodyHtml) return '';
   
-  // Clean up the HTML
-  return emailBodyHtml
-    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/Â/g, '') // Remove special character
+  let cleanText = emailBodyHtml
+  .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+  .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+  .replace(/<[^>]+>/g, ' ')
+  .replace(/ /g, ' ')
+  .replace(/&/g, '&')
+  .replace(/</g, '<')
+  .replace(/>/g, '>')
+  .replace(/"/g, '"')
+  .replace(/'/g, "'")
+  .replace(/Â/g, '')
+  .replace(/\s+/g, ' ')
+  .trim();
+
+  cleanText = cleanText
+    .replace(/will NEVER ask you for your personal information.+?(email|Delhi-\d+)\.?/gi, '')
+    .replace(/©\d+ - .+?(reserved|Limited).+?(Delhi-\d+)\.?/gi, '')
+    .replace(/For your own safety.+?(email|details)\.?/gi, '')
+    .replace(/employees or representatives.+?(etc)\.?/gi, '');
+
+  cleanText = cleanText
+    .replace(/\b(hi|hello|thank you for|ordering from|delivered|near|ordering|thank)\b/gi, '')
+    .replace(/\b(a|an|the|is|am|are|was|were|be|being|been|do|does|did|has|have|had|will|shall|should|would|may|might|must|can|could)\b/gi, '')
+    .replace(/\b(Greetings|India)\b/gi, '')
+    .replace(/\b(for|of|in|on|at|by|to|from|with|about|against|between|into|through|during|before|after|above|below|under|over)\b/gi, '')
+    .replace(/\b(and|but|or|so|yet|nor|if|then|else|when|where|why|how|because|as|since|while|although|though|whether|that|which|who|whom|whose|what|whatever|whoever|employees|representatives)\b/gi, '')
+    .replace(/\b(zomato|swiggy|\.com|http|https|www)\b/gi, '')
+    .replace(/\b(limited|private|formerly|known|all rights reserved)\b/gi, '')
+    .replace(/\b(zone|road|street|avenue|lane|place|salon|pudur|area|colony|nagar|path|highway|bypass|circle|chowk|square|market|complex|mall|plaza|tower|building|apartment|flat|floor|block|sector|phase|plot|site|house|villa|bungalow|office|shop|store|outlet)\b/gi, '')
+    .replace(/\b(north|south|east|west|central|old|new|greater|upper|lower|behind|beside|near|opposite|across|junction|crossing|signal|flyover|bridge|metro|station|terminal|airport|railway|bus stop|stand)\b/gi, '')
+    .replace(/\b(delhi|mumbai|bangalore|chennai|kolkata|hyderabad|ahmedabad|pune|surat|jaipur|lucknow|kanpur|nagpur|indore|thane|bhopal|visakhapatnam|patna|vadodara|ghaziabad|ludhiana|agra|nashik|faridabad|meerut|rajkot|varanasi|srinagar|aurangabad|dhanbad|amritsar|allahabad|ranchi|howrah|coimbatore|jabalpur|gwalior|vijayawada|jodhpur|madurai|raipur|kota|guwahati|chandigarh|solapur|hubli|dharwad|bareilly|moradabad|mysore|gurgaon|aligarh|jalandhar|tiruchirappalli|bhubaneswar|salem|warangal|mira|bhayander|thiruvananthapuram|bhiwandi|saharanpur|gorakhpur|guntur|bikaner|amravati|noida|jamshedpur|bhilai|cuttack|firozabad|kochi|nellore|bhavnagar|dehradun|durgapur|asansol|nanded|kolhapur|ajmer|akola|gulbarga|jamnagar|ujjain|loni|siliguri|jhansi|ulhasnagar|jammu|sangli|miraj|kupwad|belgaum|mangalore|ambattur|tirunelveli|malegaon|gaya|jalgaon|udaipur|maheshtala|davanagere|kozhikode|kurnool|rajpur|sonarpur|rajahmundry|bilaspur|kamarhati|shahjahanpur|bijapur|rampur|shivamogga|chandrapur|junagadh|thrissur|alwar|bardhaman|kulti|kakinada|nizamabad|parbhani|tumkur|khammam|ozhukarai|bihar|sharif|panipat|darbhanga|bally|delhi|noida|gurgaon|faridabad|ghaziabad|gurugram|ncr)\b/gi, '')    
     .replace(/\s+/g, ' ')
     .trim();
+
+  return cleanText;
 };
-export const processEmailBatch = async (emailBatch, platform) => {
-    if (!emailBatch || emailBatch.length === 0) return [];
-    
-    // Prepare the email texts and the AI prompt
-    const cleanEmailTexts = emailBatch.map(email => 
+
+// Split array into chunks
+const chunkArray = (array, chunkSize) => {
+  const chunks = [];
+  for (let i = 0; i < array.length; i += chunkSize) {
+    chunks.push(array.slice(i, i + chunkSize));
+  }
+  return chunks;
+};
+
+export const processEmailBatch = async (failedEmails, platform) => {
+  if (!failedEmails || failedEmails.length === 0) return [];
+
+  const BATCH_SIZE = 2; // Process 5 emails per batch
+  const emailChunks = chunkArray(failedEmails, BATCH_SIZE);
+  const allResults = [];
+
+  for (const chunk of emailChunks) {
+    // Prepare the email texts and the AI prompt for this chunk
+    const cleanEmailTexts = chunk.map(email => 
       extractCleanText(email.emailBodyHtml || '')
     );
     
-    // Create the prompt for the whole batch
     const prompt = `### INSTRUCTION ###
-  Extract structured information from these ${platform} food delivery emails. For EACH email, return a valid JSON object with these fields:
-  - restaurantName: Extract the restaurant's name
-  - orderItems: Create an array of all ordered items with quantities 
-  - totalPrice: Extract the total amount paid with currency symbol
-  - orderId: Extract the numeric order ID
-  - orderStatus: Extract the current status of the order (Delivered, Processing, etc.)
-  
-  I'm sending you ${cleanEmailTexts.length} emails. Return EXACTLY ${cleanEmailTexts.length} JSON objects in an array.
-  
-  ### EMAILS ###
-  ${cleanEmailTexts.map((text, index) => 
-    `\n--- EMAIL ${index + 1} ---\n${text}`).join('\n')}
-  
-  ### OUTPUT FORMAT ###
-  Respond ONLY with a valid JSON array containing ${cleanEmailTexts.length} objects. No explanations or other text.`;
-  
+Extract structured information from these ${platform} food delivery emails. For EACH email, return a valid JSON object with these fields:
+- restaurantName: Extract the restaurant's name
+- orderItems (array of {string}, include only the food name without quantities like '1 X' or '2 X') 
+- totalPrice: Extract the total amount paid with currency symbol
+- orderId: Extract the numeric order ID
+- orderStatus: Extract the current status of the order (Delivered, Processing, etc.)
+
+I'm sending you ${cleanEmailTexts.length} emails. Return EXACTLY ${cleanEmailTexts.length} JSON objects in an array.
+
+### EMAILS ###
+${cleanEmailTexts.map((text, index) => 
+  `\n--- EMAIL ${index + 1} ---\n${text}`).join('\n')}
+
+### OUTPUT FORMAT ###
+Respond ONLY with a valid JSON array containing ${cleanEmailTexts.length} JSON objects. No explanations or other text.`;
+
     try {
-      // Call the AI service with the batch prompt
       const response = await callReplicateAPI(prompt);
       
-      // Parse the response into an array of order details
+      if (!response) {
+        console.error('API returned undefined or null response for chunk');
+        throw new Error('Invalid API response');
+      }
+
       let parsedDetails;
       try {
-        // Extract JSON array from response
         const jsonMatch = response.match(/\[\s*\{.*\}\s*\]/s);
-        parsedDetails = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
+        parsedDetails = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(response);
       } catch (error) {
-        console.error('Error parsing AI response:', error);
+        console.error('Error parsing AI response for chunk:', error);
+        console.log('Raw response:', response);
         parsedDetails = [];
       }
-      
-      // Merge the parsed details with the original emails
-      return emailBatch.map((email, index) => {
-        const details = parsedDetails[index] || null;
+
+      const chunkResults = chunk.map((email, index) => {
+        const details = parsedDetails && parsedDetails[index] ? parsedDetails[index] : null;
         if (!details) {
-          // Fallback to traditional parsing
           const fallbackDetails = parseOrderDetails(email.emailBodyHtml, platform);
           return { ...email, orderDetails: fallbackDetails };
         }
         return { ...email, orderDetails: details };
       });
+
+      allResults.push(...chunkResults);
     } catch (error) {
-      console.error('Error in batch AI processing:', error);
-      // Fallback to traditional parsing for all emails in batch
-      return emailBatch.map(email => {
+      console.error('Error in batch AI processing for chunk:', error);
+      const fallbackResults = chunk.map(email => {
         const orderDetails = parseOrderDetails(email.emailBodyHtml, platform);
         return { ...email, orderDetails };
       });
+      allResults.push(...fallbackResults);
     }
-  };
-  
-  const callReplicateAPI = async (prompt) => {
-    try {
-      const response = await fetch('https://api.replicate.com/v1/predictions', {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Token REDACTED_REPLICATE_TOKEN',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          version: 'meta/meta-llama-3-8b-instruct', 
-          input: {
-            prompt: prompt,
-            temperature: 0.3,
-            max_length: 4096,
-            top_p: 0.9
-          }
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      // Handle asynchronous prediction
-      if (data.id) {
-        return await pollPredictionResult(data.id);
-      }
-      
-      return data.output || '';
-    } catch (error) {
-      console.error('Error calling AI API:', error);
-      throw error;
-    }
-  };
+  }
 
-/**
- * Create the batch prompt for the AI model
- * @param {Array<string>} cleanTexts - Array of clean email texts
- * @param {string} platform - Platform identifier
- * @returns {string} Complete prompt for the AI
- */
-const createBatchPrompt = (cleanTexts, platform) => {
-  let prompt = `### INSTRUCTION ###
-Extract structured information from these ${platform} food delivery emails. For EACH email, return a valid JSON object with these fields:
-- restaurantName: Extract the restaurant's name
-- orderItems: Create an array of all ordered items with quantities 
-- totalPrice: Extract the total amount paid with currency symbol
-- orderId: Extract the numeric order ID
-- orderStatus: Extract the current status of the order (Delivered, Processing, etc.)
-
-I'm sending you ${cleanTexts.length} emails. Return EXACTLY ${cleanTexts.length} JSON objects in an array.
-
-### EMAILS ###\n`;
-
-  // Add each email with an index
-  cleanTexts.forEach((text, index) => {
-    prompt += `\n--- EMAIL ${index + 1} ---\n${text}\n`;
-  });
-
-  prompt += `\n### OUTPUT FORMAT ###
-Respond ONLY with a valid JSON array containing ${cleanTexts.length} objects. No explanations or other text.`;
-
-  return prompt;
+  return allResults;
 };
 
-/**
- * Call the Replicate API
- * @param {string} prompt - The complete prompt
- * @returns {Promise<string>} - The AI response
- */
-const fetchFromReplicate = async (prompt) => {
+const callReplicateAPI = async (prompt) => {
   try {
+    console.log('Calling Replicate API...');
     const response = await fetch('https://api.replicate.com/v1/predictions', {
       method: 'POST',
       headers: {
-        'Authorization': `Token ${REPLICATE_API_TOKEN}`,
+        'Authorization': 'Token REDACTED_REPLICATE_TOKEN',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        version: MODEL_ID,
+        version: 'meta/meta-llama-3-8b-instruct', 
         input: {
           prompt: prompt,
-          temperature: 0.3, // Lower temperature for more deterministic outputs
-          max_length: 4096, // Set appropriate limit for response
+          temperature: 0.3,
+          max_length: 4096,
           top_p: 0.9
         }
       })
     });
-
+    
     if (!response.ok) {
-      throw new Error(`Replicate API error: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      throw new Error(`API error: ${response.status} - ${errorText}`);
     }
-
+    
     const data = await response.json();
+    console.log('API response received:', data);
     
-    // Handle asynchronous prediction
-    if (data.status === 'starting' || data.status === 'processing') {
-      return pollPredictionResult(data.id);
+    if (data.id) {
+      const result = await pollPredictionResult(data.id);
+      if (!result) throw new Error('Polling completed but returned empty result');
+      return result;
     }
     
-    return data.output || '';
+    if (!data.output) throw new Error('API returned no output');
+    return data.output;
   } catch (error) {
-    console.error('Error calling Replicate API:', error);
+    console.error('Error calling AI API:', error);
     throw error;
   }
 };
-// Poll for prediction results
+
 const pollPredictionResult = async (predictionId) => {
-    let attempts = 0;
-    const maxAttempts = 30;
-    const delay = 2000; // 2 seconds
-    
-    while (attempts < maxAttempts) {
-      try {
-        const response = await fetch(`https://api.replicate.com/v1/predictions/${predictionId}`, {
-          headers: {
-            'Authorization': 'Token REDACTED_REPLICATE_TOKEN',
-          }
-        });
-        
-        if (!response.ok) {
-          throw new Error(`API error: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (data.status === 'succeeded') {
-          return data.output || '';
-        } else if (data.status === 'failed') {
-          throw new Error(`Prediction failed: ${data.error}`);
-        }
-        
-        await new Promise(resolve => setTimeout(resolve, delay));
-        attempts++;
-      } catch (error) {
-        console.error('Error polling prediction:', error);
-        throw error;
-      }
-    }
-    
-    throw new Error('Prediction timed out');
-  };
+  let attempts = 0;
+  const maxAttempts = 30;
+  const delay = 2000;
   
-
-/**
- * Parse the AI response into structured data
- * @param {string} response - The AI response text
- * @param {number} expectedCount - Expected number of results
- * @returns {Array} - Array of parsed order details
- */
-const parseAIResponse = (response, expectedCount) => {
-  try {
-    // Extract JSON array from response (in case there's any extra text)
-    const jsonMatch = response.match(/\[\s*\{.*\}\s*\]/s);
-    if (!jsonMatch) {
-      throw new Error('No valid JSON array found in response');
-    }
-    
-    const jsonString = jsonMatch[0];
-    const parsed = JSON.parse(jsonString);
-    
-    // Validate we got the expected number of results
-    if (!Array.isArray(parsed) || parsed.length !== expectedCount) {
-      console.warn(`Expected ${expectedCount} results, got ${parsed.length}`);
-    }
-    
-    return parsed;
-  } catch (error) {
-    console.error('Error parsing AI response:', error);
-    return Array(expectedCount).fill(null); // Return array of nulls as fallback
-  }
-};
-
-/**
- * Merge parsed details with original emails
- * @param {Array} emails - Original email objects
- * @param {Array} parsedDetails - Parsed order details from AI
- * @returns {Array} - Merged email objects with order details
- */
-const mergeDetailsWithEmails = (emails, parsedDetails) => {
-  return emails.map((email, index) => {
-    // Get corresponding parsed details or null
-    const details = parsedDetails[index] || null;
-    
-    if (!details) {
-      // Fallback to traditional parsing if AI parsing failed
-      const fallbackDetails = parseOrderDetails(email.emailBodyHtml, 'zomato'); // Assume zomato as fallback
-      return { ...email, orderDetails: fallbackDetails };
-    }
-    
-    return { ...email, orderDetails: details };
-  });
-};
-
-/**
- * Main function to process emails in batches
- * @param {Array} emails - Array of all emails to process
- * @param {string} platform - Platform identifier
- * @param {Function} progressCallback - Optional callback for progress updates
- * @returns {Promise<Array>} - Processed emails with order details
- */
-export const processEmailsWithAI = async (emails, platform, progressCallback = () => {}) => {
-  if (!emails || emails.length === 0) return [];
+  console.log(`Polling for prediction result: ${predictionId}`);
   
-  const processedEmails = [];
-  const totalEmails = emails.length;
-  let processedCount = 0;
-  
-  // Process emails in batches
-  for (let i = 0; i < totalEmails; i += BATCH_SIZE) {
-    const batch = emails.slice(i, i + BATCH_SIZE);
-    
+  while (attempts < maxAttempts) {
     try {
-      // Update progress
-      progressCallback(processedCount, totalEmails, `Processing batch ${Math.floor(i/BATCH_SIZE) + 1}...`);
-      
-      // Process batch
-      const processedBatch = await processEmailBatch(batch, platform);
-      processedEmails.push(...processedBatch);
-      
-      // Update processed count
-      processedCount += batch.length;
-      progressCallback(processedCount, totalEmails, `Processed ${processedCount} of ${totalEmails} emails...`);
-    } catch (error) {
-      console.error(`Error processing batch starting at index ${i}:`, error);
-      
-      // Fallback to traditional parsing for this batch
-      const fallbackProcessed = batch.map(email => {
-        const fallbackDetails = parseOrderDetails(email.emailBodyHtml, platform);
-        return { ...email, orderDetails: fallbackDetails };
+      const response = await fetch(`https://api.replicate.com/v1/predictions/${predictionId}`, {
+        headers: { 'Authorization': 'Token REDACTED_REPLICATE_TOKEN' }
       });
       
-      processedEmails.push(...fallbackProcessed);
-      processedCount += batch.length;
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API error during polling: ${response.status} - ${errorText}`);
+      }
+      
+      const data = await response.json();
+      console.log(`Poll attempt ${attempts+1}: status = ${data.status}`);
+      
+      if (data.status === 'succeeded') {
+        if (!data.output) {
+          console.warn('API returned success but no output');
+          return '[]';
+        }
+        return Array.isArray(data.output) ? data.output.join('') : data.output;
+      } else if (data.status === 'failed') {
+        throw new Error(`Prediction failed: ${data.error}`);
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, delay));
+      attempts++;
+    } catch (error) {
+      console.error('Error during polling:', error);
+      throw error;
     }
   }
   
-  return processedEmails;
+  throw new Error('Prediction timed out after maximum attempts');
 };
 
-
-// Note: This implementation assumes the existence of callGmailApi, getAccessToken
+export default { processEmailBatch };

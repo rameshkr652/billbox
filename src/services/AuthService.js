@@ -2,7 +2,7 @@
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as AccountService from './AccountService';
-
+import { GOOGLE_WEB_CLIENT_ID } from '../config/env';
 // Constants
 const TOKEN_EXPIRY_KEY = 'token_expiry';
 const REFRESH_TOKEN_KEY = 'refresh_token';
@@ -12,7 +12,7 @@ const TOKEN_REFRESH_TIMEOUT = 30000; // 30 seconds timeout for refresh operation
 export const configureGoogleSignIn = () => {
   GoogleSignin.configure({
     scopes: ['https://www.googleapis.com/auth/gmail.readonly'],
-    webClientId: '533100730063-856k8l5r6uh2fe2fl7iovkf4t8tjdm69.apps.googleusercontent.com',
+    webClientId: GOOGLE_WEB_CLIENT_ID,
     offlineAccess: true, // This is crucial for getting refresh token
   });
 };
@@ -237,7 +237,7 @@ export const directRefreshToken = async (email) => {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
-        client_id: '533100730063-856k8l5r6uh2fe2fl7iovkf4t8tjdm69.apps.googleusercontent.com', // Your Google client ID
+        client_id: GOOGLE_WEB_CLIENT_ID,
         refresh_token: refreshToken,
         grant_type: 'refresh_token',
       }).toString(),

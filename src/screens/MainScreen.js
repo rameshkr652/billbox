@@ -79,40 +79,6 @@ const CustomDrawerContent = (props) => {
   
   return (
     <ScrollView style={styles.drawerContainer}>
-      {/* User info section at the top */}
-      {userInfo && (
-        <View style={styles.userInfoContainer}>
-          <View style={styles.avatar}>
-            {userInfo.photo ? (
-              <Image 
-                source={{ uri: userInfo.photo }} 
-                style={styles.avatarImage} 
-              />
-            ) : (
-              <Text style={styles.avatarText}>
-                {userInfo.name ? userInfo.name.charAt(0).toUpperCase() : 'U'}
-              </Text>
-            )}
-          </View>
-          <View>
-            <Text style={styles.userName}>
-              {userInfo.name || 'User'}
-            </Text>
-            <Text style={styles.userEmail}>
-              {activePlatform ? (
-                <>
-                  <Text style={styles.platformLabel}>
-                    {activePlatform.charAt(0).toUpperCase() + activePlatform.slice(1)}:{' '}
-                  </Text>
-                  {userInfo.email || 'Loading...'}
-                </>
-              ) : (
-                userInfo.email || 'Loading...'
-              )}
-            </Text>
-          </View>
-        </View>
-      )}
       
       <View style={styles.drawerHeader}>
         <Text style={styles.drawerTitle}>Platforms</Text>
@@ -172,40 +138,8 @@ const CustomDrawerContent = (props) => {
             navigation.closeDrawer();
           }}
         >
-          <Icon name="settings" size={20} color="#666" />
-          <Text style={styles.drawerFooterButtonText}>Settings</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[styles.drawerFooterButton, styles.logoutButton]}
-          onPress={() => {
-            navigation.closeDrawer();
-            Alert.alert(
-              'Sign Out',
-              'Are you sure you want to sign out?',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                { 
-                  text: 'Sign Out', 
-                  style: 'destructive',
-                  onPress: async () => {
-                    try {
-                      await AuthService.signOut();
-                      navigation.reset({
-                        index: 0,
-                        routes: [{ name: 'Intro' }],
-                      });
-                    } catch (error) {
-                      console.error('Error signing out:', error);
-                    }
-                  } 
-                },
-              ]
-            );
-          }}
-        >
-          <Icon name="logout" size={20} color={Colors.accent} />
-          <Text style={[styles.drawerFooterButtonText, { color: Colors.accent }]}>Sign Out</Text>
+          <Icon name="info" size={20} color="#666" />
+          <Text style={styles.drawerFooterButtonText}>About</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
