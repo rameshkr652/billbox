@@ -257,8 +257,7 @@ const callGmailApi = async (endpoint, accountEmail, options = {}, retryCount = 0
   }
 };
 // fetchAllPlatformEmails with AI fallback integration
-export const fetchAllPlatformEmails = async (platform, accountEmail, platformQuery, progressCallback = () => {}, setShowAiTerminal,
-setShowProgress) => {
+export const fetchAllPlatformEmails = async (platform, accountEmail, platformQuery, progressCallback = () => {}) => {
   try {
     if (!accountEmail) {
       throw new Error('No account email provided');
@@ -270,7 +269,7 @@ setShowProgress) => {
     const encodedQuery = encodeURIComponent(query);
     
     progressCallback(0, 1, 'Finding matching emails...');
-    const listUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodedQuery}&maxResults=10`;
+    const listUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodedQuery}&maxResults=100`;
     const initialData = await callGmailApi(listUrl, accountEmail);
     
     if (!initialData.messages || initialData.messages.length === 0) {
@@ -284,17 +283,17 @@ setShowProgress) => {
     let allMessageIds = initialData.messages.map(msg => msg.id);
     let nextPageToken = initialData.nextPageToken;
     
-    // while (nextPageToken) {
-    //   const pageUrl = `${listUrl}&pageToken=${nextPageToken}`;
-    //   const pageData = await callGmailApi(pageUrl, accountEmail);
+    while (nextPageToken) {
+      const pageUrl = `${listUrl}&pageToken=${nextPageToken}`;
+      const pageData = await callGmailApi(pageUrl, accountEmail);
       
-    //   if (pageData.messages && pageData.messages.length > 0) {
-    //     allMessageIds = [...allMessageIds, ...pageData.messages.map(msg => msg.id)];
-    //   }
+      if (pageData.messages && pageData.messages.length > 0) {
+        allMessageIds = [...allMessageIds, ...pageData.messages.map(msg => msg.id)];
+      }
       
-    //   nextPageToken = pageData.nextPageToken;
-    //   progressCallback(allMessageIds.length, totalCount, `Collecting message IDs (${allMessageIds.length})...`);
-    // }
+      nextPageToken = pageData.nextPageToken;
+      progressCallback(allMessageIds.length, totalCount, `Collecting message IDs (${allMessageIds.length})...`);
+    }
     
     const BATCH_SIZE = 10;
     const batches = [];
@@ -328,28 +327,22 @@ setShowProgress) => {
             const messageData = await response.json();
             const processedEmail = extractEmailData(messageData, platform);
             
-            // // Check if processing failed (missing restaurant or items)
-            // if (processedEmail && processedEmail.orderDetails) {
-            //   const { restaurantName, orderItems } = processedEmail.orderDetails;
-            //   if (!restaurantName || !orderItems || orderItems.length === 0) {
-            //     // Mark for AI processing
-            //     const emailHtmlAi = extractEmailBody(messageData);
-            //     const textToAi = extractCleanText(emailHtmlAi);
-            //     failedEmails.push({
-            //       ...processedEmail,
-            //       emailBodyHtml: textToAi, // Save full HTML for AI processing
-            //       messageId
-            //     });
-            //     return null; // Skip this for now, we'll process it with AI
-            //   }
-            // }
-            const emailHtmlAi = extractEmailBody(messageData);
+            // Check if processing failed (missing restaurant or items)
+            if (processedEmail && processedEmail.orderDetails) {
+              const { restaurantName, orderItems } = processedEmail.orderDetails;
+              if (!restaurantName || !orderItems || orderItems.length === 0) {
+                // Mark for AI processing
+                const emailHtmlAi = extractEmailBody(messageData);
                 const textToAi = extractCleanText(emailHtmlAi);
                 failedEmails.push({
                   ...processedEmail,
                   emailBodyHtml: textToAi, // Save full HTML for AI processing
                   messageId
                 });
+                return null; // Skip this for now, we'll process it with AI
+              }
+            }
+            
             return processedEmail;
           } catch (error) {
             console.error(`Error processing message ${messageId}:`, error);
@@ -371,20 +364,15 @@ setShowProgress) => {
     
     // If we have failed emails that need AI processing
     if (failedEmails.length > 0) {
-      setShowProgress(false); // Hide regular progress
-      setShowAiTerminal(true); // Show AI terminal
       progressCallback(
         processedCount,
         allMessageIds.length,
-        `Processing ${failedEmails.length} complex emails with AI...`,
-        null,
-        true // New flag indicating AI processing
-      );
+        `Processing ${failedEmails.length} complex emails with AI...`
+      );      
       const aiProcessedEmails = await AIEmailParser.processEmailBatch(failedEmails, platform);
       
       // Add the AI-processed emails to our results
       processedEmails.push(...aiProcessedEmails);
-      setShowAiTerminal(false);
     }
     await saveJsonToFile(processedEmails);
     progressCallback(allMessageIds.length, allMessageIds.length, 'Saving emails...');

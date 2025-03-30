@@ -86,8 +86,7 @@ export const loadPlatformData = async (platform, setPlatformData) => {
 /**
  * Fetch all emails for the platform
  */
-export const fetchAllEmails = async (platform, accountEmail, platformInfo, progressCallback, setShowAiTerminal,
-  setShowProgress) => {
+export const fetchAllEmails = async (platform, accountEmail, platformInfo, progressCallback) => {
   try {
     if (!accountEmail) {
       throw new Error('No account found. Please add an account first.');
@@ -101,9 +100,7 @@ export const fetchAllEmails = async (platform, accountEmail, platformInfo, progr
       platform, 
       accountEmail, 
       query,
-      progressCallback,
-      setShowAiTerminal,
-  setShowProgress
+      progressCallback
     );
     
     // Update last fetched timestamp
