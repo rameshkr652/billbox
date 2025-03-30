@@ -256,75 +256,104 @@ const callGmailApi = async (endpoint, accountEmail, options = {}, retryCount = 0
     throw error;
   }
 };
-// fetchAllPlatformEmails with AI fallback integration
+// Enhanced fetchAllPlatformEmails with optimized network requests
 export const fetchAllPlatformEmails = async (platform, accountEmail, platformQuery, progressCallback = () => {}) => {
   try {
     if (!accountEmail) {
       throw new Error('No account email provided');
     }
     
+    // Properly scoped timing variable for progress estimation
+    let startTime = Date.now();
+    
     progressCallback(0, 1, 'Preparing to fetch emails...');
     
     const query = platformQuery || `from:${platform}.com`;
     const encodedQuery = encodeURIComponent(query);
     
+    // 1. Initial search with higher maxResults (up to 500)
     progressCallback(0, 1, 'Finding matching emails...');
-    const listUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodedQuery}&maxResults=100`;
-    const initialData = await callGmailApi(listUrl, accountEmail);
+    const listUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodedQuery}&maxResults=500`;
+    const accessToken = await getAccessToken(accountEmail);
+    
+    // Make initial request with higher result count
+    const initialResponse = await fetch(listUrl, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    
+    if (!initialResponse.ok) {
+      throw new Error(`Failed to search emails: ${initialResponse.status}`);
+    }
+    
+    const initialData = await initialResponse.json();
     
     if (!initialData.messages || initialData.messages.length === 0) {
       progressCallback(1, 1, 'No emails found.');
       return [];
     }
     
-    const totalCount = initialData.resultSizeEstimate || initialData.messages.length;
-    progressCallback(0, totalCount, `Found ${totalCount} emails. Processing...`);
-    
+    // 2. Efficiently collect all message IDs using a single token
     let allMessageIds = initialData.messages.map(msg => msg.id);
     let nextPageToken = initialData.nextPageToken;
+    const estimatedTotal = initialData.resultSizeEstimate || allMessageIds.length;
     
+    progressCallback(allMessageIds.length, estimatedTotal, `Found ${allMessageIds.length} emails so far...`);
+    
+    // Collect all message IDs before processing any content
     while (nextPageToken) {
       const pageUrl = `${listUrl}&pageToken=${nextPageToken}`;
-      const pageData = await callGmailApi(pageUrl, accountEmail);
+      const pageResponse = await fetch(pageUrl, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      
+      if (!pageResponse.ok) {
+        console.warn(`Warning: Failed to get page of results: ${pageResponse.status}`);
+        break; // Continue with what we have rather than failing completely
+      }
+      
+      const pageData = await pageResponse.json();
       
       if (pageData.messages && pageData.messages.length > 0) {
         allMessageIds = [...allMessageIds, ...pageData.messages.map(msg => msg.id)];
       }
       
       nextPageToken = pageData.nextPageToken;
-      progressCallback(allMessageIds.length, totalCount, `Collecting message IDs (${allMessageIds.length})...`);
+      progressCallback(allMessageIds.length, Math.max(estimatedTotal, allMessageIds.length), 
+                      `Collecting message IDs (${allMessageIds.length})...`);
     }
     
-    const BATCH_SIZE = 10;
-    const batches = [];
+    // 3. Process emails in larger batches (25-50) for better efficiency
+    const BATCH_SIZE = 50; // Increased from 10 to 50
+    const processedEmails = [];
+    const failedEmails = []; // Keep track of emails that need AI processing
     
+    // 4. Create more efficient batches
+    const batches = [];
     for (let i = 0; i < allMessageIds.length; i += BATCH_SIZE) {
       batches.push(allMessageIds.slice(i, i + BATCH_SIZE));
     }
     
-    const processedEmails = [];
-    const failedEmails = []; // Collect emails where regex parsing fails
     let processedCount = 0;
+    const totalEmails = allMessageIds.length;
     
+    // 5. Process each batch with better error handling and fewer token refreshes
     for (const batch of batches) {
-      const accessToken = await getAccessToken(accountEmail);
-      
-      const batchResults = await Promise.all(
-        batch.map(async (messageId) => {
-          try {
-            const response = await fetch(
-              `https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageId}?format=full`,
-              {
-                headers: { Authorization: `Bearer ${accessToken}` }
-              }
-            );
-            
+      try {
+        // Only get a fresh token for each batch, not for each email
+        const batchToken = await getAccessToken(accountEmail);
+        
+        // 6. Use Promise.all to process emails in parallel within each batch
+        const batchPromises = batch.map(messageId => {
+          return fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageId}?format=full`, {
+            headers: { Authorization: `Bearer ${batchToken}` }
+          })
+          .then(response => {
             if (!response.ok) {
-              console.error(`Error fetching message ${messageId}: ${response.status}`);
-              return null;
+              throw new Error(`Failed to fetch message ${messageId}: ${response.status}`);
             }
-            
-            const messageData = await response.json();
+            return response.json();
+          })
+          .then(messageData => {
             const processedEmail = extractEmailData(messageData, platform);
             
             // Check if processing failed (missing restaurant or items)
@@ -336,51 +365,74 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
                 const textToAi = extractCleanText(emailHtmlAi);
                 failedEmails.push({
                   ...processedEmail,
-                  emailBodyHtml: textToAi, // Save full HTML for AI processing
+                  emailBodyHtml: textToAi,
                   messageId
                 });
-                return null; // Skip this for now, we'll process it with AI
+                return null; // Skip for now, will process with AI later
               }
             }
             
             return processedEmail;
-          } catch (error) {
-            console.error(`Error processing message ${messageId}:`, error);
-            return null;
-          }
-        })
-      );
-      
-      const validResults = batchResults.filter(result => result !== null);
-      processedEmails.push(...validResults);
-      
-      processedCount += batch.length;
-      progressCallback(
-        processedCount,
-        allMessageIds.length,
-        `Processing emails (${processedCount}/${allMessageIds.length})...`
-      );
+          })
+          .catch(error => {
+            console.warn(`Error processing message ${messageId}:`, error.message);
+            return null; // Don't let one failure stop the whole batch
+          });
+        });
+        
+        // Wait for all emails in batch to process
+        const batchResults = await Promise.all(batchPromises);
+        const validResults = batchResults.filter(result => result !== null);
+        processedEmails.push(...validResults);
+        
+        // Update progress
+        processedCount += batch.length;
+        const percentComplete = Math.min(0.9, processedCount / totalEmails); // Reserve 10% for AI processing
+        
+        // Calculate time estimates based on current progress
+        const currentTime = Date.now();
+        // Use a properly scoped variable instead of 'this'
+        if (!startTime) startTime = currentTime;
+        
+        const elapsedMs = currentTime - startTime;
+        const estimatedTotalMs = processedCount > 0 ? (elapsedMs / processedCount) * totalEmails : 0;
+        const remainingMs = Math.max(0, estimatedTotalMs - elapsedMs);
+        const estimatedTimeRemaining = Math.round(remainingMs / 1000); // Convert to seconds
+        
+        progressCallback(
+          processedCount,
+          totalEmails,
+          `Processing emails (${processedCount}/${totalEmails})...`,
+          estimatedTimeRemaining
+        );
+      } catch (batchError) {
+        console.error('Error processing batch:', batchError);
+        // Continue with next batch instead of failing completely
+      }
     }
     
-    // If we have failed emails that need AI processing
+    // 7. Process failed emails with AI (keeping this part unchanged)
     if (failedEmails.length > 0) {
       progressCallback(
         processedCount,
-        allMessageIds.length,
+        totalEmails,
         `Processing ${failedEmails.length} complex emails with AI...`
-      );      
-      const aiProcessedEmails = await AIEmailParser.processEmailBatch(failedEmails, platform);
+      );
       
-      // Add the AI-processed emails to our results
+      const aiProcessedEmails = await AIEmailParser.processEmailBatch(failedEmails, platform);
       processedEmails.push(...aiProcessedEmails);
     }
-    await saveJsonToFile(processedEmails);
-    progressCallback(allMessageIds.length, allMessageIds.length, 'Saving emails...');
+    
+    // 8. Save all processed emails at once
+    progressCallback(totalEmails, totalEmails, 'Saving emails...');
     const storageKey = `emails_${platform}_${accountEmail}`;
     await AsyncStorage.setItem(storageKey, JSON.stringify(processedEmails));
     
+    // Update last fetched timestamp
     const now = Date.now();
     await AsyncStorage.setItem(`lastFetched_${platform}_${accountEmail}`, now.toString());
+    
+    // No need to clean up properly scoped variables
     
     return processedEmails;
   } catch (error) {
