@@ -257,7 +257,7 @@ const callGmailApi = async (endpoint, accountEmail, options = {}, retryCount = 0
   }
 };
 // Enhanced fetchAllPlatformEmails with optimized network requests
-export const fetchAllPlatformEmails = async (platform, accountEmail, platformQuery, progressCallback = () => {}) => {
+export const fetchAllPlatformEmails = async (platform, accountEmail, platformQuery, progressCallback = () => {}, setTempEmails = null) => {
   try {
     if (!accountEmail) {
       throw new Error('No account email provided');
@@ -326,7 +326,7 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
     const BATCH_SIZE = 50; // Increased from 10 to 50
     const processedEmails = [];
     const failedEmails = []; // Keep track of emails that need AI processing
-    
+    const emailTProgressBar = []
     // 4. Create more efficient batches
     const batches = [];
     for (let i = 0; i < allMessageIds.length; i += BATCH_SIZE) {
@@ -358,6 +358,7 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
             
             // Check if processing failed (missing restaurant or items)
             if (processedEmail && processedEmail.orderDetails) {
+              emailTProgressBar.push(processedEmail.orderDetails)
               const { restaurantName, orderItems } = processedEmail.orderDetails;
               if (!restaurantName || !orderItems || orderItems.length === 0) {
                 // Mark for AI processing
@@ -408,6 +409,9 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
       } catch (batchError) {
         console.error('Error processing batch:', batchError);
         // Continue with next batch instead of failing completely
+      }
+      if(emailTProgressBar.length){
+        setTempEmails(emailTProgressBar)
       }
     }
     

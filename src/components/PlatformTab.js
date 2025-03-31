@@ -45,6 +45,7 @@ const PlatformTab = ({ platform, route }) => {
   // Drawer state
   const [showAccountDrawer, setShowAccountDrawer] = useState(false);
   const drawerAnimation = useRef(new Animated.Value(Dimensions.get('window').width)).current;
+  const [tempEmails, setTempEmails] = useState([]);
   
   // Get platform info
   const platformInfo = platforms.find(p => p.id === platform) || {
@@ -188,7 +189,8 @@ const PlatformTab = ({ platform, route }) => {
           if (estimatedTimeRemaining) {
             setTimeRemaining(PlatformTabUtils.formatTimeRemaining(estimatedTimeRemaining));
           }
-        }
+        },
+        setTempEmails
       );
       
       if (result.success) {
@@ -341,7 +343,7 @@ const fetchLatestEmails = async () => {
       progressText={progressText}
       progress={progress}
       timeRemaining={timeRemaining}
-      emails={emails} // Pass the emails array from your component's state
+      emails={tempEmails} // Pass the emails array from your component's state
     />
   );
   

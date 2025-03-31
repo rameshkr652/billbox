@@ -34,29 +34,35 @@ const ProgressBar = ({ progress, color }) => {
 
 // Extract unique restaurant names and food items from order data
 const extractOrderData = (emails) => {
-  const restaurants = new Set();
-  const foodItems = new Set();
+  // Use an object to maintain restaurant to food items mapping
+  const restaurantToFoods = {};
   
   emails.forEach(email => {
-    if (email.orderDetails?.restaurantName) {
-      restaurants.add(email.orderDetails.restaurantName);
-    }
-    
-    if (email.orderDetails?.orderItems && Array.isArray(email.orderDetails.orderItems)) {
-      email.orderDetails.orderItems.forEach(item => {
-        // Remove quantity prefix (like "2 X ")
-        const cleanItem = item.replace(/^\d+\s*[Xx×]\s+/i, '').trim();
-        if (cleanItem.length > 2) {
-          foodItems.add(cleanItem);
+    if (email?.restaurantName && email.orderItems && Array.isArray(email.orderItems)) {
+      const restaurantName = email.restaurantName;
+      
+      // Initialize array for this restaurant if it doesn't exist yet
+      if (!restaurantToFoods[restaurantName]) {
+        restaurantToFoods[restaurantName] = [];
+      }
+      
+      // Add all food items from this order to the appropriate restaurant
+      email.orderItems.forEach(item => {
+        // Check if the item is not already in the array to avoid duplicates
+        if (!restaurantToFoods[restaurantName].includes(item)) {
+          restaurantToFoods[restaurantName].push(item);
         }
       });
     }
   });
   
-  return {
-    restaurants: Array.from(restaurants),
-    foodItems: Array.from(foodItems)
-  };
+  // Format the result as needed - this returns an array of objects with restaurant name and its food items
+  const result = Object.keys(restaurantToFoods).map(restaurant => ({
+    restaurantName: restaurant,
+    foodItems: restaurantToFoods[restaurant]
+  }));
+  
+  return result;
 };
 
 /**
@@ -77,42 +83,49 @@ const AnimatedProgressModal = ({
   const bounceAnim = useRef(new Animated.Value(0)).current;
   const spinAnim = useRef(new Animated.Value(0)).current;
   
-  // Extract real-time data from emails
-  const [orderData, setOrderData] = useState({ restaurants: [], foodItems: [] });
-  const [currentRestaurant, setCurrentRestaurant] = useState('');
+  // State for restaurant and food data
+  const [orderData, setOrderData] = useState([]);
+  const [currentRestaurantData, setCurrentRestaurantData] = useState(null);
   const [currentFoodItem, setCurrentFoodItem] = useState('');
   const [foodEmojis, setFoodEmojis] = useState(['🍕', '🍔', '🍗', '🍚', '🍛']);
   const [shouldRotate, setShouldRotate] = useState(true);
   
   // Process emails to extract real order data
   useEffect(() => {
-    if (emails && emails.length > 0) {
+    if (emails && Array.isArray(emails) && emails.length > 0) {
       const extractedData = extractOrderData(emails);
       setOrderData(extractedData);
       
       // Set initial values
-      if (extractedData.restaurants.length > 0) {
-        setCurrentRestaurant(extractedData.restaurants[0]);
-      }
-      if (extractedData.foodItems.length > 0) {
-        setCurrentFoodItem(extractedData.foodItems[0]);
+      if (extractedData.length > 0) {
+        setCurrentRestaurantData(extractedData[0]);
       }
     }
   }, [emails]);
   
+  // Effect to update current food item when restaurant changes
+  useEffect(() => {
+    if (currentRestaurantData && currentRestaurantData.foodItems && currentRestaurantData.foodItems.length > 0) {
+      setCurrentFoodItem(currentRestaurantData.foodItems[0]);
+    }
+  }, [currentRestaurantData]);
+  
   // Rotate through restaurants and food items
   useEffect(() => {
-    if (!visible) return;
+    if (!visible || orderData.length === 0) return;
     
     const interval = setInterval(() => {
-      if (orderData.restaurants.length > 0) {
-        const randomIndex = Math.floor(Math.random() * orderData.restaurants.length);
-        setCurrentRestaurant(orderData.restaurants[randomIndex]);
-      }
-      
-      if (orderData.foodItems.length > 0) {
-        const randomIndex = Math.floor(Math.random() * orderData.foodItems.length);
-        setCurrentFoodItem(orderData.foodItems[randomIndex]);
+      // Select a random restaurant
+      if (orderData.length > 0) {
+        const randomRestaurantIndex = Math.floor(Math.random() * orderData.length);
+        const selectedRestaurant = orderData[randomRestaurantIndex];
+        setCurrentRestaurantData(selectedRestaurant);
+        
+        // Select a random food item from the selected restaurant
+        if (selectedRestaurant.foodItems && selectedRestaurant.foodItems.length > 0) {
+          const randomFoodIndex = Math.floor(Math.random() * selectedRestaurant.foodItems.length);
+          setCurrentFoodItem(selectedRestaurant.foodItems[randomFoodIndex]);
+        }
       }
       
       // Rotate food emojis
@@ -236,9 +249,9 @@ const AnimatedProgressModal = ({
           >
             <Text style={styles.progressMessage}>{progressText}</Text>
             
-            {currentRestaurant && (
+            {currentRestaurantData && (
               <Text style={[styles.highlightMessage, { color: platformColor }]}>
-                Found your orders from <Text style={styles.boldText}>{currentRestaurant}</Text>
+                Found your orders from <Text style={styles.boldText}>{currentRestaurantData.restaurantName}</Text>
               </Text>
             )}
             
