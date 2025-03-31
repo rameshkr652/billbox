@@ -1,4 +1,4 @@
-// src/components/AnimatedProgressModal.js
+// Improved AnimatedProgressModal.js with better AI processing visualization
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
@@ -13,7 +13,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import Colors from '../constants/colors';
 
 // Safely handle progress bar based on platform
-const ProgressBar = ({ progress, color }) => {
+const ProgressBar = ({ progress, color, isAiProcessing }) => {
   // Use the provided progress to animate the width of a custom View
   const width = progress * 100;
   
@@ -25,7 +25,8 @@ const ProgressBar = ({ progress, color }) => {
           { 
             width: `${width}%`, 
             backgroundColor: color,
-          }
+          },
+          isAiProcessing && styles.aiProcessingBar
         ]} 
       />
     </View>
@@ -89,6 +90,9 @@ const AnimatedProgressModal = ({
   const [currentFoodItem, setCurrentFoodItem] = useState('');
   const [foodEmojis, setFoodEmojis] = useState(['🍕', '🍔', '🍗', '🍚', '🍛']);
   const [shouldRotate, setShouldRotate] = useState(true);
+  const [isAiProcessing, setIsAiProcessing] = useState(false);
+  const [aiProcessingCompletedCount, setAiProcessingCompletedCount] = useState(0);
+  const [aiProcessingTotalCount, setAiProcessingTotalCount] = useState(0);
   
   // Process emails to extract real order data
   useEffect(() => {
@@ -102,6 +106,31 @@ const AnimatedProgressModal = ({
       }
     }
   }, [emails]);
+  
+  // Check for AI processing in progress text
+  useEffect(() => {
+    if (progressText && progressText.toLowerCase().includes('ai processing')) {
+      setIsAiProcessing(true);
+      
+      // Try to extract counts from progress text for AI processing
+      const countMatch = progressText.match(/(\d+)\/(\d+)/);
+      if (countMatch && countMatch.length >= 3) {
+        setAiProcessingCompletedCount(parseInt(countMatch[1], 10));
+        setAiProcessingTotalCount(parseInt(countMatch[2], 10));
+      }
+    } else if (progressText && progressText.toLowerCase().includes('complex emails with ai')) {
+      setIsAiProcessing(true);
+      
+      // Try to extract the count of emails being processed
+      const countMatch = progressText.match(/Processing (\d+) complex/);
+      if (countMatch && countMatch[1]) {
+        setAiProcessingTotalCount(parseInt(countMatch[1], 10));
+        setAiProcessingCompletedCount(0); // Just starting AI processing
+      }
+    } else {
+      setIsAiProcessing(false);
+    }
+  }, [progressText]);
   
   // Effect to update current food item when restaurant changes
   useEffect(() => {
@@ -229,14 +258,23 @@ const AnimatedProgressModal = ({
               ]}
             >
               <View style={[styles.platformIcon, { backgroundColor: platformColor }]}>
-                <Icon name="restaurant" size={30} color="#FFFFFF" />
+                {isAiProcessing ? (
+                  <Icon name="psychology" size={30} color="#FFFFFF" />
+                ) : (
+                  <Icon name="restaurant" size={30} color="#FFFFFF" />
+                )}
               </View>
             </Animated.View>
             
             <View style={styles.headerTextContainer}>
-              <Text style={styles.modalTitle}>Fetching Orders</Text>
+              <Text style={styles.modalTitle}>
+                {isAiProcessing ? 'AI Processing' : 'Fetching Orders'}
+              </Text>
               <Text style={styles.modalSubtitle}>
-                Loading your {platformName} orders
+                {isAiProcessing ? 
+                  'Processing complex emails with AI...' : 
+                  `Loading your ${platformName} orders`
+                }
               </Text>
             </View>
           </View>
@@ -249,13 +287,22 @@ const AnimatedProgressModal = ({
           >
             <Text style={styles.progressMessage}>{progressText}</Text>
             
-            {currentRestaurantData && (
+            {isAiProcessing ? (
+              <Text style={[styles.highlightMessage, { color: platformColor }]}>
+                AI is helping analyze complex emails
+                {aiProcessingTotalCount > 0 && (
+                  <Text style={styles.aiCountText}>
+                    {` (${aiProcessingCompletedCount}/${aiProcessingTotalCount})`}
+                  </Text>
+                )}
+              </Text>
+            ) : currentRestaurantData && (
               <Text style={[styles.highlightMessage, { color: platformColor }]}>
                 Found your orders from <Text style={styles.boldText}>{currentRestaurantData.restaurantName}</Text>
               </Text>
             )}
             
-            {currentFoodItem && (
+            {!isAiProcessing && currentFoodItem && (
               <Text style={styles.foodItemText}>
                 Processing your <Text style={styles.boldText}>{currentFoodItem}</Text> orders...
               </Text>
@@ -265,7 +312,8 @@ const AnimatedProgressModal = ({
           <View style={styles.progressContainer}>
             <ProgressBar 
               progress={progress} 
-              color={platformColor} 
+              color={platformColor}
+              isAiProcessing={isAiProcessing}
             />
             
             <View style={styles.foodEmojisContainer}>
@@ -287,13 +335,22 @@ const AnimatedProgressModal = ({
           </View>
           
           {timeRemaining !== null && (
-            <Text style={styles.timeRemaining}>
-              Estimated time remaining: {timeRemaining}
-            </Text>
+            <View style={styles.timeRemainingContainer}>
+              <Icon name="schedule" size={16} color="#888" style={styles.timeIcon} />
+              <Text style={styles.timeRemaining}>
+                {isAiProcessing ? 
+                  `AI processing: Estimated time remaining: ${timeRemaining}` : 
+                  `Estimated time remaining: ${timeRemaining}`
+                }
+              </Text>
+            </View>
           )}
           
           <Text style={styles.noteText}>
-            This may take a while depending on the number of orders.
+            {isAiProcessing ? 
+              "AI processing takes longer but ensures better order details extraction." :
+              "This may take a while depending on the number of orders."
+            }
           </Text>
         </Animated.View>
       </View>
@@ -394,6 +451,11 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 4,
   },
+  aiProcessingBar: {
+    backgroundImage: 'linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent)',
+    backgroundSize: '1rem 1rem',
+    animation: 'progress-bar-stripes 1s linear infinite',
+  },
   foodEmojisContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -403,16 +465,26 @@ const styles = StyleSheet.create({
   foodEmoji: {
     fontSize: 20,
   },
+  timeRemainingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  timeIcon: {
+    marginRight: 5,
+  },
   timeRemaining: {
     fontSize: 14,
     color: '#666666',
-    marginBottom: 8,
   },
   noteText: {
     fontSize: 12,
     color: '#999999',
     textAlign: 'center',
     fontStyle: 'italic',
+  },
+  aiCountText: {
+    fontWeight: 'bold',
   }
 });
 
