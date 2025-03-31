@@ -208,7 +208,7 @@ const callReplicateAPI = async (prompt) => {
 const pollPredictionResult = async (predictionId) => {
   let attempts = 0;
   const maxAttempts = 30;
-  const delay = 100;
+  const delay = 2000;
 
   console.log(`Polling for prediction result: ${predictionId}`);
 

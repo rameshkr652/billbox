@@ -1,4 +1,4 @@
-// Improved AnimatedProgressModal.js with better AI processing visualization
+// Enhanced AnimatedProgressModal.js with added game button
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
@@ -7,10 +7,14 @@ import {
   Modal, 
   Animated, 
   Easing,
-  Platform
+  Platform,
+  TouchableOpacity,
+  Dimensions
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Colors from '../constants/colors';
+import GameOverlay from './GameOverlay';
+const { width, height } = Dimensions.get('window');
 
 // Safely handle progress bar based on platform
 const ProgressBar = ({ progress, color, isAiProcessing }) => {
@@ -93,6 +97,10 @@ const AnimatedProgressModal = ({
   const [isAiProcessing, setIsAiProcessing] = useState(false);
   const [aiProcessingCompletedCount, setAiProcessingCompletedCount] = useState(0);
   const [aiProcessingTotalCount, setAiProcessingTotalCount] = useState(0);
+  
+  // New state for full screen game modal
+  const [showGameModal, setShowGameModal] = useState(false);
+  const [isGameMinimized, setIsGameMinimized] = useState(false);
   
   // Process emails to extract real order data
   useEffect(() => {
@@ -231,6 +239,21 @@ const AnimatedProgressModal = ({
     outputRange: [0, -10, 0]
   });
   
+  // Toggle the game modal
+  const handleOpenGame = () => {
+    setShowGameModal(true);
+    setIsGameMinimized(false);
+  };
+  
+  const handleMinimizeGame = () => {
+    setIsGameMinimized(true);
+  };
+  
+  const handleCloseGame = () => {
+    setShowGameModal(false);
+    setIsGameMinimized(false);
+  };
+  
   // Skip rendering if not visible
   if (!visible) return null;
   
@@ -352,7 +375,39 @@ const AnimatedProgressModal = ({
               "This may take a while depending on the number of orders."
             }
           </Text>
+          
+          {/* New game button */}
+          <TouchableOpacity 
+            style={[styles.gameButton, { borderColor: platformColor, backgroundColor: platformColor + '15' }]}
+            onPress={handleOpenGame}
+          >
+            <Icon name="videogame-asset" size={24} color={platformColor} />
+            <Text style={[styles.gameButtonText, { color: platformColor }]}>
+              Bored? Play a game while you wait!
+            </Text>
+          </TouchableOpacity>
+          
+          {/* Game minimized indicator button - shows when game is minimized */}
+          {isGameMinimized && (
+            <TouchableOpacity 
+              style={[styles.minimizedIndicator, { backgroundColor: platformColor }]}
+              onPress={() => setIsGameMinimized(false)}
+            >
+              <Icon name="videogame-asset" size={16} color="#FFFFFF" />
+              <Text style={styles.minimizedText}>Resume Game</Text>
+            </TouchableOpacity>
+          )}
         </Animated.View>
+        
+        {showGameModal && (
+            <GameOverlay 
+                showGameModal={showGameModal} 
+                isGameMinimized={isGameMinimized} 
+                handleMinimizeGame={handleMinimizeGame} 
+                handleCloseGame={handleCloseGame} 
+            />
+        )}
+
       </View>
     </Modal>
   );
@@ -482,9 +537,89 @@ const styles = StyleSheet.create({
     color: '#999999',
     textAlign: 'center',
     fontStyle: 'italic',
+    marginBottom: 16,
   },
   aiCountText: {
     fontWeight: 'bold',
+  },
+  
+  // Game button styles
+  gameButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 8,
+  },
+  gameButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginLeft: 12,
+  },
+  
+  // Minimized indicator styles
+  minimizedIndicator: {
+    position: 'absolute',
+    bottom: -15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+  },
+  minimizedText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginLeft: 6,
+  },
+  
+  // Game modal styles
+  gameModalContainer: {
+    flex: 1,
+    backgroundColor: '#121212',
+  },
+  gameModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#222222',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333333',
+  },
+  gameModalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  gameModalControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  gameModalButton: {
+    padding: 8,
+    marginLeft: 16,
+  },
+  gameContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  gameComingSoonText: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    textAlign: 'center',
   }
 });
 
