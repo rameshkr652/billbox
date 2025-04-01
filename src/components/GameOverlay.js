@@ -1,3 +1,4 @@
+// src/components/GameOverlay.js
 import React from 'react';
 import { 
     View, 
@@ -7,6 +8,7 @@ import {
     TouchableOpacity
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import SnakeGame from './SnakeGame';
 
 const GameOverlay = ({ showGameModal, isGameMinimized, handleMinimizeGame, handleCloseGame }) => {
     return (
@@ -19,7 +21,7 @@ const GameOverlay = ({ showGameModal, isGameMinimized, handleMinimizeGame, handl
             >
                 <View style={styles.gameModalContainer}>
                     <View style={styles.gameModalHeader}>
-                        <Text style={styles.gameModalTitle}>Game Time!</Text>
+                        <Text style={styles.gameModalTitle}>Snake Game</Text>
                         <View style={styles.gameModalControls}>
                             <TouchableOpacity 
                                 style={styles.gameModalButton}
@@ -36,7 +38,7 @@ const GameOverlay = ({ showGameModal, isGameMinimized, handleMinimizeGame, handl
                         </View>
                     </View>
                     <View style={styles.gameContainer}>
-                        <Text style={styles.gameComingSoonText}>Game loading...</Text>
+                        <SnakeGame />
                     </View>
                 </View>
             </Modal>
@@ -76,12 +78,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-    },
-    gameComingSoonText: {
-        fontSize: 18,
-        color: '#FFFFFF',
-        textAlign: 'center',
-    },
+    }
 });
 
 export default GameOverlay;
