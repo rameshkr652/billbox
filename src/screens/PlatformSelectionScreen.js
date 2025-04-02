@@ -126,7 +126,7 @@ const PlatformSelectionScreen = () => {
   };
 
   const renderPlatformItem = ({ item }) => (
-    <TouchableOpacity
+    <View
       style={[
         styles.platformItem,
         selectedPlatforms.includes(item.id) && { 
@@ -135,7 +135,6 @@ const PlatformSelectionScreen = () => {
           backgroundColor: `${item.color}10` // Light background for selected items
         }
       ]}
-      onPress={() => togglePlatform(item.id)}
     >
       <View style={[styles.logoContainer, { backgroundColor: item.color }]}>
         <Icon name={item.icon} size={30} color={Colors.white} />
@@ -146,7 +145,7 @@ const PlatformSelectionScreen = () => {
           <Icon name="check-circle" size={24} color={item.color} />
         )}
       </View>
-    </TouchableOpacity>
+    </View>
   );
 
   return (

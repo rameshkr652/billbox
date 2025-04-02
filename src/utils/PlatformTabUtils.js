@@ -124,7 +124,7 @@ export const fetchAllEmails = async (platform, accountEmail, platformInfo, progr
 /**
  * Fetch only latest emails since last fetch
  */
-export const fetchLatestEmails = async (platform, accountEmail, lastFetched, platformInfo, progressCallback) => {
+export const fetchLatestEmails = async (platform, accountEmail, lastFetched, platformInfo, progressCallback, setTempEmails) => {
   try {
     if (!accountEmail || !lastFetched) {
       throw new Error('Missing account or last fetched timestamp');
@@ -135,7 +135,8 @@ export const fetchLatestEmails = async (platform, accountEmail, lastFetched, pla
       platform, 
       accountEmail, 
       lastFetched,
-      progressCallback
+      progressCallback,
+      setTempEmails
     );
     
     // Update last fetched timestamp

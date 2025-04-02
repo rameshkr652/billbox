@@ -7,6 +7,7 @@ export default [
     color: '#CB202D',
     icon: 'restaurant',
     emailQuery: 'from:noreply@zomato.com',
+    secondaryColor: '#00a86b',
   },
   {
     id: 'swiggy',
@@ -14,5 +15,6 @@ export default [
     color: '#FC8019',
     icon: 'fastfood',
     emailQuery: 'from:noreply@swiggy.in',
+    secondaryColor: '#00a86b',
   }
 ];

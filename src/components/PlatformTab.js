@@ -331,7 +331,8 @@ const PlatformTab = ({ platform, route }) => {
           if (estimatedTimeRemaining) {
             setTimeRemaining(PlatformTabUtils.formatTimeRemaining(estimatedTimeRemaining));
           }
-        }
+        },
+        setTempEmails
       );
       
       if (result.success) {
@@ -530,7 +531,7 @@ const PlatformTab = ({ platform, route }) => {
               platformColor={platformInfo.color}
             />
             <OrderTimeMachineButton 
-              platformColor={platformInfo.color}
+              platformColor={platformInfo.secondaryColor}
               emailCount={emails.length} 
             />
             <MealTimingAnalysis 

@@ -1233,7 +1233,7 @@ container: {
   backgroundColor: '#f8f9fa',
 },
 header: {
-  paddingTop: 50,
+  paddingTop: 15,
   paddingBottom: 15,
 },
 headerContent: {
@@ -1362,6 +1362,8 @@ paginationContainer: {
   backgroundColor: '#fff',
   borderTopWidth: 1,
   borderTopColor: '#eee',
+  paddingBottom:50,
+  paddingTop:40
 },
 paginationButton: {
   padding: 8,
