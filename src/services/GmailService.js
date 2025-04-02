@@ -275,7 +275,7 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
     
     // 1. Initial search with higher maxResults (up to 500)
     progressCallback(0, 1, 'Finding matching emails...');
-    const listUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodedQuery}&maxResults=500`;
+    const listUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodedQuery}&maxResults=25`;
     const accessToken = await getAccessToken(accountEmail);
     
     // Make initial request with higher result count
@@ -302,30 +302,30 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
     progressCallback(allMessageIds.length, estimatedTotal, `Found ${allMessageIds.length} emails so far...`);
     
     // Collect all message IDs before processing any content
-    while (nextPageToken) {
-      const pageUrl = `${listUrl}&pageToken=${nextPageToken}`;
-      const pageResponse = await fetch(pageUrl, {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
+    // while (nextPageToken) {
+    //   const pageUrl = `${listUrl}&pageToken=${nextPageToken}`;
+    //   const pageResponse = await fetch(pageUrl, {
+    //     headers: { Authorization: `Bearer ${accessToken}` }
+    //   });
       
-      if (!pageResponse.ok) {
-        console.warn(`Warning: Failed to get page of results: ${pageResponse.status}`);
-        break; // Continue with what we have rather than failing completely
-      }
+    //   if (!pageResponse.ok) {
+    //     console.warn(`Warning: Failed to get page of results: ${pageResponse.status}`);
+    //     break; // Continue with what we have rather than failing completely
+    //   }
       
-      const pageData = await pageResponse.json();
+    //   const pageData = await pageResponse.json();
       
-      if (pageData.messages && pageData.messages.length > 0) {
-        allMessageIds = [...allMessageIds, ...pageData.messages.map(msg => msg.id)];
-      }
+    //   if (pageData.messages && pageData.messages.length > 0) {
+    //     allMessageIds = [...allMessageIds, ...pageData.messages.map(msg => msg.id)];
+    //   }
       
-      nextPageToken = pageData.nextPageToken;
-      progressCallback(allMessageIds.length, Math.max(estimatedTotal, allMessageIds.length), 
-                      `Collecting message IDs (${allMessageIds.length})...`);
-    }
+    //   nextPageToken = pageData.nextPageToken;
+    //   progressCallback(allMessageIds.length, Math.max(estimatedTotal, allMessageIds.length), 
+    //                   `Collecting message IDs (${allMessageIds.length})...`);
+    // }
     
     // 3. Process emails in larger batches (25-50) for better efficiency
-    const BATCH_SIZE = 50; // Increased from 10 to 50
+    const BATCH_SIZE = 25; // Increased from 10 to 50
     const processedEmails = [];
     const failedEmails = []; // Keep track of emails that need AI processing
     const emailTProgressBar = []

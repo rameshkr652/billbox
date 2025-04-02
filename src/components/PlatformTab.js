@@ -1,4 +1,4 @@
-// src/components/PlatformTab.js - Fixed to handle account switching
+// src/components/PlatformTab.js - Updated with game state persistence
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
@@ -28,6 +28,8 @@ import TopFavoritesSection from './TopFavoritesSection';
 import DietaryPreferencesSection from './DietaryPreferencesSection';
 import MealTimingAnalysis from './MealTimingAnalysis';
 import OrderTimeMachineButton from './OrderTimeMachineButton';
+import GameOverlay from './GameOverlay';
+import SnakeGame from './SnakeGame'; // Import the snake game component
 
 const PlatformTab = ({ platform, route }) => {
   const navigation = useNavigation();
@@ -42,16 +44,24 @@ const PlatformTab = ({ platform, route }) => {
   const [progressText, setProgressText] = useState('');
   const [timeRemaining, setTimeRemaining] = useState(null);
   const [showConfirmClear, setShowConfirmClear] = useState(false);
-  // Drawer state
+  const [gameModalVisible, setGameModalVisible] = useState(false);
   const [showAccountDrawer, setShowAccountDrawer] = useState(false);
   const drawerAnimation = useRef(new Animated.Value(Dimensions.get('window').width)).current;
   const [tempEmails, setTempEmails] = useState([]);
+  
+  // Game state - used to persist game even after progress modal closes
+  const [showGameModal, setShowGameModal] = useState(false);
+  const [isGameMinimized, setIsGameMinimized] = useState(false);
   
   // Get platform info
   const platformInfo = platforms.find(p => p.id === platform) || {
     name: platform.charAt(0).toUpperCase() + platform.slice(1),
     color: '#4285F4',
     icon: 'inbox'
+  };
+
+  const toggleGameModal = () => {
+    setGameModalVisible(!gameModalVisible);
   };
 
   useEffect(() => {
@@ -77,6 +87,25 @@ const PlatformTab = ({ platform, route }) => {
   useEffect(() => {
     loadPlatformData();
   }, []);
+  
+  // Handle game-related actions
+  const handleOpenGame = () => {
+    setShowGameModal(true);
+    setIsGameMinimized(false);
+  };
+  
+  const handleMinimizeGame = () => {
+    setIsGameMinimized(true);
+  };
+  
+  const handleCloseGame = () => {
+    setShowGameModal(false);
+    setIsGameMinimized(false);
+  };
+  
+  const handleResumeGame = () => {
+    setIsGameMinimized(false);
+  };
   
   // Load platform data with correct account
   const loadPlatformData = async () => {
@@ -213,100 +242,101 @@ const PlatformTab = ({ platform, route }) => {
       setRefreshing(false);
       setShowProgress(false);
       setTimeRemaining(null);
+      // Note: We don't close the game here, allowing it to persist after progress is done
     }
   };
   
   // Fetch latest emails
-  // Fixed fetchLatestEmails function in PlatformTab.js
-const fetchLatestEmails = async () => {
-  if (loading || !lastFetched) return;
-  
-  try {
-    setLoading(true);
-    setError(null);
-    setShowProgress(true);
-    setProgress(0);
-    setProgressText('Preparing to fetch latest emails...');
+  const fetchLatestEmails = async () => {
+    if (loading || !lastFetched) return;
     
-    // Make a copy of existing emails before fetching new ones
-    const existingEmails = [...emails];
-    console.log(`Existing emails before fetch: ${existingEmails.length}`);
-    
-    // Fetch latest emails with progress tracking
-    const result = await PlatformTabUtils.fetchLatestEmails(
-      platform,
-      accountEmail,
-      lastFetched,
-      platformInfo,
-      (current, total, message, estimatedTimeRemaining) => {
-        const progressValue = total > 0 ? current / total : 0;
-        setProgress(0.1 + progressValue * 0.8);
-        setProgressText(message || `Processing ${current} of ${total} latest emails...`);
-        
-        if (estimatedTimeRemaining) {
-          setTimeRemaining(PlatformTabUtils.formatTimeRemaining(estimatedTimeRemaining));
-        }
-      }
-    );
-    
-    if (result.success) {
-      console.log(`New emails fetched: ${result.emails ? result.emails.length : 0}`);
+    try {
+      setLoading(true);
+      setError(null);
+      setShowProgress(true);
+      setProgress(0);
+      setProgressText('Preparing to fetch latest emails...');
       
-      // Create a new array with only truly new emails
-      const newEmails = [];
+      // Make a copy of existing emails before fetching new ones
+      const existingEmails = [...emails];
+      console.log(`Existing emails before fetch: ${existingEmails.length}`);
       
-      // Check each new email to see if it's already in our existing set
-      if (result.emails && result.emails.length > 0) {
-        result.emails.forEach(newEmail => {
-          // Check if this email is already in our existing set
-          const isDuplicate = existingEmails.some(existingEmail => 
-            existingEmail.id === newEmail.id || 
-            (existingEmail.orderDetails?.orderId && 
-             newEmail.orderDetails?.orderId && 
-             existingEmail.orderDetails.orderId === newEmail.orderDetails.orderId)
-          );
+      // Fetch latest emails with progress tracking
+      const result = await PlatformTabUtils.fetchLatestEmails(
+        platform,
+        accountEmail,
+        lastFetched,
+        platformInfo,
+        (current, total, message, estimatedTimeRemaining) => {
+          const progressValue = total > 0 ? current / total : 0;
+          setProgress(0.1 + progressValue * 0.8);
+          setProgressText(message || `Processing ${current} of ${total} latest emails...`);
           
-          // If it's not a duplicate, add it to our new emails array
-          if (!isDuplicate) {
-            newEmails.push(newEmail);
+          if (estimatedTimeRemaining) {
+            setTimeRemaining(PlatformTabUtils.formatTimeRemaining(estimatedTimeRemaining));
           }
-        });
-      }
+        }
+      );
       
-      console.log(`Truly new emails (not duplicates): ${newEmails.length}`);
-      
-      // Combine existing and new emails
-      const combinedEmails = [...existingEmails, ...newEmails];
-      console.log(`Combined emails: ${combinedEmails.length}`);
-      
-      // Save the combined emails
-      await GmailService.saveEmails(platform, accountEmail, combinedEmails);
-      
-      // Update state with combined emails
-      setEmails(combinedEmails);
-      setLastFetched(result.lastFetched);
-      
-      // Show appropriate notification
-      if (newEmails.length === 0) {
-        Alert.alert('No New Orders', `No new ${platformInfo.name} orders found since your last update.`);
+      if (result.success) {
+        console.log(`New emails fetched: ${result.emails ? result.emails.length : 0}`);
+        
+        // Create a new array with only truly new emails
+        const newEmails = [];
+        
+        // Check each new email to see if it's already in our existing set
+        if (result.emails && result.emails.length > 0) {
+          result.emails.forEach(newEmail => {
+            // Check if this email is already in our existing set
+            const isDuplicate = existingEmails.some(existingEmail => 
+              existingEmail.id === newEmail.id || 
+              (existingEmail.orderDetails?.orderId && 
+               newEmail.orderDetails?.orderId && 
+               existingEmail.orderDetails.orderId === newEmail.orderDetails.orderId)
+            );
+            
+            // If it's not a duplicate, add it to our new emails array
+            if (!isDuplicate) {
+              newEmails.push(newEmail);
+            }
+          });
+        }
+        
+        console.log(`Truly new emails (not duplicates): ${newEmails.length}`);
+        
+        // Combine existing and new emails
+        const combinedEmails = [...existingEmails, ...newEmails];
+        console.log(`Combined emails: ${combinedEmails.length}`);
+        
+        // Save the combined emails
+        await GmailService.saveEmails(platform, accountEmail, combinedEmails);
+        
+        // Update state with combined emails
+        setEmails(combinedEmails);
+        setLastFetched(result.lastFetched);
+        
+        // Show appropriate notification
+        if (newEmails.length === 0) {
+          Alert.alert('No New Orders', `No new ${platformInfo.name} orders found since your last update.`);
+        } else {
+          Alert.alert('Success', `Found ${newEmails.length} new orders and updated your data.`);
+        }
       } else {
-        Alert.alert('Success', `Found ${newEmails.length} new orders and updated your data.`);
+        setError(result.error);
+        Alert.alert('Error', result.error);
       }
-    } else {
-      setError(result.error);
-      Alert.alert('Error', result.error);
+    } catch (error) {
+      console.error(`Error fetching latest emails for ${platform}:`, error);
+      setError(error.message || `Failed to fetch latest data for ${platform}`);
+      Alert.alert('Error', `Failed to fetch latest orders. ${error.message}`);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+      setShowProgress(false);
+      setTimeRemaining(null);
+      // Note: We don't close the game here, allowing it to persist after progress is done
     }
-  } catch (error) {
-    console.error(`Error fetching latest emails for ${platform}:`, error);
-    setError(error.message || `Failed to fetch latest data for ${platform}`);
-    Alert.alert('Error', `Failed to fetch latest orders. ${error.message}`);
-  } finally {
-    setLoading(false);
-    setRefreshing(false);
-    setShowProgress(false);
-    setTimeRemaining(null);
-  }
-};
+  };
   
   // Clear emails
   const handleClearEmails = () => {
@@ -334,17 +364,29 @@ const fetchLatestEmails = async () => {
     }
   };
   
-  // Render progress modal
+  // Render the custom progress modal with game integration
   const renderProgressModal = () => (
-    <PlatformTabComponents.ProgressModal
-      visible={showProgress}
-      platformName={platformInfo.name}
-      platformColor={platformInfo.color}
-      progressText={progressText}
-      progress={progress}
-      timeRemaining={timeRemaining}
-      emails={tempEmails} // Pass the emails array from your component's state
-    />
+    <>
+      <PlatformTabComponents.ProgressModal
+        visible={showProgress}
+        platformName={platformInfo.name}
+        platformColor={platformInfo.color}
+        progressText={progressText}
+        progress={progress}
+        timeRemaining={timeRemaining}
+        emails={tempEmails}
+      />
+      
+      {/* Game overlay rendered independently of progress modal */}
+      {showGameModal && (
+        <GameOverlay 
+          showGameModal={showGameModal} 
+          isGameMinimized={isGameMinimized} 
+          handleMinimizeGame={handleMinimizeGame} 
+          handleCloseGame={handleCloseGame} 
+        />
+      )}
+    </>
   );
   
   return (
@@ -358,7 +400,6 @@ const fetchLatestEmails = async () => {
         />
       ) : emails.length === 0 ? (
         <View>
-          
           <PlatformTabComponents.ListHeader
             platformName={platformInfo.name}
             platformColor={platformInfo.color}
@@ -378,8 +419,6 @@ const fetchLatestEmails = async () => {
       ) : (
         // Here we replace the FlatList with our ExpenseSummary component
         <View style={{ flex: 1 }}>
-        
-          
           <PlatformTabComponents.ListHeader
             platformName={platformInfo.name}
             platformColor={platformInfo.color}
@@ -394,7 +433,17 @@ const fetchLatestEmails = async () => {
             <ExpenseSummary 
               emails={emails} 
               platformColor={platformInfo.color}
-            />            
+            />  
+            <View>
+              <Text style={styles.gameButtonText}>Frustrated on Seeing transactions?</Text>
+              <TouchableOpacity 
+                style={{...styles.gameButton, backgroundColor: platformInfo.color}} 
+                onPress={toggleGameModal} 
+                activeOpacity={0.7}
+              >
+                <Text style={styles.gameButtonSubtext}>Play Game and Chill</Text>
+              </TouchableOpacity>
+            </View>
             <DietaryPreferencesSection 
               emails={emails} 
               platformColor={platformInfo.color}
@@ -421,7 +470,7 @@ const fetchLatestEmails = async () => {
         <PlatformTabComponents.ErrorMessage error={error} />
       )}
       
-      {/* Progress Modal */}
+      {/* Progress Modal with independent game */}
       {renderProgressModal()}      
       
       {showConfirmClear && (
@@ -448,6 +497,26 @@ const fetchLatestEmails = async () => {
           </View>
         </View>
       )}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={gameModalVisible}
+        onRequestClose={toggleGameModal}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContentGame}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitleGame}>Snake Game</Text>
+              <TouchableOpacity onPress={toggleGameModal} style={styles.closeButton}>
+                <Text style={styles.closeButtonText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.gameContainer}>
+              <SnakeGame />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -536,6 +605,121 @@ const styles = StyleSheet.create({
   clearButtonText: {
     color: '#fff',
     fontWeight: 'bold',
+  },
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#F5F5F5',
+  },
+  header: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    color: '#333',
+  },
+  transactionsSection: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 16,
+    color: '#333',
+  },
+  seeAllButton: {
+    alignSelf: 'flex-end',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: '#F0F0F0',
+    marginTop: 8,
+  },
+  seeAllText: {
+    color: '#555',
+    fontWeight: '500',
+  },
+  gameButton: {
+    marginBottom:20,
+    backgroundColor: '#9932CC', // Same purple as game controls
+    paddingVertical: 12,
+    borderRadius: 25,
+    alignItems: 'center',
+    marginHorizontal:16
+  },
+  gameButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+  },
+  modalContentGame: {
+    backgroundColor: '#1E1E2E', // Dark background matching the game
+    borderRadius: 20,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+    backgroundColor: '#0A0A1A',
+  },
+  modalTitleGame: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    textShadowColor: '#89CFF0', // Light blue shadow
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 6,
+  },
+  closeButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  gameContainer: {
+    flex: 1,
+    padding: 5,
+  },
+  gameButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  gameButtonSubtext: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
   },
 });
 

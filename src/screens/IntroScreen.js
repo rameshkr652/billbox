@@ -259,6 +259,11 @@ const IntroScreen = () => {
                 Remember to check "View your email messages and settings" on the Google permissions screen
               </Text>
             </View>
+            <View style={styles.rememberBox}>
+              <Icon name="info" size={20} color={Colors.primary} />
+              <Text style={styles.rememberText}>Make sure you receive email notifications from Swiggy/Zomato
+              </Text>
+            </View>
           </View>
         </View>
       </ScrollView>

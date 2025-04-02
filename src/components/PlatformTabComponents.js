@@ -1,37 +1,33 @@
-// src/components/PlatformTabComponents.js
-import React from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, Modal, Platform, ProgressBarAndroid as RNProgressBarAndroid } from 'react-native';
+// src/components/PlatformTabComponents.js - Modified for game persistence
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, ActivityIndicator, Platform as RNPlatform } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Colors from '../constants/colors';
 import PlatformTabStyles from '../styles/PlatformTabStyles';
 import { formatDate } from '../utils/PlatformTabUtils';
 import AnimatedProgressModal from './AnimatedProgressModal';
+import GameOverlay from './GameOverlay';
+
+// Global game state to persist across component lifecycles
+const gameState = {
+  showGameModal: false,
+  isGameMinimized: false
+};
+
 // Safely handle progress bar based on platform
 const ProgressBar = ({ progress, color }) => {
-  if (Platform.OS === 'android') {
-    return (
-      <RNProgressBarAndroid
-        styleAttr="Horizontal"
-        indeterminate={false}
-        progress={progress}
-        color={color}
-        style={PlatformTabStyles.progressBar}
+  // Use a simple custom progress indicator
+  return (
+    <View style={[PlatformTabStyles.progressBar, { backgroundColor: '#f0f0f0' }]}>
+      <View 
+        style={{
+          height: '100%', 
+          width: `${progress * 100}%`, 
+          backgroundColor: color
+        }} 
       />
-    );
-  } else {
-    // For iOS, render a simple progress indicator since RNProgressBarAndroid may not be available
-    return (
-      <View style={[PlatformTabStyles.progressBar, { backgroundColor: '#f0f0f0' }]}>
-        <View 
-          style={{
-            height: '100%', 
-            width: `${progress * 100}%`, 
-            backgroundColor: color
-          }} 
-        />
-      </View>
-    );
-  }
+    </View>
+  );
 };
 
 /**
@@ -144,6 +140,9 @@ export const ListHeader = ({
   </View>
 );
 
+/**
+ * Progress modal component with game persistence
+ */
 export const ProgressModal = ({ 
   visible, 
   platformName, 
@@ -151,24 +150,77 @@ export const ProgressModal = ({
   progressText, 
   progress, 
   timeRemaining = null,
-  emails = [] // Add emails parameter with default empty array
-}) => (
-  <AnimatedProgressModal
-    visible={visible}
-    platformName={platformName}
-    platformColor={platformColor}
-    progressText={progressText}
-    progress={progress}
-    timeRemaining={timeRemaining}
-    emails={emails}
-  />
-);
+  emails = []
+}) => {
+  // Use local state that syncs with the global gameState
+  const [showGameModal, setShowGameModal] = useState(gameState.showGameModal);
+  const [isGameMinimized, setIsGameMinimized] = useState(gameState.isGameMinimized);
 
+  // Init from global state on mount
+  useEffect(() => {
+    setShowGameModal(gameState.showGameModal);
+    setIsGameMinimized(gameState.isGameMinimized);
+  }, []);
+
+  // Update global state when local state changes
+  useEffect(() => {
+    gameState.showGameModal = showGameModal;
+    gameState.isGameMinimized = isGameMinimized;
+  }, [showGameModal, isGameMinimized]);
+
+  // Handle opening the game
+  const handleOpenGame = () => {
+    setShowGameModal(true);
+    setIsGameMinimized(false);
+  };
+  
+  // Handle minimizing the game
+  const handleMinimizeGame = () => {
+    setIsGameMinimized(true);
+  };
+  
+  // Handle closing the game
+  const handleCloseGame = () => {
+    setShowGameModal(false);
+    setIsGameMinimized(false);
+  };
+
+  return (
+    <>
+      {/* Progress Modal Component */}
+      <AnimatedProgressModal
+        visible={visible}
+        platformName={platformName}
+        platformColor={platformColor}
+        progressText={progressText}
+        progress={progress}
+        timeRemaining={timeRemaining}
+        emails={emails}
+        // Pass game state and handlers
+        showGameModal={showGameModal}
+        isGameMinimized={isGameMinimized}
+        handleOpenGame={handleOpenGame}
+      />
+
+      {/* Independent Game Overlay that persists after progress modal closes */}
+      {showGameModal && (
+        <GameOverlay 
+          showGameModal={showGameModal} 
+          isGameMinimized={isGameMinimized} 
+          handleMinimizeGame={handleMinimizeGame} 
+          handleCloseGame={handleCloseGame} 
+        />
+      )}
+    </>
+  );
+};
 
 export default {
   EmptyState,
   LoadingIndicator,
   ErrorMessage,
   ListHeader,
-  ProgressModal
+  ProgressModal,
+  // Export gameState to allow other components to check game status
+  getGameState: () => ({ ...gameState })
 };

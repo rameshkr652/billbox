@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, Dimensions, Animated } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, Dimensions } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 const GRID_SIZE = 20;
@@ -17,48 +17,114 @@ const SnakeGame = () => {
   const [score, setScore] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [gameSpeed, setGameSpeed] = useState(180); // Slightly faster initial speed
+  const [isEating, setIsEating] = useState(false); // State to track eating animation
 
   function getRandomFoodEmoji() {
     return FOOD_EMOJIS[Math.floor(Math.random() * FOOD_EMOJIS.length)];
   }
 
-  // Updated function to calculate the rotation degree for the snake segments
-  const getSegmentStyle = (index, segment, nextSegment, prevSegment) => {
-    // For the head
+  // Updated function to determine snake segment appearance
+  const getSnakeSegmentStyle = (index, segment, nextSegment, prevSegment) => {
+    const baseStyle = {
+      width: CELL_SIZE,
+      height: CELL_SIZE,
+      backgroundColor: index === 0 ? '#FFFF00' : '#00FF00', // Yellow head, green body
+      borderRadius: CELL_SIZE / 2, // Rounded corners for all segments
+      position: 'absolute',
+      left: segment.x * CELL_SIZE,
+      top: segment.y * CELL_SIZE,
+      justifyContent: 'center',
+      alignItems: 'center',
+      shadowColor: index === 0 ? '#888800' : '#008800',
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.7,
+      shadowRadius: 5,
+      elevation: 5,
+      borderWidth: 1,
+      borderColor: index === 0 ? '#CCCC00' : '#00CC00',
+    };
+
+    // Additional styling for the head with snake face
     if (index === 0) {
-      switch (direction) {
-        case 'UP': return { transform: [{ rotate: '270deg' }] };
-        case 'DOWN': return { transform: [{ rotate: '90deg' }] };
-        case 'LEFT': return { transform: [{ rotate: '180deg' }] };
-        case 'RIGHT': return { transform: [{ rotate: '0deg' }] };
-        default: return { transform: [{ rotate: '0deg' }] };
-      }
-    }
-    
-    // For body segments
-    if (prevSegment && nextSegment) {
-      // Determine if segment is part of a horizontal or vertical path
-      const isHorizontalPath = prevSegment.y === segment.y && nextSegment.y === segment.y;
-      const isVerticalPath = prevSegment.x === segment.x && nextSegment.x === segment.x;
+      // Position eyes based on direction
+      let eyePositions = [];
+      let mouthStyle = {};
       
-      if (isHorizontalPath) {
-        return { transform: [{ rotate: '0deg' }] };  // Horizontal orientation (→)
-      } else if (isVerticalPath) {
-        return { transform: [{ rotate: '90deg' }] }; // Vertical orientation (↓)
+      switch (direction) {
+        case 'UP':
+          eyePositions = [
+            { left: CELL_SIZE / 4, top: CELL_SIZE / 4 },
+            { right: CELL_SIZE / 4, top: CELL_SIZE / 4 }
+          ];
+          // Mouth at the top
+          mouthStyle = {
+            top: isEating ? CELL_SIZE / 8 : CELL_SIZE / 6,
+            left: '35%',
+            width: CELL_SIZE / 3,
+            height: isEating ? CELL_SIZE / 3 : CELL_SIZE / 10,
+            borderBottomLeftRadius: CELL_SIZE / 3,
+            borderBottomRightRadius: CELL_SIZE / 3,
+            backgroundColor: '#FF3333',
+          };
+          break;
+        case 'DOWN':
+          eyePositions = [
+            { left: CELL_SIZE / 4, bottom: CELL_SIZE / 4 },
+            { right: CELL_SIZE / 4, bottom: CELL_SIZE / 4 }
+          ];
+          // Mouth at the bottom
+          mouthStyle = {
+            bottom: isEating ? CELL_SIZE / 8 : CELL_SIZE / 6,
+            left: '35%',
+            width: CELL_SIZE / 3,
+            height: isEating ? CELL_SIZE / 3 : CELL_SIZE / 10,
+            borderTopLeftRadius: CELL_SIZE / 3,
+            borderTopRightRadius: CELL_SIZE / 3,
+            backgroundColor: '#FF3333',
+          };
+          break;
+        case 'LEFT':
+          eyePositions = [
+            { left: CELL_SIZE / 4, top: CELL_SIZE / 4 },
+            { left: CELL_SIZE / 4, bottom: CELL_SIZE / 4 }
+          ];
+          // Mouth at the left
+          mouthStyle = {
+            left: isEating ? CELL_SIZE / 8 : CELL_SIZE / 6,
+            top: '35%',
+            height: CELL_SIZE / 3,
+            width: isEating ? CELL_SIZE / 3 : CELL_SIZE / 10,
+            borderTopRightRadius: CELL_SIZE / 3,
+            borderBottomRightRadius: CELL_SIZE / 3,
+            backgroundColor: '#FF3333',
+          };
+          break;
+        case 'RIGHT':
+          eyePositions = [
+            { right: CELL_SIZE / 4, top: CELL_SIZE / 4 },
+            { right: CELL_SIZE / 4, bottom: CELL_SIZE / 4 }
+          ];
+          // Mouth at the right
+          mouthStyle = {
+            right: isEating ? CELL_SIZE / 8 : CELL_SIZE / 6,
+            top: '35%',
+            height: CELL_SIZE / 3,
+            width: isEating ? CELL_SIZE / 3 : CELL_SIZE / 10,
+            borderTopLeftRadius: CELL_SIZE / 3,
+            borderBottomLeftRadius: CELL_SIZE / 3,
+            backgroundColor: '#FF3333',
+          };
+          break;
       }
+
+      return {
+        baseStyle,
+        eyePositions,
+        mouthStyle
+      };
     }
-    
-    // For the tail or when adjacent segments can't be determined
-    if (prevSegment) {
-      if (prevSegment.x === segment.x) {
-        return { transform: [{ rotate: '90deg' }] }; // Vertical orientation
-      } else {
-        return { transform: [{ rotate: '0deg' }] };  // Horizontal orientation
-      }
-    }
-    
-    // Default orientation
-    return { transform: [{ rotate: '0deg' }] };
+
+    return { baseStyle };
   };
 
   useEffect(() => {
@@ -103,6 +169,13 @@ const SnakeGame = () => {
     // Check food collision
     if (head.x === food.x && head.y === food.y) {
       setScore(score + 1);
+      
+      // Trigger eating animation
+      setIsEating(true);
+      setTimeout(() => {
+        setIsEating(false);
+      }, 300); // Animation duration
+      
       generateFood(newSnake);
     } else {
       newSnake.pop();
@@ -149,6 +222,7 @@ const SnakeGame = () => {
     setScore(0);
     setIsPaused(false);
     setGameSpeed(180); // Reset speed
+    setIsEating(false); // Reset eating state
     generateFood();
   };
 
@@ -167,27 +241,29 @@ const SnakeGame = () => {
 
         {/* Game Board */}
         <View style={styles.grid}>
-          {/* Render snake as infinity symbols */}
+          {/* Render snake as rounded segments with face */}
           {snake.map((segment, index) => {
             const prevSegment = index > 0 ? snake[index - 1] : null;
             const nextSegment = index < snake.length - 1 ? snake[index + 1] : null;
+            const segmentStyle = getSnakeSegmentStyle(index, segment, nextSegment, prevSegment);
             
             return (
-              <View
-                key={index}
-                style={[
-                  styles.snakeSegmentContainer,
-                  {
-                    left: segment.x * CELL_SIZE,
-                    top: segment.y * CELL_SIZE,
-                  },
-                ]}
-              >
-                <Text style={[
-                  styles.infinitySymbol,
-                  index === 0 ? styles.snakeHead : null, // Special style for head
-                  getSegmentStyle(index, segment, nextSegment, prevSegment)
-                ]}>∞</Text>
+              <View key={index}>
+                <View style={segmentStyle.baseStyle}>
+                  {index === 0 && segmentStyle.eyePositions.map((eyePos, eyeIdx) => (
+                    <View key={eyeIdx} style={[styles.snakeEye, eyePos]} />
+                  ))}
+                  {/* Mouth for the head */}
+                  {index === 0 && segmentStyle.mouthStyle && (
+                    <View style={[styles.snakeMouth, segmentStyle.mouthStyle]} />
+                  )}
+                  {/* Flicking tongue for head */}
+                  {index === 0 && !isEating && direction === 'RIGHT' && (
+                    <View style={styles.tongueLine}>
+                      <View style={styles.tonguePoint} />
+                    </View>
+                  )}
+                </View>
               </View>
             );
           })}
@@ -288,6 +364,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 20,
   },
+  snakeMouth: {
+    position: 'absolute',
+    backgroundColor: '#FF3333', // Red mouth
+  },
   gameContainer: {
     width: GRID_SIZE * CELL_SIZE,
     height: GAME_HEIGHT,
@@ -308,27 +388,28 @@ const styles = StyleSheet.create({
     height: '100%',
     position: 'relative',
   },
-  snakeSegmentContainer: {
-    width: CELL_SIZE,
-    height: CELL_SIZE,
+  snakeEye: {
+    width: CELL_SIZE / 5,
+    height: CELL_SIZE / 5,
+    backgroundColor: '#000000',
+    borderRadius: CELL_SIZE / 5,
     position: 'absolute',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
-  infinitySymbol: {
-    fontSize: CELL_SIZE - 2,
-    color: '#00FF00', // Bright green for the snake
-    fontWeight: 'bold',
-    textShadowColor: '#008800',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 5, // Enhanced shadow
+  tongueLine: {
+    position: 'absolute',
+    right: -CELL_SIZE / 3,
+    height: 2,
+    width: CELL_SIZE / 3,
+    backgroundColor: '#FF0000',
   },
-  snakeHead: {
-    color: '#FFFF00', // Yellow for the head
-    fontSize: CELL_SIZE,
-    textShadowColor: '#888800',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 6, // Enhanced shadow
+  tonguePoint: {
+    position: 'absolute',
+    right: -3,
+    top: -3,
+    height: 8,
+    width: 8,
+    backgroundColor: '#FF0000',
+    borderRadius: 4,
   },
   food: {
     width: CELL_SIZE,

@@ -414,13 +414,6 @@ const ExpenseSummary = ({ emails, platformColor }) => {
           )}
         </TouchableOpacity>
 
-        {/* Show a preview or summary of transactions */}
-        {!filteredEmails.length ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No orders found for this period</Text>
-            <Text style={styles.emptySubtext}>Try selecting a different time frame</Text>
-          </View>
-        ) :  null}
       </View>
 
       {/* Date Picker Modal */}

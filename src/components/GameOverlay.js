@@ -1,4 +1,4 @@
-// src/components/GameOverlay.js
+// src/components/GameOverlay.js - Modified for independent operation
 import React from 'react';
 import { 
     View, 
@@ -11,38 +11,33 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import SnakeGame from './SnakeGame';
 
 const GameOverlay = ({ showGameModal, isGameMinimized, handleMinimizeGame, handleCloseGame }) => {
+    // This component now receives direct state and handlers from the parent,
+    // which allows it to exist independently from the progress modal
+
     return (
-        showGameModal && (
-            <Modal
-                transparent
-                visible={!isGameMinimized}
-                animationType="slide"
-                onRequestClose={handleMinimizeGame}
-            >
-                <View style={styles.gameModalContainer}>
-                    <View style={styles.gameModalHeader}>
-                        <Text style={styles.gameModalTitle}>Snake Game</Text>
-                        <View style={styles.gameModalControls}>
-                            <TouchableOpacity 
-                                style={styles.gameModalButton}
-                                onPress={handleMinimizeGame}
-                            >
-                                <Icon name="minimize" size={24} color="#FFFFFF" />
-                            </TouchableOpacity>
-                            <TouchableOpacity 
-                                style={styles.gameModalButton}
-                                onPress={handleCloseGame}
-                            >
-                                <Icon name="close" size={24} color="#FFFFFF" />
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                    <View style={styles.gameContainer}>
-                        <SnakeGame />
+        <Modal
+            transparent
+            visible={showGameModal && !isGameMinimized}
+            animationType="slide"
+            onRequestClose={handleMinimizeGame}
+        >
+            <View style={styles.gameModalContainer}>
+                <View style={styles.gameModalHeader}>
+                    <Text style={styles.gameModalTitle}>Snake Game</Text>
+                    <View style={styles.gameModalControls}>
+                        <TouchableOpacity 
+                            style={styles.gameModalButton}
+                            onPress={handleCloseGame}
+                        >
+                            <Icon name="close" size={24} color="#FFFFFF" />
+                        </TouchableOpacity>
                     </View>
                 </View>
-            </Modal>
-        )
+                <View style={styles.gameContainer}>
+                    <SnakeGame />
+                </View>
+            </View>
+        </Modal>
     );
 };
 
