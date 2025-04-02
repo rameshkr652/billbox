@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "409558821110",
+    "project_id": "billbox-notification",
+    "storage_bucket": "billbox-notification.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:409558821110:android:19ac22ac4dfc7e3c2ea4d7",
+        "android_client_info": {
+          "package_name": "com.billbox"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB8xi-rJP--iSNs0OM9yrpiGHUNh9ih4_c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
