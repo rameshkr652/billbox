@@ -1,11 +1,10 @@
-// src/components/PlatformTab.js - Updated with game state persistence
+// src/components/PlatformTab.js - With CustomAlert integration
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  Alert,
   Animated,
   SafeAreaView,
   StatusBar,
@@ -29,7 +28,8 @@ import DietaryPreferencesSection from './DietaryPreferencesSection';
 import MealTimingAnalysis from './MealTimingAnalysis';
 import OrderTimeMachineButton from './OrderTimeMachineButton';
 import GameOverlay from './GameOverlay';
-import SnakeGame from './SnakeGame'; // Import the snake game component
+import SnakeGame from './SnakeGame';
+import CustomAlert, { alertManager } from './CustomAlert'; // Import the CustomAlert
 
 const PlatformTab = ({ platform, route }) => {
   const navigation = useNavigation();
@@ -53,6 +53,16 @@ const PlatformTab = ({ platform, route }) => {
   const [showGameModal, setShowGameModal] = useState(false);
   const [isGameMinimized, setIsGameMinimized] = useState(false);
   
+  // Track active CustomAlert
+  const [customAlertVisible, setCustomAlertVisible] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({
+    title: '',
+    message: '',
+    type: 'INFO',
+    buttons: [],
+    customColor: null
+  });
+  
   // Get platform info
   const platformInfo = platforms.find(p => p.id === platform) || {
     name: platform.charAt(0).toUpperCase() + platform.slice(1),
@@ -73,7 +83,7 @@ const PlatformTab = ({ platform, route }) => {
       // This ensures data persistence between account switches
       loadPlatformData();
     }
-  }, [route.params?.refreshTrigger,]);
+  }, [route.params?.refreshTrigger]);
   
   // Also reload when the screen gains focus
   useFocusEffect(
@@ -87,6 +97,37 @@ const PlatformTab = ({ platform, route }) => {
   useEffect(() => {
     loadPlatformData();
   }, []);
+  
+  // Custom alert functions that replace the native Alert
+  const showCustomAlert = (title, message, type = 'INFO', buttons = [], customColor = null) => {
+    setAlertConfig({
+      title,
+      message,
+      type,
+      buttons,
+      customColor: customColor || platformInfo.color
+    });
+    setCustomAlertVisible(true);
+  };
+  
+  const showCustomConfirm = (title, message, onConfirm, onCancel = null) => {
+    const buttons = [
+      { 
+        text: 'Cancel', 
+        style: 'secondary',
+        onPress: () => {
+          if (onCancel) onCancel();
+        }
+      },
+      { 
+        text: 'Confirm', 
+        style: 'primary',
+        onPress: onConfirm
+      }
+    ];
+    
+    showCustomAlert(title, message, 'WARNING', buttons);
+  };
   
   // Handle game-related actions
   const handleOpenGame = () => {
@@ -227,16 +268,31 @@ const PlatformTab = ({ platform, route }) => {
         setLastFetched(result.lastFetched);
         
         if (result.emails.length === 0) {
-          Alert.alert('No Orders Found', `No ${platformInfo.name} orders found.`);
+          // Show custom alert instead of native Alert
+          showCustomAlert(
+            'No Orders Found',
+            `No ${platformInfo.name} orders found.`,
+            'INFO'
+          );
         }
       } else {
         setError(result.error);
-        Alert.alert('Error', result.error);
+        // Show custom alert for error
+        showCustomAlert(
+          'Error',
+          result.error,
+          'ERROR'
+        );
       }
     } catch (error) {
       console.error(`Error fetching emails for ${platform}:`, error);
       setError(error.message || `Failed to fetch data for ${platform}`);
-      Alert.alert('Error', `Failed to fetch orders. ${error.message}`);
+      // Show custom alert for error
+      showCustomAlert(
+        'Error',
+        `Failed to fetch orders. ${error.message}`,
+        'ERROR'
+      );
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -315,20 +371,32 @@ const PlatformTab = ({ platform, route }) => {
         setEmails(combinedEmails);
         setLastFetched(result.lastFetched);
         
-        // Show appropriate notification
+        // Show appropriate notification with custom alert
         if (newEmails.length === 0) {
-          Alert.alert('No New Orders', `No new ${platformInfo.name} orders found since your last update.`);
+          showCustomAlert(
+            'No New Orders',
+            `No new ${platformInfo.name} orders found since your last update.`,
+            'INFO'
+          );
         } else {
-          Alert.alert('Success', `Found ${newEmails.length} new orders and updated your data.`);
+          showCustomAlert(
+            'Success',
+            `Found ${newEmails.length} new orders and updated your data.`,
+            'SUCCESS'
+          );
         }
       } else {
         setError(result.error);
-        Alert.alert('Error', result.error);
+        showCustomAlert('Error', result.error, 'ERROR');
       }
     } catch (error) {
       console.error(`Error fetching latest emails for ${platform}:`, error);
       setError(error.message || `Failed to fetch latest data for ${platform}`);
-      Alert.alert('Error', `Failed to fetch latest orders. ${error.message}`);
+      showCustomAlert(
+        'Error',
+        `Failed to fetch latest orders. ${error.message}`,
+        'ERROR'
+      );
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -340,7 +408,13 @@ const PlatformTab = ({ platform, route }) => {
   
   // Clear emails
   const handleClearEmails = () => {
-    setShowConfirmClear(true);
+    // Use custom confirm dialog instead of showing the modal directly
+    showCustomConfirm(
+      'Clear Data',
+      `Are you sure you want to clear all ${platformInfo.name} orders?`,
+      performClearEmails,
+      () => {} // Empty function for cancel
+    );
   };
 
   const performClearEmails = async () => {
@@ -353,14 +427,21 @@ const PlatformTab = ({ platform, route }) => {
       if (result) {
         setEmails([]);
         setLastFetched(null);
-        Alert.alert('Success', `All ${platformInfo.name} order data has been cleared.`);
+        showCustomAlert(
+          'Success',
+          `All ${platformInfo.name} order data has been cleared.`,
+          'SUCCESS'
+        );
       }
     } catch (error) {
       console.error(`Error clearing ${platform} emails:`, error);
-      Alert.alert('Error', `Failed to clear emails: ${error.message}`);
+      showCustomAlert(
+        'Error',
+        `Failed to clear emails: ${error.message}`,
+        'ERROR'
+      );
     } finally {
       setLoading(false);
-      setShowConfirmClear(false);
     }
   };
   
@@ -471,32 +552,19 @@ const PlatformTab = ({ platform, route }) => {
       )}
       
       {/* Progress Modal with independent game */}
-      {renderProgressModal()}      
+      {renderProgressModal()}
       
-      {showConfirmClear && (
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Clear Data</Text>
-            <Text style={styles.modalText}>Are you sure you want to clear all {platformInfo.name} orders?</Text>
-            
-            <View style={styles.modalButtons}>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setShowConfirmClear(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.clearButton]}
-                onPress={performClearEmails}
-              >
-                <Text style={styles.clearButtonText}>Clear</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      )}
+      {/* Custom Alert Component */}
+      <CustomAlert
+        visible={customAlertVisible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        buttons={alertConfig.buttons}
+        customColor={alertConfig.customColor}
+        onClose={() => setCustomAlertVisible(false)}
+      />
+      
       <Modal
         animationType="slide"
         transparent={true}
@@ -553,111 +621,6 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
     zIndex: 1000,
-  },
-  modalOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 20,
-    width: '80%',
-    maxWidth: 400,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#333',
-  },
-  modalText: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 20,
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-  },
-  modalButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 4,
-    marginLeft: 8,
-  },
-  cancelButton: {
-    backgroundColor: '#f0f0f0',
-  },
-  clearButton: {
-    backgroundColor: "#DB4437",
-  },
-  cancelButtonText: {
-    color: '#333',
-  },
-  clearButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  container: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: '#F5F5F5',
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    color: '#333',
-  },
-  transactionsSection: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 16,
-    color: '#333',
-  },
-  seeAllButton: {
-    alignSelf: 'flex-end',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    backgroundColor: '#F0F0F0',
-    marginTop: 8,
-  },
-  seeAllText: {
-    color: '#555',
-    fontWeight: '500',
-  },
-  gameButton: {
-    marginBottom:20,
-    backgroundColor: '#9932CC', // Same purple as game controls
-    paddingVertical: 12,
-    borderRadius: 25,
-    alignItems: 'center',
-    marginHorizontal:16
-  },
-  gameButtonText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 16,
   },
   modalContainer: {
     flex: 1,
@@ -720,6 +683,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
     textAlign: 'center',
+  },
+  gameButton: {
+    marginBottom: 20,
+    backgroundColor: '#9932CC', // Same purple as game controls
+    paddingVertical: 12,
+    borderRadius: 25,
+    alignItems: 'center',
+    marginHorizontal: 16
   },
 });
 
