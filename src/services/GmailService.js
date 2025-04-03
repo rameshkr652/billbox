@@ -10,7 +10,7 @@ import AIEmailParser from '../utils/AIEmailParser';
 import { GOOGLE_WEB_CLIENT_ID } from '../config/env';
 
 const saveJsonToFile = async (messageData) => {
-  const filePath = `${RNFS.DocumentDirectoryPath}/saveJsonToFile.json`;
+  const filePath = `${RNFS.DocumentDirectoryPath}/food2.json`;
 
   try {
     await RNFS.writeFile(filePath, JSON.stringify(messageData, null, 2), 'utf8');
@@ -57,7 +57,7 @@ const tokenCache = {
 export { tokenCache };
 
 const getAccessToken = async (accountEmail) => {
-  return "ya29.a0AeXRPp6aUgr7Er86UpTmc71_GL4iKl4syihaequQ8EVwtcxFwYTQLewtf_pPnc2ARZ8LU49qMIQirNo-KF3MUtp2aPcOO4CTGFBo2CyJh6XXUdQutC_K7cxoHIF4aZGO2a2P0GPIZbYMt9OJa_zAZo2UbzaAsrnd3D8sEVxSaCgYKASASARASFQHGX2Minh4TrscUtPbBLWAhkWujHw0175"
+  return "ya29.a0AZYkNZgzDKq9n-cg_zpHw8gK64WWsOMQOiVcOP4WEfDaHTyzQvAZIbBga4Nw93c48GlDeS_fPFSGsjrPVL7CxA4WWkwL9GckwThR1KMky1y77bjOz94K7QNpQPm3xVz_9VmTc3WtkrfKlVhpO_4C1dUBFNE3dNclR5um1JJK8AaCgYKAdYSARASFQHGX2MiU33VPq2R2Q0MVpSgb1hgVw0177"
   try {
     if (!accountEmail) {
       throw new Error('Account email is required to get an access token');
@@ -258,27 +258,49 @@ const callGmailApi = async (endpoint, accountEmail, options = {}, retryCount = 0
   }
 };
 
-// Enhanced fetchAllPlatformEmails with AI processing time estimation
+/**
+ * Enhanced fetchAllPlatformEmails with improved deduplication and error handling
+ * @param {string} platform - Platform identifier (e.g., 'zomato', 'swiggy')
+ * @param {string} accountEmail - Email of the account being used
+ * @param {string} platformQuery - Gmail search query for the platform
+ * @param {Function} progressCallback - Callback for progress updates
+ * @param {Function} setTempEmails - Optional callback to update temp emails state
+ * @returns {Array} Processed email objects
+ */
 export const fetchAllPlatformEmails = async (platform, accountEmail, platformQuery, progressCallback = () => {}, setTempEmails = null) => {
   try {
     if (!accountEmail) {
       throw new Error('No account email provided');
     }
     
-    // Properly scoped timing variable for progress estimation
+    // Track processing with unique IDs to prevent duplicates
+    const processedIds = new Set();
     let startTime = Date.now();
     
     progressCallback(0, 1, 'Preparing to fetch emails...');
     
+    // Construct search query
     const query = platformQuery || `from:${platform}.com`;
     const encodedQuery = encodeURIComponent(query);
     
-    // 1. Initial search with higher maxResults (up to 500)
+    // 1. Get existing emails first to enable proper deduplication
+    progressCallback(0, 1, 'Checking existing emails...');
+    const storageKey = `emails_${platform}_${accountEmail}`;
+    const existingEmailsJson = await AsyncStorage.getItem(storageKey);
+    const existingEmails = existingEmailsJson ? JSON.parse(existingEmailsJson) : [];
+    
+    // Add existing email IDs to our tracking set
+    existingEmails.forEach(email => {
+      if (email && email.id) {
+        processedIds.add(email.id);
+      }
+    });
+    
+    // 2. Initial search with higher maxResults
     progressCallback(0, 1, 'Finding matching emails...');
     const listUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodedQuery}&maxResults=500`;
     const accessToken = await getAccessToken(accountEmail);
     
-    // Make initial request with higher result count
     const initialResponse = await fetch(listUrl, {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
@@ -290,18 +312,21 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
     const initialData = await initialResponse.json();
     
     if (!initialData.messages || initialData.messages.length === 0) {
-      progressCallback(1, 1, 'No emails found.');
-      return [];
+      progressCallback(1, 1, 'No new emails found.');
+      return existingEmails; // Return existing emails as no new ones found
     }
     
-    // 2. Efficiently collect all message IDs using a single token
-    let allMessageIds = initialData.messages.map(msg => msg.id);
+    // 3. Filter out already processed IDs to avoid duplicates
+    let newMessageIds = initialData.messages
+      .filter(msg => !processedIds.has(msg.id))
+      .map(msg => msg.id);
+    
     let nextPageToken = initialData.nextPageToken;
-    const estimatedTotal = initialData.resultSizeEstimate || allMessageIds.length;
+    const estimatedTotal = initialData.resultSizeEstimate || newMessageIds.length;
     
-    progressCallback(allMessageIds.length, estimatedTotal, `Found ${allMessageIds.length} emails so far...`);
+    progressCallback(newMessageIds.length, estimatedTotal, `Found ${newMessageIds.length} new emails...`);
     
-    // Collect all message IDs before processing any content
+    // 4. Collect all NEW message IDs (not already processed)
     while (nextPageToken) {
       const pageUrl = `${listUrl}&pageToken=${nextPageToken}`;
       const pageResponse = await fetch(pageUrl, {
@@ -316,35 +341,46 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
       const pageData = await pageResponse.json();
       
       if (pageData.messages && pageData.messages.length > 0) {
-        allMessageIds = [...allMessageIds, ...pageData.messages.map(msg => msg.id)];
+        // Filter out already processed IDs
+        const pageNewIds = pageData.messages
+          .filter(msg => !processedIds.has(msg.id))
+          .map(msg => msg.id);
+        
+        newMessageIds = [...newMessageIds, ...pageNewIds];
       }
       
       nextPageToken = pageData.nextPageToken;
-      progressCallback(allMessageIds.length, Math.max(estimatedTotal, allMessageIds.length), 
-                      `Collecting message IDs (${allMessageIds.length})...`);
+      progressCallback(newMessageIds.length, Math.max(estimatedTotal, newMessageIds.length), 
+                      `Collecting message IDs (${newMessageIds.length})...`);
     }
     
-    // 3. Process emails in larger batches (25-50) for better efficiency
-    const BATCH_SIZE = 25; // Increased from 10 to 50
+    // If no new emails after filtering, return existing emails
+    if (newMessageIds.length === 0) {
+      progressCallback(1, 1, 'No new emails to process.');
+      return existingEmails;
+    }
+    
+    // 5. Process emails in larger batches for better efficiency
+    const BATCH_SIZE = 25;
     const processedEmails = [];
-    const failedEmails = []; // Keep track of emails that need AI processing
-    const emailTProgressBar = []
-    // 4. Create more efficient batches
+    const failedEmails = []; // Emails needing AI processing
+    const emailTProgressBar = [];
+    
+    // 6. Create batches of new IDs only
     const batches = [];
-    for (let i = 0; i < allMessageIds.length; i += BATCH_SIZE) {
-      batches.push(allMessageIds.slice(i, i + BATCH_SIZE));
+    for (let i = 0; i < newMessageIds.length; i += BATCH_SIZE) {
+      batches.push(newMessageIds.slice(i, i + BATCH_SIZE));
     }
     
     let processedCount = 0;
-    const totalEmails = allMessageIds.length;
+    const totalNewEmails = newMessageIds.length;
     
-    // 5. Process each batch with better error handling and fewer token refreshes
+    // 7. Process each batch of new emails
     for (const batch of batches) {
       try {
-        // Only get a fresh token for each batch, not for each email
         const batchToken = await getAccessToken(accountEmail);
         
-        // 6. Use Promise.all to process emails in parallel within each batch
+        // Process emails in parallel within each batch
         const batchPromises = batch.map(messageId => {
           return fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageId}?format=full`, {
             headers: { Authorization: `Bearer ${batchToken}` }
@@ -356,12 +392,20 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
             return response.json();
           })
           .then(messageData => {
+            // Mark ID as processed to prevent duplicates
+            processedIds.add(messageId);
+            
             const processedEmail = extractEmailData(messageData, platform);
             
             // Check if processing failed (missing restaurant or items)
             if (processedEmail && processedEmail.orderDetails) {
-              emailTProgressBar.push(processedEmail.orderDetails)
               const { restaurantName, orderItems } = processedEmail.orderDetails;
+              
+              // Track for progress updates
+              if (emailTProgressBar && setTempEmails) {
+                emailTProgressBar.push(processedEmail.orderDetails);
+              }
+              
               if (!restaurantName || !orderItems || orderItems.length === 0) {
                 // Mark for AI processing
                 const emailHtmlAi = extractEmailBody(messageData);
@@ -390,104 +434,105 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
         
         // Update progress
         processedCount += batch.length;
-        const percentComplete = Math.min(0.9, processedCount / totalEmails); // Reserve 10% for AI processing
+        const percentComplete = Math.min(0.9, processedCount / totalNewEmails);
         
         // Calculate time estimates based on current progress
         const currentTime = Date.now();
-        if (!startTime) startTime = currentTime;
-        
         const elapsedMs = currentTime - startTime;
-        const estimatedTotalMs = processedCount > 0 ? (elapsedMs / processedCount) * totalEmails : 0;
+        const estimatedTotalMs = processedCount > 0 ? (elapsedMs / processedCount) * totalNewEmails : 0;
         const remainingMs = Math.max(0, estimatedTotalMs - elapsedMs);
-        const estimatedTimeRemaining = Math.round(remainingMs / 1000); // Convert to seconds
+        const estimatedTimeRemaining = Math.round(remainingMs / 1000);
         
         progressCallback(
           processedCount,
-          totalEmails,
-          `Processing emails (${processedCount}/${totalEmails})...`,
+          totalNewEmails,
+          `Processing emails (${processedCount}/${totalNewEmails})...`,
           estimatedTimeRemaining
         );
+        
+        // Update temporary emails for UI if callback provided
+        if (emailTProgressBar.length && setTempEmails) {
+          setTempEmails(emailTProgressBar);
+        }
       } catch (batchError) {
         console.error('Error processing batch:', batchError);
         // Continue with next batch instead of failing completely
       }
-      if(emailTProgressBar.length){
-        setTempEmails(emailTProgressBar)
-      }
     }
     
-    // 7. Process failed emails with AI - FIXED: Add time estimation for AI processing
-    if (failedEmails.length > 0) {
-      // Track AI processing start time for accurate time estimation
-      const aiStartTime = Date.now();
-      const totalToProcess = totalEmails;
-      const aiEmailCount = failedEmails.length;
+    // 8. Process failed emails with AI
+    let aiProcessedEmails = [];
+    // if (failedEmails.length > 0) {
+    //   // Track AI processing start time for accurate time estimation
+    //   const aiStartTime = Date.now();
+    //   const totalToProcess = totalNewEmails;
+    //   const aiEmailCount = failedEmails.length;
       
-      // Calculate the time per email from the regular processing to estimate AI time
-      const msPerRegularEmail = (aiStartTime - startTime) / processedCount;
-      // AI processing generally takes 3-5x longer per email
-      const estimatedMsPerAiEmail = msPerRegularEmail * 4;
-      const estimatedAiTimeMs = estimatedMsPerAiEmail * aiEmailCount;
+    //   // Initial AI progress update
+    //   progressCallback(
+    //     processedCount,
+    //     totalToProcess,
+    //     `Processing ${aiEmailCount} complex emails with AI...`,
+    //     Math.round((aiEmailCount * 5000) / 1000) // Rough estimate: 5 seconds per email
+    //   );
       
-      // Initial AI progress update
-      progressCallback(
-        processedCount,
-        totalToProcess,
-        `Processing ${aiEmailCount} complex emails with AI...`,
-        Math.round(estimatedAiTimeMs / 1000) // Convert to seconds
-      );
+    //   // Process emails in smaller AI batches to provide progress updates
+    //   const AI_BATCH_SIZE = 2;
       
-      // Process emails in smaller AI batches to provide progress updates
-      const AI_BATCH_SIZE = 2; // Small batch size for more frequent updates
-      const aiProcessedEmails = [];
-      
-      for (let i = 0; i < failedEmails.length; i += AI_BATCH_SIZE) {
-        const aiBatch = failedEmails.slice(i, i + AI_BATCH_SIZE);
+    //   for (let i = 0; i < failedEmails.length; i += AI_BATCH_SIZE) {
+    //     const aiBatch = failedEmails.slice(i, i + AI_BATCH_SIZE);
+    //     console.log(failedEmails, "failedEmails");
+    //     // Process this AI batch
+    //     const aiBatchResults = await AIEmailParser.processEmailBatch(aiBatch, platform);
+    //     aiProcessedEmails.push(...aiBatchResults);
         
-        // Process this AI batch
-        const aiBatchResults = await AIEmailParser.processEmailBatch(aiBatch, platform);
-        aiProcessedEmails.push(...aiBatchResults);
+    //     // Update progress after each AI batch
+    //     const aiProcessedCount = Math.min(i + AI_BATCH_SIZE, failedEmails.length);
+    //     const totalProcessedCount = processedCount + aiProcessedCount;
         
-        // Update progress after each AI batch
-        const aiProcessedCount = Math.min(i + AI_BATCH_SIZE, failedEmails.length);
-        const totalProcessedCount = processedCount + aiProcessedCount;
+    //     // Recalculate remaining time based on actual progress
+    //     const currentTime = Date.now();
+    //     const aiElapsedMs = currentTime - aiStartTime;
+    //     const aiRemainingCount = failedEmails.length - aiProcessedCount;
         
-        // Recalculate remaining time based on actual progress
-        const currentTime = Date.now();
-        const aiElapsedMs = currentTime - aiStartTime;
-        const aiRemainingCount = failedEmails.length - aiProcessedCount;
+    //     // Calculate actual ms per AI email based on progress so far
+    //     const actualMsPerAiEmail = aiProcessedCount > 0 ? aiElapsedMs / aiProcessedCount : 5000;
+    //     const remainingAiTimeMs = actualMsPerAiEmail * aiRemainingCount;
         
-        // Calculate actual ms per AI email based on progress so far
-        const actualMsPerAiEmail = aiProcessedCount > 0 ? aiElapsedMs / aiProcessedCount : estimatedMsPerAiEmail;
-        const remainingAiTimeMs = actualMsPerAiEmail * aiRemainingCount;
-        
-        progressCallback(
-          totalProcessedCount,
-          totalToProcess,
-          `AI processing: ${aiProcessedCount}/${aiEmailCount} complex emails...`,
-          Math.round(remainingAiTimeMs / 1000) // Convert to seconds
-        );
-      }
-      
-      // Add all AI processed emails to the final result
-      processedEmails.push(...aiProcessedEmails);
-    }
+    //     progressCallback(
+    //       totalProcessedCount,
+    //       totalToProcess,
+    //       `AI processing: ${aiProcessedCount}/${aiEmailCount} complex emails...`,
+    //       Math.round(remainingAiTimeMs / 1000)
+    //     );
+    //   }
+    // }
     
-    // 8. Save all processed emails at once
-    progressCallback(totalEmails, totalEmails, 'Saving emails...');
-    const storageKey = `emails_${platform}_${accountEmail}`;
-    await AsyncStorage.setItem(storageKey, JSON.stringify(processedEmails));
+    // 9. Combine all processed emails and use the improved merger function
+    progressCallback(totalNewEmails, totalNewEmails, 'Merging and saving emails...');
+    
+    // Combine regular and AI processed emails
+    const allNewEmails = [...processedEmails, ...aiProcessedEmails];
+    // Use the improved merge function to avoid duplicates
+    const mergedEmails = improvedMergeWithoutDuplicates(existingEmails, allNewEmails);
+    await saveJsonToFile(mergedEmails)
+    
+    // Save all processed emails at once
+    await AsyncStorage.setItem(storageKey, JSON.stringify(mergedEmails));
     
     // Update last fetched timestamp
     const now = Date.now();
     await AsyncStorage.setItem(`lastFetched_${platform}_${accountEmail}`, now.toString());
     
-    return processedEmails;
+    return mergedEmails;
   } catch (error) {
     console.error(`Error fetching platform emails for ${accountEmail}:`, error);
     throw error;
   }
 };
+
+// Import the improvedMergeWithoutDuplicates function definition here or place it above
+
 
 /**
  * Extract and normalize email data
@@ -688,11 +733,14 @@ export const fetchLatestEmails = async (platform, accountEmail, lastFetchedDate,
     throw error;
   }
 };
-
 /**
- * Helper to merge emails without duplicates
+ * Improved function to merge email arrays without duplicates
+ * Uses multiple identifying properties to prevent duplicates
+ * @param {Array} existingEmails - Array of existing email objects
+ * @param {Array} newEmails - Array of new email objects to merge
+ * @returns {Array} Merged array without duplicates
  */
-const mergeWithoutDuplicates = (existingEmails, newEmails) => {
+const improvedMergeWithoutDuplicates = (existingEmails, newEmails) => {
   if (!existingEmails || existingEmails.length === 0) {
     return newEmails || [];
   }
@@ -701,23 +749,73 @@ const mergeWithoutDuplicates = (existingEmails, newEmails) => {
     return existingEmails;
   }
   
+  // Create a Map to track existing emails by multiple keys
   const emailMap = new Map();
+  const idMap = new Map(); // For tracking by message ID only
   
+  // Helper function to generate a composite key with fallbacks
+  const generateKey = (email) => {
+    // Primary key - order ID if available
+    if (email.orderDetails?.orderId) {
+      return `orderId:${email.orderDetails.orderId}`;
+    }
+    
+    // Secondary key - combination of restaurant name and date if available
+    if (email.orderDetails?.restaurantName && email.date) {
+      const dateStr = new Date(email.date).toISOString().split('T')[0]; // Just the date part
+      return `restaurant:${email.orderDetails.restaurantName}:date:${dateStr}`;
+    }
+    
+    // Fallback - message ID
+    return `id:${email.id}`;
+  };
+  
+  // Add existing emails to the map
   existingEmails.forEach(email => {
-    const key = email.orderDetails?.orderId || email.id;
-    emailMap.set(key, email);
+    if (!email) return; // Skip null/undefined entries
+    
+    const compositeKey = generateKey(email);
+    emailMap.set(compositeKey, email);
+    
+    // Also track by ID to catch duplicate message IDs
+    idMap.set(email.id, email);
   });
   
+  // Add new emails, avoiding duplicates
   newEmails.forEach(email => {
-    const key = email.orderDetails?.orderId || email.id;
-    if (!emailMap.has(key)) {
-      emailMap.set(key, email);
+    if (!email) return; // Skip null/undefined entries
+    
+    const compositeKey = generateKey(email);
+    
+    // Check if this email already exists by composite key
+    if (!emailMap.has(compositeKey)) {
+      // Also check if the message ID exists
+      if (!idMap.has(email.id)) {
+        emailMap.set(compositeKey, email);
+        idMap.set(email.id, email);
+      } else {
+        // If message ID exists but composite key doesn't, the data might have been 
+        // enhanced. Compare and use the more detailed entry.
+        const existingEmail = idMap.get(email.id);
+        
+        // If the new email has order details and the existing one doesn't,
+        // or the new one has more order items, use the new one
+        if (
+          (email.orderDetails && !existingEmail.orderDetails) ||
+          (email.orderDetails?.orderItems?.length > (existingEmail.orderDetails?.orderItems?.length || 0))
+        ) {
+          const existingKey = generateKey(existingEmail);
+          emailMap.delete(existingKey);
+          emailMap.set(compositeKey, email);
+          idMap.set(email.id, email);
+        }
+      }
     }
   });
   
+  // Convert map back to array
   return Array.from(emailMap.values());
 };
-
 /**
  * Save emails for a specific platform and account
  */

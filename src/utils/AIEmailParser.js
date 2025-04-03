@@ -97,13 +97,13 @@ export const processEmailBatch = async (failedEmails, platform) => {
     }
 
     cleanTextTest.push(cleanEmailTexts);
-    const prompt = `### INSTRUCTION ###
-    Extract structured information from these ${platform} food delivery emails. For EACH email, return a valid JSON object with these fields:
-    - restaurantName: Extract the restaurant's name (empty string if not found)
-    - orderItems: Array of strings with food names (no quantities like '1 X'), empty array if not found
-    - totalPrice: Total amount paid with currency symbol (use '₹' for rupee, empty string if not found)
-    - orderId: Numeric order ID (empty string if not found)
-    - orderStatus: Current status (Delivered, Processing, etc., Delivered if not found)
+  const prompt = `### INSTRUCTION ###
+    Extract structured information from these ${platform} food-related order emails. For EACH email, return a valid JSON object with these fields:
+    - restaurantName: Extract the restaurant's name as a clean string, removing any extra text like feedback requests or additional sentences. Exact restuarent name alone Use an empty string if not found.
+    - orderItems: Array of strings with item names only (exclude quantities like '1 X' or prices), empty array if not found.
+    - totalPrice: Total amount paid with currency symbol (use '₹' for rupee), empty string if not found.
+    - orderId: Numeric order ID, empty string if not found.
+    - orderStatus: Current status (e.g., Delivered, Processing), default to "Delivered" if not found.
     
     I'm sending you ${cleanEmailTexts.length} emails. Return EXACTLY ${cleanEmailTexts.length} JSON objects in an array. If an email has no meaningful content, return an empty object {}.
     
@@ -113,7 +113,6 @@ export const processEmailBatch = async (failedEmails, platform) => {
     
     ### OUTPUT FORMAT ###
     Respond ONLY with a valid JSON array containing ${cleanEmailTexts.length} JSON objects. No explanations or other text.`;
-
     try {
       const response = await callReplicateAPI(prompt);
 

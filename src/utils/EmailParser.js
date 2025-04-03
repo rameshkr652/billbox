@@ -49,7 +49,6 @@ export const parseOrderDetails = (emailBodyHtml, platform) => {
       return null;
   }
 };
-
 /**
  * Extract order details from Zomato emails
  * Keeping the exact same logic as in GmailService.js for Zomato
@@ -71,7 +70,6 @@ export const extractZomatoOrderDetails = (emailBodyHtml) => {
       .replace(/&gt;/g, '>')
       .replace(/&quot;/g, '"')
       .replace(/&#(\d+);/g, (match, dec) => {
-        // Handle numeric HTML entities
         return String.fromCharCode(parseInt(dec, 10));
       });
   };
@@ -81,16 +79,22 @@ export const extractZomatoOrderDetails = (emailBodyHtml) => {
     .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
     .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/Â/g, '') // Remove special character
+    .replace(/ /g, ' ')
+    .replace(/Â/g, '')
     .replace(/\s+/g, ' ')
     .trim();
-     // Check if the email mentions a refund or cancellation
+  
+  // Helper function to check for refund keywords
+  const containsRefundKeyword = (text) => {
+    const refundKeywords = ['refund', 'cancelled', 'cancellation'];
+    return refundKeywords.some(keyword => text.toLowerCase().includes(keyword));
+  };
+  
   if (containsRefundKeyword(cleanText)) {
     console.log("This email is related to a refund or cancellation. Skipping order extraction.");
     return null;
   }
-  // Object to store our extracted data
+  
   const orderDetails = {
     restaurantName: null,
     orderItems: [],
@@ -100,11 +104,14 @@ export const extractZomatoOrderDetails = (emailBodyHtml) => {
     orderDateTime: null
   };
   
-  // Extract restaurant name
-  const restaurantMatch = cleanText.match(/Thank you for ordering.*?from\s+(.*?)\s*ORDER ID/i);
+  // Extract restaurant name with fixed regex
+  const restaurantMatch = cleanText.match(/Thank you for ordering.*?from\s+([^.]+?)(?:\s*ORDER ID|\s*We hope|\s*\.\s|$)/i);
   if (restaurantMatch && restaurantMatch[1]) {
-    // Decode HTML entities in restaurant name
-    orderDetails.restaurantName = decodeHtmlEntities(restaurantMatch[1].trim());
+    // Clean up the restaurant name and decode HTML entities
+    let restaurantName = decodeHtmlEntities(restaurantMatch[1].trim());
+    // Remove any trailing punctuation or extra text
+    restaurantName = restaurantName.replace(/[\.\s]*$/g, '');
+    orderDetails.restaurantName = restaurantName;
   }
   
   // Extract order ID
@@ -122,10 +129,8 @@ export const extractZomatoOrderDetails = (emailBodyHtml) => {
   // Extract total price - Handle different rupee symbols and commas in price
   const totalMatch = cleanText.match(/Total paid\s*-\s*.*?[₹â¹]([0-9,.]+)/i);
   if (totalMatch && totalMatch[1]) {
-    // Make sure we capture the complete price with commas
     orderDetails.totalPrice = `₹${totalMatch[1]}`;
   } else {
-    // Ultimate fallback - try to find any price pattern after "Total paid"
     const fallbackMatch = cleanText.match(/Total paid\s*-\s*.*?([0-9,.]+)/i);
     if (fallbackMatch && fallbackMatch[1]) {
       orderDetails.totalPrice = `₹${fallbackMatch[1]}`;
@@ -133,32 +138,22 @@ export const extractZomatoOrderDetails = (emailBodyHtml) => {
   }
   
   // Extract order items from the HTML structure
-  // For Zomato, items are usually in p tags within td with class="es-m-txt-l"
   const itemRegexes = [
-    // Primary pattern: <td class="es-m-txt-l"><p>1 X Item</p></td>
     /<td[^>]*class="es-m-txt-l"[^>]*><p[^>]*>(\d+)\s*[Xx×]\s+([^<]+)<\/p>/gi,
-    
-    // Secondary pattern: Any <p> tag with the X pattern
     /<p[^>]*>(\d+)\s*[Xx×]\s+([^<]+)<\/p>/gi,
-    
-    // Fallback pattern: Any context with the X pattern
     /(\d+)\s*[Xx×]\s+([A-Za-z][^<>\d\.,]{2,})/gi
   ];
   
-  // Apply all patterns to find order items
   for (const regex of itemRegexes) {
     const matches = [...emailBodyHtml.matchAll(regex)];
     
     for (const match of matches) {
       if (match[1] && match[2]) {
         const quantity = match[1].trim();
-        // Decode HTML entities in item names
         const itemName = decodeHtmlEntities(match[2].trim());
         
-        // Validate this looks like a food item
         if (itemName.length > 1 && 
             !/ORDER ID|Total paid|Delivered|Processing/i.test(itemName)) {
-          // Add to items if not already there (avoid duplicates)
           const isDuplicate = orderDetails.orderItems.some(existing => 
             existing.toLowerCase().includes(itemName.toLowerCase()));
           
@@ -169,7 +164,6 @@ export const extractZomatoOrderDetails = (emailBodyHtml) => {
       }
     }
     
-    // If we found items with this pattern, no need to try others
     if (orderDetails.orderItems.length > 0) {
       break;
     }
