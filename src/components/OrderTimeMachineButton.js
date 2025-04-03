@@ -5,7 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Colors from '../constants/colors';
 
-const OrderTimeMachineButton = ({ platformColor, emailCount }) => {
+const OrderTimeMachineButton = ({ platformColor, emails, emailCount }) => {
   const navigation = useNavigation();
   
   // Animation values
@@ -27,10 +27,45 @@ const OrderTimeMachineButton = ({ platformColor, emailCount }) => {
     ]).start();
   };
   
-  // Navigate to the Time Machine screen
+  // Prepare and filter valid data before navigation
   const navigateToTimeMachine = () => {
     animatePress();
-    navigation.navigate('OrderTimeline', { platformColor });
+    
+    // Filter out invalid orders (similar to TransactionsScreen approach)
+    const validEmails = emails.filter(email => 
+      email.orderDetails?.restaurantName && 
+      email.orderDetails?.restaurantName !== 'Unknown Restaurant' &&
+      email.orderDetails?.totalPrice && 
+      email.orderDetails?.totalPrice !== 'N/A'
+    );
+    
+    // Extract unique restaurant names
+    const uniqueRestaurants = [...new Set(validEmails
+      .map(email => email.orderDetails.restaurantName))];
+    
+    // Extract food items from order details
+    const allFoodItems = [];
+    validEmails.forEach(email => {
+      if (email.orderDetails?.orderItems && Array.isArray(email.orderDetails.orderItems)) {
+        email.orderDetails.orderItems.forEach(item => {
+          if (item) {
+            allFoodItems.push(item.trim());
+          }
+        });
+      }
+    });
+    
+    // Get unique food items
+    const uniqueFoodItems = [...new Set(allFoodItems)];
+    
+    navigation.navigate('OrderTimeline', { 
+      platformColor,
+      validEmails,
+      filterOptions: {
+        restaurants: uniqueRestaurants,
+        foodItems: uniqueFoodItems
+      }
+    });
   };
   
   return (

@@ -1,4 +1,4 @@
-// src/screens/OrderTimelineScreen.js
+// src/screens/OrderTimelineScreen.js - Modified to properly handle data
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   View, 
@@ -20,6 +20,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import * as AccountService from '../services/AccountService';
 import * as StorageService from '../services/StorageService';
+import { advancedCombinedFoods } from '../utils/FoodPraser';
 
 const { width, height } = Dimensions.get('window');
 
@@ -39,21 +40,25 @@ const OrderTimelineScreen = ({ navigation, route }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5; // Number of memories per page
 
+  // Get validated data from route params
+  const validEmails = route.params?.validEmails || [];
+  const filterOptions = route.params?.filterOptions || { restaurants: [], foodItems: [] };
+
   // Get platform color from route params or use default
   useEffect(() => {
     const color = route.params?.platformColor || Colors.primary;
     setPlatformColor(color);
+    
+    // If we have valid emails passed in, use those directly
+    if (validEmails && validEmails.length > 0) {
+      processEmailData(validEmails);
+    } else {
+      // Otherwise load data from storage
+      loadOrderData();
+    }
   }, [route.params]);
 
-  // Load current account and order data when screen is focused
-  useFocusEffect(
-    useCallback(() => {
-      loadCurrentAccount();
-      loadOrderData();
-    }, [])
-  );
-
-  // Get current account
+  // Load current account
   const loadCurrentAccount = async () => {
     try {
       const account = await AccountService.getCurrentAccount();
@@ -63,12 +68,67 @@ const OrderTimelineScreen = ({ navigation, route }) => {
     }
   };
 
-  // Main function to load all order data
+  // Process emails data directly without storage fetch
+  const processEmailData = (emails) => {
+    try {
+      setIsLoading(true);
+      setLoadingText("Processing your food journey...");
+      
+      const marked = {};
+      const allOrdersData = [];
+      
+      // Process each email and extract order data
+      emails.forEach(email => {
+        if (email.date) {
+          const orderDate = new Date(email.date);
+          const dateStr = orderDate.toISOString().split('T')[0];
+          
+          // Mark date on calendar
+          if (!marked[dateStr]) {
+            marked[dateStr] = { marked: true, dotColor: platformColor };
+          }
+          
+          // Prepare order details
+          let formattedPrice = email.orderDetails?.totalPrice || 'N/A';
+          if (formattedPrice === 'N/A' && email.subject && email.subject.match(/[₹₨Rs\.]?\s*\d+/)) {
+            const priceMatch = email.subject.match(/[₹₨Rs\.]?\s*(\d+)/);
+            if (priceMatch && priceMatch[1]) formattedPrice = `₹${priceMatch[1]}`;
+          }
+          
+          // For each email, create a processed order object
+          allOrdersData.push({
+            id: email.id,
+            date: orderDate,
+            dateStr,
+            restaurant: email.orderDetails?.restaurantName || 'Unknown Restaurant',
+            items: email.orderDetails?.orderItems || [],
+            totalPrice: formattedPrice,
+            orderStatus: email.orderDetails?.orderStatus || 'Order Placed',
+            subject: email.subject,
+            orderData: email
+          });
+        }
+      });
+      
+      setMarkedDates(marked);
+      allOrdersData.sort((a, b) => b.date - a.date);
+      setAllOrders(allOrdersData);
+      prepareMemoryData(allOrdersData);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error processing email data:", error);
+      setIsLoading(false);
+      setLoadingText("Error processing email data");
+    }
+  };
+
+  // Main function to load all order data from storage
   const loadOrderData = async () => {
     try {
       setIsLoading(true);
       setLoadingText("Discovering your food journey...");
       
+      await loadCurrentAccount();
       const accounts = await AccountService.getAccounts();
       const platforms = ['swiggy', 'zomato'];
       const marked = {};
@@ -81,7 +141,16 @@ const OrderTimelineScreen = ({ navigation, route }) => {
           const emailsJson = await AsyncStorage.getItem(storageKey);
           
           if (emailsJson) {
-            const emails = JSON.parse(emailsJson);
+            let emails = JSON.parse(emailsJson);
+            
+            // Filter out invalid data
+            emails = emails.filter(email => 
+              email.orderDetails?.restaurantName && 
+              email.orderDetails?.restaurantName !== 'Unknown Restaurant' &&
+              email.orderDetails?.totalPrice && 
+              email.orderDetails?.totalPrice !== 'N/A'
+            );
+            
             emails.forEach(email => {
               if (email.date) {
                 const orderDate = new Date(email.date);
@@ -130,7 +199,7 @@ const OrderTimelineScreen = ({ navigation, route }) => {
     }
   };
 
-  // Prepare memory data
+  // Enhanced memory data preparation that handles faulty data
   const prepareMemoryData = (orders) => {
     try {
       const today = new Date();
@@ -141,6 +210,8 @@ const OrderTimelineScreen = ({ navigation, route }) => {
 
       // "On This Day" memories
       orders.forEach(order => {
+        if (!order.date) return;
+        
         const orderDate = new Date(order.date);
         const orderYear = orderDate.getFullYear();
         const orderMonth = orderDate.getMonth();
@@ -149,31 +220,42 @@ const OrderTimelineScreen = ({ navigation, route }) => {
         if (orderMonth === currentMonth && orderDay === currentDay && orderYear !== today.getFullYear() && !foundYears.has(orderYear)) {
           foundYears.add(orderYear);
           const ordersOnThisDay = orders.filter(o => {
+            if (!o.date) return false;
             const d = new Date(o.date);
             return d.getDate() === orderDay && d.getMonth() === orderMonth && d.getFullYear() === orderYear;
           });
-          memories.push({
-            id: `memory-${orderYear}`,
-            type: 'onThisDay',
-            year: orderYear,
-            yearsAgo: today.getFullYear() - orderYear,
-            date: orderDate,
-            orders: ordersOnThisDay
-          });
+          
+          if (ordersOnThisDay.length > 0) {
+            memories.push({
+              id: `memory-${orderYear}`,
+              type: 'onThisDay',
+              year: orderYear,
+              yearsAgo: today.getFullYear() - orderYear,
+              date: orderDate,
+              orders: ordersOnThisDay
+            });
+          }
         }
       });
 
-      // "First Time" memories
+      // "First Time" memories with improved handling of irregular restaurant names
       const restaurantCountMap = {};
       orders.forEach(order => {
-        if (order.restaurant && order.restaurant !== 'Unknown Restaurant') {
-          if (!restaurantCountMap[order.restaurant]) {
-            restaurantCountMap[order.restaurant] = { count: 1, firstOrder: order };
-          } else {
-            restaurantCountMap[order.restaurant].count += 1;
-            if (new Date(order.date) < new Date(restaurantCountMap[order.restaurant].firstOrder.date)) {
-              restaurantCountMap[order.restaurant].firstOrder = order;
-            }
+        if (!order.restaurant || order.restaurant === 'Unknown Restaurant') return;
+        
+        // Clean/normalize restaurant name for better matches
+        const normalizedName = order.restaurant.toLowerCase().trim();
+        
+        if (!restaurantCountMap[normalizedName]) {
+          restaurantCountMap[normalizedName] = { 
+            count: 1, 
+            firstOrder: order, 
+            displayName: order.restaurant // Keep original case for display
+          };
+        } else {
+          restaurantCountMap[normalizedName].count += 1;
+          if (new Date(order.date) < new Date(restaurantCountMap[normalizedName].firstOrder.date)) {
+            restaurantCountMap[normalizedName].firstOrder = order;
           }
         }
       });
@@ -188,7 +270,7 @@ const OrderTimelineScreen = ({ navigation, route }) => {
             memories.push({
               id: `first-${restaurant}`,
               type: 'firstTime',
-              restaurant,
+              restaurant: restaurantCountMap[restaurant].displayName,
               orderCount: restaurantCountMap[restaurant].count,
               date: firstOrderDate,
               daysSince,
@@ -243,7 +325,7 @@ const OrderTimelineScreen = ({ navigation, route }) => {
 
   // Get platform color
   const getPlatformColor = (platform) => {
-    switch(platform.toLowerCase()) {
+    switch(platform?.toLowerCase()) {
       case 'swiggy': return Colors.swiggy;
       case 'zomato': return Colors.zomato;
       case 'flipkart': return Colors.flipkart;
@@ -255,8 +337,8 @@ const OrderTimelineScreen = ({ navigation, route }) => {
   // Format price
   const formatPrice = (price) => {
     if (!price || price === 'N/A') return 'N/A';
-    if (price.includes('₹')) return price;
-    const numericPrice = parseFloat(price.replace(/[^\d.-]/g, '') || 0);
+    if (typeof price === 'string' && price.includes('₹')) return price;
+    const numericPrice = parseFloat(price.toString().replace(/[^\d.-]/g, '') || 0);
     if (isNaN(numericPrice)) return price;
     return `₹${numericPrice.toFixed(2)}`;
   };
@@ -264,9 +346,14 @@ const OrderTimelineScreen = ({ navigation, route }) => {
   // Format date
   const formatDate = (date, includeYear = true) => {
     if (!date) return '';
-    const options = { weekday: 'long', day: 'numeric', month: 'long' };
-    if (includeYear) options.year = 'numeric';
-    return date.toLocaleDateString('en-US', options);
+    try {
+      const options = { weekday: 'long', day: 'numeric', month: 'long' };
+      if (includeYear) options.year = 'numeric';
+      return date.toLocaleDateString('en-US', options);
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return date.toString();
+    }
   };
 
   // Get ordinal suffix
@@ -282,9 +369,15 @@ const OrderTimelineScreen = ({ navigation, route }) => {
 
   // Format date with ordinal
   const formatDateWithOrdinal = (date) => {
-    const day = date.getDate();
-    const suffix = getOrdinalSuffix(day);
-    return `${day}${suffix} ${date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`;
+    if (!date) return '';
+    try {
+      const day = date.getDate();
+      const suffix = getOrdinalSuffix(day);
+      return `${day}${suffix} ${date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`;
+    } catch (error) {
+      console.error("Error formatting date with ordinal:", error);
+      return date.toString();
+    }
   };
 
   // Get status icon
@@ -300,7 +393,7 @@ const OrderTimelineScreen = ({ navigation, route }) => {
     return 'receipt';
   };
 
-  // Render calendar order item
+  // Render calendar order item with improved error handling
   const renderCalendarOrderItem = ({ item }) => (
     <TouchableOpacity 
       style={styles.orderItem}
@@ -317,7 +410,7 @@ const OrderTimelineScreen = ({ navigation, route }) => {
     >
       <View style={[styles.platformIndicator, { backgroundColor: getPlatformColor(item.platform) }]} />
       <View style={styles.orderDetails}>
-        <Text style={styles.restaurantName}>{item.restaurant}</Text>
+        <Text style={styles.restaurantName}>{item.restaurant || 'Unknown Restaurant'}</Text>
         <Text style={styles.orderItems}>
           {item.items && item.items.length > 0 
             ? item.items.slice(0, 2).join(', ') + (item.items.length > 2 ? ` +${item.items.length - 2} more` : '')
@@ -364,7 +457,7 @@ const OrderTimelineScreen = ({ navigation, route }) => {
           >
             <View style={[styles.memoryPlatformIndicator, { backgroundColor: getPlatformColor(order.platform) }]} />
             <View style={styles.memoryOrderDetails}>
-              <Text style={styles.memoryRestaurantName}>{order.restaurant}</Text>
+              <Text style={styles.memoryRestaurantName}>{order.restaurant || 'Unknown Restaurant'}</Text>
               <Text style={styles.memoryOrderItems}>
                 {order.items && order.items.length > 0 
                   ? order.items.slice(0, 2).join(', ') + (order.items.length > 2 ? ` +${order.items.length - 2} more` : '')
@@ -409,7 +502,9 @@ const OrderTimelineScreen = ({ navigation, route }) => {
         {memory.order.items && memory.order.items.length > 0 && (
           <View style={styles.memoryFirstOrderItems}>
             {memory.order.items.map((item, index) => (
-              <Text key={`first-item-${index}`} style={styles.memoryFirstOrderItem}>• {item}</Text>
+              <Text key={`first-item-${index}`} style={styles.memoryFirstOrderItem}>
+                • {item || 'Unknown item'}
+              </Text>
             ))}
           </View>
         )}
@@ -499,6 +594,10 @@ const OrderTimelineScreen = ({ navigation, route }) => {
                       todayTextColor: platformColor,
                       arrowColor: platformColor,
                       dotColor: platformColor,
+                      textDayFontWeight: '500',
+                      textMonthFontWeight: 'bold',
+                      textDayHeaderFontWeight: '500',
+                      textDisabledColor: '#d9e1e8',
                       'stylesheet.calendar.header': {
                         dayTextAtIndex0: { color: 'red' },
                         dayTextAtIndex6: { color: 'blue' }

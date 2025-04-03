@@ -533,6 +533,7 @@ const PlatformTab = ({ platform, route }) => {
             <OrderTimeMachineButton 
               platformColor={platformInfo.secondaryColor}
               emailCount={emails.length} 
+              emails={emails}
             />
             <MealTimingAnalysis 
               emails={emails} 
