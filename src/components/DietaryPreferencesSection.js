@@ -18,14 +18,12 @@ const DietaryPreferencesSection = ({ emails, platformColor }) => {
   const [dietStats, setDietStats] = useState({
     veg: 0,
     nonVeg: 0,
-    vegan: 0,
     total: 0
   });
   
   const [barWidths] = useState({
     veg: new Animated.Value(0),
-    nonVeg: new Animated.Value(0),
-    vegan: new Animated.Value(0)
+    nonVeg: new Animated.Value(0)
   });
   
   useEffect(() => {
@@ -38,17 +36,63 @@ const DietaryPreferencesSection = ({ emails, platformColor }) => {
     const stats = {
       veg: 0,
       nonVeg: 0,
-      vegan: 0,
       total: 0
     };
     
-    // Expanded vegetarian food item keywords with Indian cuisine focus
+    // Comprehensive vegetarian food item keywords from all regions of India
     const vegKeywords = [
       // Basic veg identifiers
-      'paneer', 'veg', 'vegetable', 'vegetarian', 'veggie',
+      'veg', 'vegetable', 'vegetarian', 'veggie',
+      
+      // North Indian veg dishes
+      'paneer', 'dal makhani', 'chana masala', 'aloo gobi', 'palak paneer', 
+      'rajma', 'matar paneer', 'malai kofta', 'shahi paneer', 'kadhi pakora',
+      'navratan korma', 'aloo matar', 'baingan bharta', 'bhindi masala', 'aloo paratha',
+      'gobi paratha', 'paneer paratha', 'chole bhature', 'pav bhaji', 'samosa',
+      'kachori', 'pakora', 'dahi bhalla', 'aloo tikki', 'paneer tikka',
+      'khasta kachori', 'sarson ka saag', 'makki di roti', 'paneer jalfrezi', 'lauki kofta',
+      'aloo baingan', 'methi malai matar', 'paneer kofta', 'veg biryani', 'pulao',
+      'jeera rice', 'kashmiri dum aloo', 'punjabi kadhi', 'amritsari kulcha', 'missi roti',
+      'paneer bhurji', 'aloo methi', 'tawa sabzi', 'paneer do pyaza', 'lauki chana dal',
+      'arbi masala', 'aloo shimla mirch', 'paneer lababdar',
+      
+      // South Indian veg dishes
+      'masala dosa', 'plain dosa', 'idli', 'vada', 'sambar', 
+      'rasam', 'uttapam', 'pongal', 'bisi bele bath', 'appam',
+      'puttu', 'avial', 'thoran', 'olan', 'pachadi',
+      'puliyogare', 'coconut rice', 'lemon rice', 'tomato bath', 'curd rice',
+      'pesarattu', 'adai', 'medu vada', 'mysore pak', 'payasam',
+      'poriyal', 'kootu', 'kuzhambu', 'sundal', 'upma',
+      'rava idli', 'rava dosa', 'paniyaram', 'kozhambu', 'kaara kuzhambu',
+      'mor kuzhambu', 'paruppu urundai kuzhambu', 'thogayal', 'milagu kuzhambu', 'puli kuzhambu',
+      'vendakkai poriyal', 'vazhakkai podimas', 'kathirikai poriyal', 'cabbage poriyal', 'carrot beans poriyal',
+      'kottu parotta', 'keerai masiyal', 'paruppu usili', 'karamani sundal', 'chettinadu vegetable curry',
+      
+      // East Indian veg dishes
+      'shukto', 'aloo posto', 'cholar dal', 'dhokar dalna', 'aloo chokha',
+      'santula', 'dalma', 'pakhala', 'ghugni', 'begun bhaja',
+      'aloo bhaja', 'chana\'r dalna', 'luchi', 'radha ballabhi', 'koraishutir kochuri',
+      'aloor dom', 'chhena poda', 'rasgulla', 'sandesh', 'mishti doi',
+      'chhanar jilipi', 'posto bora', 'phulkopir dalna', 'mochar ghonto', 'enchor er dalna',
+      'kumro chokka', 'labra', 'chhanar kalia', 'doodh puli', 'kheer sagar',
+      'patishapta', 'narkel naru', 'khaja', 'malpua', 'pantua',
+      'pithe', 'puli pithe', 'chirer pulao', 'bhapa pitha', 'dudh puli',
+      'potoler dorma', 'chhanar dalna', 'jhinge posto', 'thor ghonto', 'alu potol posto',
+      
+      // West Indian veg dishes
+      'dhokla', 'khandvi', 'thepla', 'fafda', 'khakhra',
+      'undhiyu', 'patra', 'handvo', 'sev tameta', 'batata vada',
+      'dabeli', 'misal pav', 'vada pav', 'thalipeeth', 'sabudana khichdi',
+      'methi thepla', 'basundi', 'shrikhand', 'puran poli', 'modak',
+      'gatte ki sabzi', 'dal baati churma', 'ker sangri', 'papad ki sabzi', 'bajra roti',
+      'kadhi', 'mohanthal', 'ghevar', 'daal dhokli', 'lilva kachori',
+      'muthiya', 'sev usal', 'ragda pattice', 'kala chana', 'surti locho',
+      'khichu', 'churma ladoo', 'gatta pulao', 'bajre ka khichda', 'paush',
+      'lapsi', 'khaman', 'sev khamani', 'masala bhat', 'tondli bhaji',
+      'matki usal', 'zunka bhakri', 'ukadiche modak',
       
       // Veg proteins
-      'tofu', 'chana', 'beans', 'lentil', 'dal', 'masoor', 'moong', 'toor', 'rajma', 
+      'chana', 'beans', 'lentil', 'dal', 'masoor', 'moong', 'toor', 'rajma', 
       
       // Vegetables
       'aloo', 'potato', 'gobi', 'cauliflower', 'palak', 'spinach', 'bhindi', 'okra', 'ladyfinger',
@@ -56,25 +100,6 @@ const DietaryPreferencesSection = ({ emails, platformColor }) => {
       'capsicum', 'bell pepper', 'shimla mirch', 'mushroom', 'methi', 'fenugreek', 'cabbage', 
       'tomato', 'onion', 'ginger', 'pumpkin', 'kaddu', 'lauki', 'bottle gourd', 'karela',
       'bitter gourd', 'parwal', 'turnip', 'tinda', 'turai', 'ridge gourd', 'lotus stem', 'kamal kakdi',
-      
-      // South Indian veg items
-      'idli', 'dosa', 'uttapam', 'vada', 'sambar', 'rasam', 'upma', 'pesarattu', 'pongal',
-      'appam', 'payasam', 'bisi bele bath', 'avial', 'thoran', 'olan', 'pachadi',
-      
-      // North Indian veg items
-      'paratha', 'chapati', 'roti', 'naan', 'kulcha', 'puri', 'chole', 'chana masala',
-      'rajma', 'dal makhani', 'kadhi', 'pakora', 'paneer tikka', 'paneer butter masala',
-      'paneer makhani', 'shahi paneer', 'malai kofta', 'palak paneer', 'matar paneer',
-      'navratan korma', 'aloo gobi', 'aloo matar', 'aloo palak', 'bhindi masala',
-      'baingan bharta', 'pav bhaji', 'veg biryani', 'veg pulao', 'jeera rice',
-      
-      // East Indian veg items
-      'rasgulla', 'sandesh', 'mishti doi', 'pitha', 'aloo posto', 'cholar dal',
-      'dhokar dalna', 'shukto', 'posto bora', 'bhaja', 'tarkari',
-      
-      // West Indian veg items
-      'dhokla', 'khandvi', 'thepla', 'fafda', 'jalebi', 'undhiyu', 'khakhra',
-      'basundi', 'shrikhand', 'batata vada', 'dabeli', 'patra', 'handvo',
       
       // Dairy and Desserts
       'paneer', 'cheese', 'curd', 'yogurt', 'raita', 'butter', 'ghee', 'cream',
@@ -88,15 +113,62 @@ const DietaryPreferencesSection = ({ emails, platformColor }) => {
       // Snacks
       'samosa', 'kachori', 'bhaji', 'pakora', 'vada', 'dhokla', 'khakhra', 'chaat',
       'pani puri', 'bhel puri', 'dahi puri', 'sev puri', 'aloo tikki', 'dahi vada',
-      'poha', 'upma', 'idli', 'dosa', 'uttapam',
-      
-      // Breakfast items
-      'upma', 'poha', 'idli', 'dosa', 'vada', 'uttapam', 'dhokla', 'thepla',
-      'paratha', 'aloo paratha'
+      'poha', 'upma', 'idli', 'dosa', 'uttapam'
     ];
     
-    // Expanded non-veg food item keywords with Indian cuisine focus
+    // Comprehensive non-vegetarian food item keywords from all regions of India
     const nonVegKeywords = [
+      // Basic non-veg identifiers
+      'non-veg', 'nonveg', 'non veg',
+      
+      // North Indian non-veg dishes
+      'butter chicken', 'chicken tikka masala', 'tandoori chicken', 'chicken korma', 'kadai chicken',
+      'chicken curry', 'chicken biryani', 'mutton biryani', 'rogan josh', 'keema matar',
+      'keema pav', 'nihari', 'paya', 'bhuna gosht', 'laal maas',
+      'seekh kebab', 'galouti kebab', 'shammi kebab', 'boti kebab', 'hariyali kebab',
+      'tangdi kebab', 'malai tikka', 'chicken reshmi kebab', 'chicken afghani', 'mutton curry',
+      'chicken handi', 'chicken do pyaza', 'chicken saagwala', 'chicken chettinad', 'amritsari fish',
+      'fish tikka', 'chicken kali mirch', 'chicken achari', 'mutton kofta', 'chicken changezi',
+      'chicken lahori', 'chicken patiala', 'mutton korma', 'chicken kadhai', 'tawa chicken',
+      'chicken kalimirch', 'chicken makhmali', 'chicken lababdar', 'egg curry', 'keema kaleji',
+      'bheja fry', 'gurda kapura', 'chicken chaap', 'chicken rezala', 'chicken bharta',
+      
+      // South Indian non-veg dishes
+      'chicken chettinad', 'hyderabadi biryani', 'malabar fish curry', 'andhra chicken curry', 'mutton ghee roast',
+      'nellore chepala pulusu', 'kerala fish molee', 'karimeen pollichathu', 'chicken 65', 'prawn masala',
+      'meen pollichathu', 'anjal fry', 'mutton sukka', 'nati koli saaru', 'chicken ghee roast',
+      'kori rotti', 'meen curry', 'prawn roast', 'crab masala', 'mutton pepper fry',
+      'dindigul biryani', 'ambur biryani', 'thalassery biryani', 'chettinad biryani', 'donne biryani',
+      'chicken pepper fry', 'mutton chops', 'malabar beef fry', 'kozhi varutha curry', 'nattu kozhi kulambu',
+      'prawn thokku', 'meen varuval', 'crab curry', 'squid fry', 'mutton dalcha',
+      'hyderabadi haleem', 'kodi vepudu', 'gongura mamsam', 'chicken roast', 'mutton kola urundai',
+      'nethili fry', 'kaadai roast', 'chettinad egg curry', 'malabar chicken curry', 'mangalorean fish curry',
+      'kori gassi', 'chicken peralan', 'mutton stew', 'prawn ularthiyathu', 'meen mulakittathu',
+      
+      // East Indian non-veg dishes
+      'kosha mangsho', 'machher jhol', 'ilish bhapa', 'chingri malai curry', 'fish kalia',
+      'doi maach', 'muri ghonto', 'chicken rezala', 'kathi roll', 'machha besara',
+      'mutton jhola', 'dak bungalow chicken', 'pork bharta', 'masor tenga', 'pork with bamboo shoot',
+      'smoked pork', 'duck curry', 'pigeon curry', 'chitol maach muitha', 'shorshe ilish',
+      'bhapa chingri', 'daab chingri', 'bhetki paturi', 'pabda macher jhal', 'tangra macher jhol',
+      'mourola macher bora', 'mangsher chop', 'chicken kabiraji', 'kolkata biryani', 'dimer devil',
+      'mughlai paratha', 'chicken chaap', 'mutton ghugni', 'prawn malaikari', 'luchi mangsho',
+      'koldil duck', 'masor koni', 'pork with lai xaak', 'akhuni pork', 'jadoh',
+      'doh khleh', 'nakham bitchi', 'pork bhot jolokia', 'chicken dohneiiong', 'misa mach poora',
+      'aloo duck', 'pork indad', 'iromba', 'ngari', 'chak-hao amubi',
+      
+      // West Indian non-veg dishes
+      'pork vindaloo', 'malvani prawn curry', 'laal maas', 'goan fish curry', 'bombil fry',
+      'chicken xacuti', 'chicken cafreal', 'sorpotel', 'kolhapuri chicken', 'malvani fish curry',
+      'mackerel recheado', 'mutton rassa', 'kombdi vade', 'saoji chicken', 'mutton kolhapuri',
+      'chicken sukka', 'mutton sukka', 'goan prawn curry', 'fish rechad', 'chicken rassa',
+      'mutton dhansak', 'salli boti', 'jardaloo salli boti', 'parsi cutlets', 'bohri raan',
+      'bohri biryani', 'khubani ma gosht', 'kheema pav', 'teetar fry', 'safed maas',
+      'jungli maas', 'khad khargosh', 'mathania meat curry', 'rajasthani chicken curry', 'mutton banjara',
+      'chicken angara', 'bohri khichda', 'chicken farcha', 'patrani macchi', 'prawn koliwada',
+      'bombay duck curry', 'mutton kala masala', 'chicken ghee roast', 'goan crab curry', 'chicken malvani',
+      'mutton lonche', 'koli fish curry', 'vajri khudi', 'chicken sagoti', 'mutton vade',
+      
       // Meat types
       'chicken', 'murgh', 'mutton', 'lamb', 'beef', 'pork', 'goat', 'keema', 'mince', 'meat',
       
@@ -106,73 +178,7 @@ const DietaryPreferencesSection = ({ emails, platformColor }) => {
       'seafood', 'tuna', 'salmon', 'mackerel', 'bangda',
       
       // Other non-veg
-      'egg', 'anda', 'omelette', 'bhurji', 'non-veg', 'nonveg', 'non veg',
-      
-      // North Indian non-veg dishes
-      'butter chicken', 'chicken tikka', 'chicken tikka masala', 'tandoori chicken',
-      'chicken korma', 'kadai chicken', 'murgh makhani', 'chicken curry', 'chicken biryani',
-      'mutton biryani', 'mutton curry', 'rogan josh', 'keema matar', 'keema pav',
-      'nihari', 'paya', 'bhuna gosht', 'laal maas', 'seekh kebab', 'galouti kebab',
-      'shammi kebab', 'boti kebab', 'hariyali kebab', 'tangdi kebab', 'malai tikka',
-      
-      // South Indian non-veg dishes
-      'chicken chettinad', 'andhra chicken curry', 'mangalorean fish curry', 'fish moilee',
-      'meen curry', 'chicken 65', 'prawn masala', 'meen pollichathu', 'anjal fry',
-      'mutton sukka', 'nati koli saaru', 'keema dosa', 'chicken ghee roast',
-      
-      // East Indian non-veg dishes
-      'maacher jhol', 'ilish bhapa', 'chingri malai curry', 'kosha mangsho',
-      'fish kalia', 'doi maach', 'muri ghonto', 'chicken rezala', 'kathi roll',
-      
-      // West Indian non-veg dishes
-      'chicken xacuti', 'chicken cafreal', 'sorpotel', 'bombil fry', 'kolhapuri chicken',
-      'malvani fish curry', 'goan fish curry', 'mackerel recheado', 'vindaloo',
-      
-      // Other Indian non-veg dishes
-      'chicken biryani', 'mutton biryani', 'fish biryani', 'egg biryani', 'keema biryani',
-      'chicken dum biryani', 'hyderabadi biryani', 'lucknowi biryani', 'kolkata biryani',
-      'thalassery biryani', 'dindigul biryani', 'chettinad biryani',
-      
-      // Common accompaniments
-      'egg curry', 'egg roast', 'egg masala', 'anda curry', 'fish fry', 'tandoori fish',
-      'prawn curry', 'prawn masala', 'prawn fry', 'crab curry', 'crab masala'
-    ];
-    
-    // Expanded vegan food item keywords with Indian cuisine focus
-    const veganKeywords = [
-      // Basic vegan identifiers
-      'vegan', 'plant-based', 'plant based', 'dairy-free', 'dairy free',
-      
-      // Vegan milks and alternatives
-      'almond milk', 'soy milk', 'coconut milk', 'oat milk', 'cashew milk',
-      'rice milk', 'hemp milk', 'vegan curd', 'vegan yogurt', 'vegan butter',
-      'vegan ghee', 'vegan cheese', 'vegan cream', 'vegan paneer',
-      
-      // Vegan proteins
-      'tofu', 'tempeh', 'seitan', 'soya chunks', 'soya granules', 'jackfruit',
-      'kathal', 'mock meat', 'plant protein', 'vegan protein',
-      
-      // Indian vegan dishes
-      'dal tadka', 'chana masala', 'aloo gobi', 'baingan bharta', 'bhindi masala',
-      'pav bhaji vegan', 'vegan biryani', 'vegetable tahiri', 'jeera aloo',
-      'vegan tikka masala', 'vegan butter masala', 'vegan korma',
-      
-      // Vegan South Indian dishes
-      'masala dosa vegan', 'idli vegan', 'vada vegan', 'uttapam vegan',
-      'coconut chutney', 'tomato chutney', 'sambar vegan', 'rasam vegan',
-      
-      // Vegan desserts
-      'vegan kheer', 'vegan halwa', 'vegan barfi', 'vegan ladoo', 'vegan gulab jamun',
-      'vegan ice cream', 'vegan cake', 'vegan dessert', 'vegan sweet',
-      
-      // Other vegan foods
-      'hummus', 'falafel', 'avocado', 'quinoa', 'chia seeds', 'flaxseed',
-      'nutritional yeast', 'vegan burger', 'vegan sausage', 'vegan nuggets',
-      'vegan mayonnaise', 'vegan dahi', 'vegan yogurt', 'vegan raita',
-      
-      // Lentil-based dishes (when specifically marked vegan)
-      'vegan dal makhani', 'vegan rajma', 'vegan chole', 'vegan kadhi',
-      'vegan daal', 'vegan dal', 'vegan dahl'
+      'egg', 'anda', 'omelette', 'bhurji'
     ];
     
     // Check each email's order items
@@ -185,10 +191,10 @@ const DietaryPreferencesSection = ({ emails, platformColor }) => {
           // Track total items
           stats.total++;
           
-          // Check if vegan
-          if (veganKeywords.some(keyword => itemText.includes(keyword))) {
-            stats.vegan++;
-            return; // If it's vegan, skip the other checks
+          // Check if non-vegetarian
+          if (nonVegKeywords.some(keyword => itemText.includes(keyword))) {
+            stats.nonVeg++;
+            return; // If it's non-veg, skip the remaining checks
           }
           
           // Check if vegetarian
@@ -196,12 +202,6 @@ const DietaryPreferencesSection = ({ emails, platformColor }) => {
               !nonVegKeywords.some(keyword => itemText.includes(keyword))) {
             stats.veg++;
             return; // If it's veg, skip the remaining checks
-          }
-          
-          // Check if non-vegetarian
-          if (nonVegKeywords.some(keyword => itemText.includes(keyword))) {
-            stats.nonVeg++;
-            return; // If it's non-veg, skip the remaining checks
           }
           
           // If we couldn't categorize the item, default to including it in total only
@@ -217,7 +217,7 @@ const DietaryPreferencesSection = ({ emails, platformColor }) => {
   };
   
   const animateBars = (stats) => {
-    const categorizedTotal = stats.veg + stats.nonVeg + stats.vegan;
+    const categorizedTotal = stats.veg + stats.nonVeg;
     const total = categorizedTotal || 1; // Avoid division by zero
     
     Animated.parallel([
@@ -230,23 +230,18 @@ const DietaryPreferencesSection = ({ emails, platformColor }) => {
         toValue: (stats.nonVeg / total) * BAR_WIDTH,
         duration: 800,
         useNativeDriver: false
-      }),
-      Animated.timing(barWidths.vegan, {
-        toValue: (stats.vegan / total) * BAR_WIDTH,
-        duration: 800,
-        useNativeDriver: false
       })
     ]).start();
   };
   
   const getPercentage = (value) => {
-    const categorizedTotal = dietStats.veg + dietStats.nonVeg + dietStats.vegan;
+    const categorizedTotal = dietStats.veg + dietStats.nonVeg;
     if (categorizedTotal === 0) return '0%';
     return `${Math.round((value / categorizedTotal) * 100)}%`;
   };
   
   // Don't render if no data or all zeros
-  const categorizedTotal = dietStats.veg + dietStats.nonVeg + dietStats.vegan;
+  const categorizedTotal = dietStats.veg + dietStats.nonVeg;
   if (categorizedTotal === 0) return null;
   
   return (
@@ -299,26 +294,6 @@ const DietaryPreferencesSection = ({ emails, platformColor }) => {
               <Text style={styles.percentText}>({getPercentage(dietStats.nonVeg)})</Text>
             </View>
           </View>
-          
-          {/* Vegan */}
-          <View style={styles.statRow}>
-            <View style={styles.statLabel}>
-              <View style={[styles.dotIndicator, { backgroundColor: '#8BC34A' }]} />
-              <Text style={styles.labelText}>Vegan</Text>
-            </View>
-            <View style={styles.barContainer}>
-              <Animated.View 
-                style={[
-                  styles.bar, 
-                  { width: barWidths.vegan, backgroundColor: '#8BC34A' }
-                ]} 
-              />
-            </View>
-            <View style={styles.statValue}>
-              <Text style={styles.valueText}>{dietStats.vegan}</Text>
-              <Text style={styles.percentText}>({getPercentage(dietStats.vegan)})</Text>
-            </View>
-          </View>
         </View>
         
         <View style={styles.summaryContainer}>
@@ -329,8 +304,6 @@ const DietaryPreferencesSection = ({ emails, platformColor }) => {
                 'You prefer non-vegetarian options!' : 
                 'You have a balanced diet of veg and non-veg!'
             }
-            {dietStats.vegan > 0 && dietStats.vegan > dietStats.veg * 0.5 && 
-              ' With a good amount of vegan choices too!'}
           </Text>
           <Text style={styles.summarySubtext}>Based on {categorizedTotal} identified items</Text>
         </View>

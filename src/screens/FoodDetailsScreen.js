@@ -14,11 +14,23 @@ import {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Colors from '../constants/colors';
+import RNFS from 'react-native-fs';
 
 const { width } = Dimensions.get('window');
 const BAR_WIDTH = width - 96; // Account for padding and margins
 
 const FoodDetailsScreen = () => {
+
+const saveJsonToFile = async (messageData) => {
+  const filePath = `${RNFS.DocumentDirectoryPath}/foodetails.json`;
+
+  try {
+    await RNFS.writeFile(filePath, JSON.stringify(messageData, null, 2), 'utf8');
+    console.log('Data saved successfully at:', filePath);
+  } catch (error) {
+    console.error('Error saving JSON file:', error);
+  }
+};
   const navigation = useNavigation();
   const route = useRoute();
   const { foodName, emails, foodData, platformColor } = route.params;
@@ -43,7 +55,7 @@ const FoodDetailsScreen = () => {
     }
   }, [emails, foodName]);
   
-  const analyzeFoodData = () => {
+  const analyzeFoodData = async() => {
     try {
       setLoading(true);
       
@@ -59,15 +71,14 @@ const FoodDetailsScreen = () => {
         
         // Check if any order item contains the food name
         const hasFoodItem = email.orderDetails.orderItems.some(item => {
-          const itemName = item.replace(/^\d+\s*[Xx×]\s+/i, '').trim();
+          const itemName = item?.replace(/^\d+\s*[Xx×]\s+/i, '').trim();
           return itemName.toLowerCase().includes(foodName.toLowerCase());
         });
         
         if (hasFoodItem) {
           const orderDate = new Date(email.date);
-          const price = parseFloat(email.orderDetails.totalPrice.replace(/[^\d.-]/g, '') || 0);
+          const price = parseFloat(email?.orderDetails?.totalPrice?.replace(/[^\d.-]/g, '') || 0);
           const restaurant = email.orderDetails.restaurantName;
-          
           // Add to orders
           foodOrders.push({
             id: email.id,
@@ -76,7 +87,8 @@ const FoodDetailsScreen = () => {
             price: price,
             formattedPrice: `₹${price.toFixed(2)}`,
             items: email.orderDetails.orderItems,
-            restaurant: restaurant
+            restaurant: restaurant,
+            orderId: email.orderDetails.orderId
           });
           
           // Update restaurant data
@@ -136,12 +148,11 @@ const FoodDetailsScreen = () => {
         const dateB = new Date(b.monthYear);
         return dateB - dateA;
       });
-      
       // Update the stats
       setOrders(foodOrders);
       setRestaurants(restaurantList.slice(0, 5)); // Show top 5
       setMonthlyData(monthlyDataArray.slice(0, 6)); // Show last 6 months
-      
+      await saveJsonToFile(foodOrders);
       setStats({
         count: foodOrders.length,
         firstOrdered: foodOrders.length > 0 ? foodOrders[foodOrders.length - 1].date : null,
@@ -149,7 +160,6 @@ const FoodDetailsScreen = () => {
         avgPrice: foodOrders.length > 0 ? totalPrice / foodOrders.length : 0,
         totalSpent: totalPrice
       });
-      
       setLoading(false);
     } catch (error) {
       console.error('Error analyzing food data:', error);
@@ -179,7 +189,8 @@ const FoodDetailsScreen = () => {
           restaurant: item.restaurant,
           date: item.date,
           totalPrice: item.formattedPrice,
-          orderItems: item.items
+          orderItems: item.items,
+          orderId: item.orderId
         }
       })}
     >
@@ -386,11 +397,11 @@ const FoodDetailsScreen = () => {
                 
                 // Check if any order item contains the food name
                 return email.orderDetails.orderItems.some(item => {
-                  const itemName = item.replace(/^\d+\s*[Xx×]\s+/i, '').trim();
+                  const itemName = item?.replace(/^\d+\s*[Xx×]\s+/i, '').trim();
                   return itemName.toLowerCase().includes(foodName.toLowerCase());
                 });
               });
-              
+              console.log(foodEmails.length,"foodEmails")
               // Get unique restaurants for this food
               const uniqueRestaurants = [...new Set(foodEmails
                 .map(email => email.orderDetails.restaurantName)

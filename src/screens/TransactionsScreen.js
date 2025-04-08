@@ -147,6 +147,15 @@ const TransactionsScreen = () => {
   // Process emails into transaction data
   useEffect(() => {
     if (allEmails && Array.isArray(allEmails)) {
+      const invalidRecords = allEmails.filter(email => {
+        return !email.orderDetails?.restaurantName || 
+               email.orderDetails?.restaurantName === "Unknown Restaurant" || 
+               !email.orderDetails?.totalPrice || 
+               email.orderDetails?.totalPrice === "N/A";
+      });
+      
+      console.log(invalidRecords);
+      
       // Transform emails into a more table-friendly format
       const processedData = allEmails
         .filter(email => {
@@ -191,6 +200,7 @@ const TransactionsScreen = () => {
             email // Keep original email data for details
           };
         });
+        console.log(processedData.length)
       
       setTransactions(processedData);
       setLoading(false);

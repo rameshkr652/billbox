@@ -1,4 +1,4 @@
-package com.billbox
+package com.binatrix.billbox
 
 import android.app.Application
 import com.facebook.react.PackageList

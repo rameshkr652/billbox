@@ -1,4 +1,4 @@
-package com.billbox
+package com.binatrix.billbox
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

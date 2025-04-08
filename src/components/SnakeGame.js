@@ -4,7 +4,7 @@ import { View, StyleSheet, Text, TouchableOpacity, Dimensions } from 'react-nati
 const { width, height } = Dimensions.get('window');
 const GRID_SIZE = 20;
 const CELL_SIZE = Math.floor(width / GRID_SIZE);
-const GAME_HEIGHT = Math.floor(height * 0.7 / CELL_SIZE) * CELL_SIZE;
+const GAME_HEIGHT = Math.floor(height * 0.6 / CELL_SIZE) * CELL_SIZE;
 
 // Array of food emojis for random selection
 const FOOD_EMOJIS = ['🍎', '🍌', '🍒', '🍓', '🍊', '🍇', '🍉', '🍑', '🍍', '🍕', '🍔', '🍩', '🍫', '🍬'];
@@ -524,8 +524,8 @@ const styles = StyleSheet.create({
   },
   controls: {
     alignItems: 'center',
-    marginTop: 30,
-    width: '80%',
+    marginTop: 0,
+    width: '70%',
   },
   horizontalControls: {
     flexDirection: 'row',
@@ -535,8 +535,8 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   controlButton: {
-    width: 65, // Slightly larger
-    height: 65, // Slightly larger
+    width: 85, // Slightly larger
+    height: 85, // Slightly larger
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 35, // Rounded corners
