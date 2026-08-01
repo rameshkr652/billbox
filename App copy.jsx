@@ -24,7 +24,7 @@ const App = () => {
     GoogleSignin.configure({
       scopes: ["https://www.googleapis.com/auth/gmail.readonly"],
       webClientId:
-        "533100730063-856k8l5r6uh2fe2fl7iovkf4t8tjdm69.apps.googleusercontent.com",
+        "384131129772-j9lbdd92ru0l9onceka3bbj2p2vf14nq.apps.googleusercontent.com",
       offlineAccess: true,
     });
 
