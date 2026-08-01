@@ -76,4 +76,5 @@ yarn-error.log
 .qodo
 .env
 .env.*
+!.env.example
 oauth.txt

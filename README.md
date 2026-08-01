@@ -1,97 +1,86 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# BillBox
 
-# Getting Started
+BillBox is a React Native app that turns your Gmail inbox into an automatic expense tracker. It signs in with Google, reads order/payment emails (Swiggy, Zomato, bank alerts, and other platforms), and uses an LLM (via [Replicate](https://replicate.com)) to parse unstructured email content into structured order and transaction data — no manual entry required.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## Features
 
-## Step 1: Start Metro
+- **Google Sign-In & Gmail integration** — connects to one or more Gmail accounts to fetch relevant emails.
+- **AI-assisted email parsing** — cleans HTML email bodies and extracts order/refund/payment details using an LLM, with a regex-based parser as fallback.
+- **Multi-platform support** — built-in handling for food delivery platforms (Swiggy, Zomato) and bank transaction emails.
+- **Expense insights** — order timelines, restaurant/food breakdowns, meal-timing analysis, and top-favorites summaries.
+- **Multi-account support** — switch between multiple connected Gmail accounts.
+- **Push notifications** — via Firebase Cloud Messaging.
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+## Tech Stack
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+- [React Native](https://reactnative.dev)
+- [React Navigation](https://reactnavigation.org) (drawer, bottom tabs, native stack)
+- [Firebase](https://rnfirebase.io) (Cloud Messaging)
+- [Google Sign-In](https://github.com/react-native-google-signin/google-signin)
+- [Replicate](https://replicate.com) (LLM inference for email parsing)
+
+## Getting Started
+
+> **Note**: Make sure you have completed the React Native [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+
+### 1. Install dependencies
 
 ```sh
-# Using npm
+npm install
+# or
+yarn install
+```
+
+### 2. Configure environment variables
+
+Copy the example env file and fill in your own credentials (Google OAuth client ID, Replicate API token, etc.):
+
+```sh
+cp .env.example .env
+```
+
+None of these values are committed to the repo — see [`src/config/env.js`](src/config/env.js) for what's read at runtime.
+
+### 3. Start Metro
+
+```sh
 npm start
-
-# OR using Yarn
-yarn start
 ```
 
-## Step 2: Build and run your app
+### 4. Run the app
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
+**Android**
 
 ```sh
-# Using npm
 npm run android
-
-# OR using Yarn
-yarn android
 ```
 
-### iOS
-
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+**iOS**
 
 ```sh
-bundle install
-```
-
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
+bundle install          # first time only
+bundle exec pod install # whenever native deps change
 npm run ios
-
-# OR using Yarn
-yarn ios
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+## Project Structure
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+```
+src/
+  screens/     # App screens (accounts, orders, transactions, settings, ...)
+  components/  # Reusable UI components
+  services/    # Gmail/Auth/Account/Storage integrations
+  utils/       # Email parsing (AI-assisted + regex fallback)
+  context/     # React context providers
+  navigation/  # React Navigation setup
+  constants/   # Static data (banks, platforms, colors)
+  config/      # Environment/config accessors
+```
 
-## Step 3: Modify your app
+## Contributing
 
-Now that you have successfully run the app, let's make changes!
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for how to get set up and submit a pull request.
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+## License
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+[MIT](LICENSE)
