@@ -1,5 +1,6 @@
 import { parseOrderDetails } from './EmailParser'; // Fallback parser
 import RNFS from 'react-native-fs';
+import { REPLICATE_API_TOKEN } from '../config/env';
 
 const saveJsonToFile = async (messageData) => {
   const filePath = `${RNFS.DocumentDirectoryPath}/aa.json`;
@@ -167,7 +168,7 @@ const callReplicateAPI = async (prompt) => {
     const response = await fetch('https://api.replicate.com/v1/predictions', {
       method: 'POST',
       headers: {
-        'Authorization': 'Token REDACTED_REPLICATE_TOKEN',
+        'Authorization': `Token ${REPLICATE_API_TOKEN}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -213,7 +214,7 @@ const pollPredictionResult = async (predictionId) => {
   while (attempts < maxAttempts) {
     try {
       const response = await fetch(`https://api.replicate.com/v1/predictions/${predictionId}`, {
-        headers: { 'Authorization': 'Token REDACTED_REPLICATE_TOKEN' }
+        headers: { 'Authorization': `Token ${REPLICATE_API_TOKEN}` }
       });
 
       if (!response.ok) {
