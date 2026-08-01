@@ -57,7 +57,7 @@ const tokenCache = {
 export { tokenCache };
 
 const getAccessToken = async (accountEmail) => {
-  return "ya29.a0AZYkNZgzDKq9n-cg_zpHw8gK64WWsOMQOiVcOP4WEfDaHTyzQvAZIbBga4Nw93c48GlDeS_fPFSGsjrPVL7CxA4WWkwL9GckwThR1KMky1y77bjOz94K7QNpQPm3xVz_9VmTc3WtkrfKlVhpO_4C1dUBFNE3dNclR5um1JJK8AaCgYKAdYSARASFQHGX2MiU33VPq2R2Q0MVpSgb1hgVw0177"
+  // return "ya29.a0AZYkNZjsaLBYyDi94p55Bp1goi2Jig2awH0yoIVa-Wn1bNDN9WCoMfmWEXiy5CqXEMpQquEOeF1raAaVpqM6K1efv2AnjAbMoIUvuxt5tQKjbJS_IzyrZmlcJFvqEF-9NzKEZMuQEcGz4Kuxb9B9Swchl2SP_o2zUuYYnk0SaCgYKAVkSARASFQHGX2MiKIJm-aaxSf8YSbrKNkcALA0175"
   try {
     if (!accountEmail) {
       throw new Error('Account email is required to get an access token');
@@ -399,17 +399,20 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
             
             // Check if processing failed (missing restaurant or items)
             if (processedEmail && processedEmail.orderDetails) {
-              const { restaurantName, orderItems } = processedEmail.orderDetails;
+              const { restaurantName, orderItems, totalPrice } = processedEmail.orderDetails;
               
               // Track for progress updates
               if (emailTProgressBar && setTempEmails) {
                 emailTProgressBar.push(processedEmail.orderDetails);
               }
               
-              if (!restaurantName || !orderItems || orderItems.length === 0) {
+              if (!restaurantName || !orderItems || orderItems.length === 0 || totalPrice === null || totalPrice === "") {
                 // Mark for AI processing
                 const emailHtmlAi = extractEmailBody(messageData);
                 const textToAi = extractCleanText(emailHtmlAi);
+                if(textToAi === null || textToAi === ''){
+                  return null
+                }
                 failedEmails.push({
                   ...processedEmail,
                   emailBodyHtml: textToAi,
@@ -462,51 +465,51 @@ export const fetchAllPlatformEmails = async (platform, accountEmail, platformQue
     
     // 8. Process failed emails with AI
     let aiProcessedEmails = [];
-    // if (failedEmails.length > 0) {
-    //   // Track AI processing start time for accurate time estimation
-    //   const aiStartTime = Date.now();
-    //   const totalToProcess = totalNewEmails;
-    //   const aiEmailCount = failedEmails.length;
+    if (failedEmails.length > 0) {
+      // Track AI processing start time for accurate time estimation
+      const aiStartTime = Date.now();
+      const totalToProcess = totalNewEmails;
+      const aiEmailCount = failedEmails.length;
       
-    //   // Initial AI progress update
-    //   progressCallback(
-    //     processedCount,
-    //     totalToProcess,
-    //     `Processing ${aiEmailCount} complex emails with AI...`,
-    //     Math.round((aiEmailCount * 5000) / 1000) // Rough estimate: 5 seconds per email
-    //   );
+      // Initial AI progress update
+      progressCallback(
+        processedCount,
+        totalToProcess,
+        `Processing ${aiEmailCount} complex emails with AI...`,
+        Math.round((aiEmailCount * 5000) / 1000) // Rough estimate: 5 seconds per email
+      );
       
-    //   // Process emails in smaller AI batches to provide progress updates
-    //   const AI_BATCH_SIZE = 2;
+      // Process emails in smaller AI batches to provide progress updates
+      const AI_BATCH_SIZE = 2;
       
-    //   for (let i = 0; i < failedEmails.length; i += AI_BATCH_SIZE) {
-    //     const aiBatch = failedEmails.slice(i, i + AI_BATCH_SIZE);
-    //     console.log(failedEmails, "failedEmails");
-    //     // Process this AI batch
-    //     const aiBatchResults = await AIEmailParser.processEmailBatch(aiBatch, platform);
-    //     aiProcessedEmails.push(...aiBatchResults);
+      for (let i = 0; i < failedEmails.length; i += AI_BATCH_SIZE) {
+        const aiBatch = failedEmails.slice(i, i + AI_BATCH_SIZE);
+        console.log(failedEmails, "failedEmails");
+        // Process this AI batch
+        const aiBatchResults = await AIEmailParser.processEmailBatch(aiBatch, platform);
+        aiProcessedEmails.push(...aiBatchResults);
         
-    //     // Update progress after each AI batch
-    //     const aiProcessedCount = Math.min(i + AI_BATCH_SIZE, failedEmails.length);
-    //     const totalProcessedCount = processedCount + aiProcessedCount;
+        // Update progress after each AI batch
+        const aiProcessedCount = Math.min(i + AI_BATCH_SIZE, failedEmails.length);
+        const totalProcessedCount = processedCount + aiProcessedCount;
         
-    //     // Recalculate remaining time based on actual progress
-    //     const currentTime = Date.now();
-    //     const aiElapsedMs = currentTime - aiStartTime;
-    //     const aiRemainingCount = failedEmails.length - aiProcessedCount;
+        // Recalculate remaining time based on actual progress
+        const currentTime = Date.now();
+        const aiElapsedMs = currentTime - aiStartTime;
+        const aiRemainingCount = failedEmails.length - aiProcessedCount;
         
-    //     // Calculate actual ms per AI email based on progress so far
-    //     const actualMsPerAiEmail = aiProcessedCount > 0 ? aiElapsedMs / aiProcessedCount : 5000;
-    //     const remainingAiTimeMs = actualMsPerAiEmail * aiRemainingCount;
+        // Calculate actual ms per AI email based on progress so far
+        const actualMsPerAiEmail = aiProcessedCount > 0 ? aiElapsedMs / aiProcessedCount : 5000;
+        const remainingAiTimeMs = actualMsPerAiEmail * aiRemainingCount;
         
-    //     progressCallback(
-    //       totalProcessedCount,
-    //       totalToProcess,
-    //       `AI processing: ${aiProcessedCount}/${aiEmailCount} complex emails...`,
-    //       Math.round(remainingAiTimeMs / 1000)
-    //     );
-    //   }
-    // }
+        progressCallback(
+          totalProcessedCount,
+          totalToProcess,
+          `AI processing: ${aiProcessedCount}/${aiEmailCount} complex emails...`,
+          Math.round(remainingAiTimeMs / 1000)
+        );
+      }
+    }
     
     // 9. Combine all processed emails and use the improved merger function
     progressCallback(totalNewEmails, totalNewEmails, 'Merging and saving emails...');
@@ -719,7 +722,7 @@ export const fetchLatestEmails = async (platform, accountEmail, lastFetchedDate,
     
     const existingEmails = await getPlatformEmails(platform, accountEmail);
     
-    const mergedEmails = mergeWithoutDuplicates(existingEmails, newEmails);
+    const mergedEmails = improvedMergeWithoutDuplicates(existingEmails, newEmails);
     
     const storageKey = `emails_${platform}_${accountEmail}`;
     await AsyncStorage.setItem(storageKey, JSON.stringify(mergedEmails));
@@ -733,88 +736,41 @@ export const fetchLatestEmails = async (platform, accountEmail, lastFetchedDate,
     throw error;
   }
 };
+
 /**
- * Improved function to merge email arrays without duplicates
- * Uses multiple identifying properties to prevent duplicates
+ * Simple merge function that only uses orderDetails.orderId for deduplication
+ * Only emails with orderIds are considered for merging and deduplication
  * @param {Array} existingEmails - Array of existing email objects
  * @param {Array} newEmails - Array of new email objects to merge
- * @returns {Array} Merged array without duplicates
+ * @returns {Array} Merged array without duplicate orderIds
  */
 const improvedMergeWithoutDuplicates = (existingEmails, newEmails) => {
-  if (!existingEmails || existingEmails.length === 0) {
-    return newEmails || [];
+  // Create a Map to track emails by orderId
+  const orderIdMap = new Map();
+  
+  // First add all valid existing emails with orderIds
+  if (existingEmails && existingEmails.length > 0) {
+    existingEmails.forEach(email => {
+      if (email && email.orderDetails && email.orderDetails.orderId) {
+        orderIdMap.set(email.orderDetails.orderId, email);
+      }
+    });
   }
   
-  if (!newEmails || newEmails.length === 0) {
-    return existingEmails;
-  }
-  
-  // Create a Map to track existing emails by multiple keys
-  const emailMap = new Map();
-  const idMap = new Map(); // For tracking by message ID only
-  
-  // Helper function to generate a composite key with fallbacks
-  const generateKey = (email) => {
-    // Primary key - order ID if available
-    if (email.orderDetails?.orderId) {
-      return `orderId:${email.orderDetails.orderId}`;
-    }
-    
-    // Secondary key - combination of restaurant name and date if available
-    if (email.orderDetails?.restaurantName && email.date) {
-      const dateStr = new Date(email.date).toISOString().split('T')[0]; // Just the date part
-      return `restaurant:${email.orderDetails.restaurantName}:date:${dateStr}`;
-    }
-    
-    // Fallback - message ID
-    return `id:${email.id}`;
-  };
-  
-  // Add existing emails to the map
-  existingEmails.forEach(email => {
-    if (!email) return; // Skip null/undefined entries
-    
-    const compositeKey = generateKey(email);
-    emailMap.set(compositeKey, email);
-    
-    // Also track by ID to catch duplicate message IDs
-    idMap.set(email.id, email);
-  });
-  
-  // Add new emails, avoiding duplicates
-  newEmails.forEach(email => {
-    if (!email) return; // Skip null/undefined entries
-    
-    const compositeKey = generateKey(email);
-    
-    // Check if this email already exists by composite key
-    if (!emailMap.has(compositeKey)) {
-      // Also check if the message ID exists
-      if (!idMap.has(email.id)) {
-        emailMap.set(compositeKey, email);
-        idMap.set(email.id, email);
-      } else {
-        // If message ID exists but composite key doesn't, the data might have been 
-        // enhanced. Compare and use the more detailed entry.
-        const existingEmail = idMap.get(email.id);
-        
-        // If the new email has order details and the existing one doesn't,
-        // or the new one has more order items, use the new one
-        if (
-          (email.orderDetails && !existingEmail.orderDetails) ||
-          (email.orderDetails?.orderItems?.length > (existingEmail.orderDetails?.orderItems?.length || 0))
-        ) {
-          const existingKey = generateKey(existingEmail);
-          emailMap.delete(existingKey);
-          emailMap.set(compositeKey, email);
-          idMap.set(email.id, email);
+  // Then add new emails with orderIds if they don't exist yet
+  if (newEmails && newEmails.length > 0) {
+    newEmails.forEach(email => {
+      if (email && email.orderDetails && email.orderDetails.orderId) {
+        // Only add if this orderId doesn't exist yet
+        if (!orderIdMap.has(email.orderDetails.orderId)) {
+          orderIdMap.set(email.orderDetails.orderId, email);
         }
       }
-    }
-  });
+    });
+  }
   
-  // Convert map back to array
-  return Array.from(emailMap.values());
+  // Return array of unique-by-orderId emails
+  return Array.from(orderIdMap.values());
 };
 /**
  * Save emails for a specific platform and account

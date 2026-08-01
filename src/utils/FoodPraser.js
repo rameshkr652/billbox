@@ -17,7 +17,7 @@ export const advancedCombinedFoods = (food) => {
       .replace(/\b(full|half|small|large|medium|regular|jumbo)\s+/gi, '') // Remove size prefixes
       
       // Final spacing cleanup
-      .replace(/\s{2,}/g, ' ').trim();                           // Collapse multiple spaces
+      .replace(/\s{2,}/g, ' ').replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim();                           // Collapse multiple spaces
   
     // STEP 2: Special handling for dishes with slashes - preserve the distinction
     if (/\s\/\s/.test(originalFood) || /\w\/\w/.test(originalFood)) {
